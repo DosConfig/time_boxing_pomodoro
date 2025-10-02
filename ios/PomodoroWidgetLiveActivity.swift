@@ -28,15 +28,29 @@ struct PomodoroWidgetLiveActivity: Widget {
                 }
 
                 DynamicIslandExpandedRegion(.center) {
-                    Text(formatTime(seconds: context.state.remainingTime))
-                        .font(.system(size: 40, weight: .bold, design: .monospaced))
-                        .foregroundColor(.green)
-                        .monospacedDigit()
+                    if context.state.status == "paused", let pausedSeconds = context.state.pausedRemainingSeconds {
+                        // 일시정지 상태: 정적 시간 표시
+                        Text(formatTime(seconds: pausedSeconds))
+                            .font(.system(size: 40, weight: .bold, design: .monospaced))
+                            .foregroundColor(.yellow)
+                            .monospacedDigit()
+                    } else {
+                        // 실행 중: 자동 카운트다운
+                        Text(timerInterval: Date()...context.state.endTime, countsDown: true)
+                            .font(.system(size: 40, weight: .bold, design: .monospaced))
+                            .foregroundColor(.green)
+                            .monospacedDigit()
+                            .multilineTextAlignment(.center)
+                    }
                 }
 
                 DynamicIslandExpandedRegion(.bottom) {
-                    ProgressView(value: Double(context.state.remainingTime), total: Double(context.attributes.totalDuration))
-                        .tint(.green)
+                    let progressVal = context.state.status == "paused" && context.state.pausedRemainingSeconds != nil
+                        ? Double(context.state.pausedRemainingSeconds!)
+                        : max(0, context.state.endTime.timeIntervalSinceNow)
+
+                    ProgressView(value: progressVal, total: Double(context.attributes.totalDuration))
+                        .tint(context.state.status == "paused" ? .yellow : .green)
                 }
 
             } compactLeading: {
@@ -46,10 +60,17 @@ struct PomodoroWidgetLiveActivity: Widget {
 
             } compactTrailing: {
                 // Compact trailing (right side of Dynamic Island)
-                Text(formatTime(seconds: context.state.remainingTime))
-                    .font(.system(size: 12, design: .monospaced))
-                    .foregroundColor(.green)
-                    .monospacedDigit()
+                if context.state.status == "paused", let pausedSeconds = context.state.pausedRemainingSeconds {
+                    Text(formatTime(seconds: pausedSeconds))
+                        .font(.system(size: 12, design: .monospaced))
+                        .foregroundColor(.yellow)
+                        .monospacedDigit()
+                } else {
+                    Text(timerInterval: Date()...context.state.endTime, countsDown: true)
+                        .font(.system(size: 12, design: .monospaced))
+                        .foregroundColor(.green)
+                        .monospacedDigit()
+                }
 
             } minimal: {
                 // Minimal (when multiple activities)
@@ -88,16 +109,15 @@ struct LockScreenLiveActivityView: View {
 
             // CRT Style Timer Display
             CRTTimerView(
-                remainingTime: context.state.remainingTime,
-                totalDuration: context.attributes.totalDuration
+                context: context
             )
 
             // Progress Bar
             ProgressView(
-                value: Double(context.state.remainingTime),
+                value: progressValue,
                 total: Double(context.attributes.totalDuration)
             )
-            .tint(.green)
+            .tint(context.state.status == "paused" ? .yellow : .green)
             .scaleEffect(x: 1, y: 2, anchor: .center)
         }
         .padding()
@@ -117,14 +137,22 @@ struct LockScreenLiveActivityView: View {
             return "Pomodoro"
         }
     }
+
+    private var progressValue: Double {
+        if context.state.status == "paused", let pausedSeconds = context.state.pausedRemainingSeconds {
+            return Double(pausedSeconds)
+        } else {
+            let remaining = context.state.endTime.timeIntervalSinceNow
+            return max(0, remaining)
+        }
+    }
 }
 
 // MARK: - CRT Timer View
 
 @available(iOS 16.1, *)
 struct CRTTimerView: View {
-    let remainingTime: Int
-    let totalDuration: Int
+    let context: ActivityViewContext<PomodoroActivityAttributes>
 
     var body: some View {
         ZStack {
@@ -148,13 +176,25 @@ struct CRTTimerView: View {
                 )
                 .cornerRadius(12)
 
-            // Timer Text
-            Text(formatTime(seconds: remainingTime))
-                .font(.system(size: 48, weight: .regular, design: .monospaced))
-                .foregroundColor(Color(red: 0.2, green: 1.0, blue: 0.53))
-                .shadow(color: Color(red: 0.2, green: 1.0, blue: 0.53).opacity(0.8), radius: 10)
-                .shadow(color: Color(red: 0.2, green: 1.0, blue: 0.53).opacity(0.5), radius: 20)
-                .monospacedDigit()
+            // Timer Text with auto-countdown
+            if context.state.status == "paused", let pausedSeconds = context.state.pausedRemainingSeconds {
+                // 일시정지: 정적 시간 표시
+                Text(formatTime(seconds: pausedSeconds))
+                    .font(.system(size: 48, weight: .regular, design: .monospaced))
+                    .foregroundColor(Color(red: 1.0, green: 0.8, blue: 0.2))
+                    .shadow(color: Color(red: 1.0, green: 0.8, blue: 0.2).opacity(0.8), radius: 10)
+                    .shadow(color: Color(red: 1.0, green: 0.8, blue: 0.2).opacity(0.5), radius: 20)
+                    .monospacedDigit()
+            } else {
+                // 실행 중: 자동 카운트다운
+                Text(timerInterval: Date()...context.state.endTime, countsDown: true)
+                    .font(.system(size: 48, weight: .regular, design: .monospaced))
+                    .foregroundColor(Color(red: 0.2, green: 1.0, blue: 0.53))
+                    .shadow(color: Color(red: 0.2, green: 1.0, blue: 0.53).opacity(0.8), radius: 10)
+                    .shadow(color: Color(red: 0.2, green: 1.0, blue: 0.53).opacity(0.5), radius: 20)
+                    .monospacedDigit()
+                    .multilineTextAlignment(.center)
+            }
         }
         .frame(height: 100)
     }
