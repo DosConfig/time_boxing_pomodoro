@@ -3,19 +3,6 @@ import Flutter
 import UserNotifications
 import ActivityKit
 
-// MARK: - Activity Attributes
-
-@available(iOS 16.1, *)
-struct PomodoroActivityAttributes: ActivityAttributes {
-    public struct ContentState: Codable, Hashable {
-        var remainingTime: Int  // in seconds
-        var status: String      // "running", "paused", "break"
-        var sessionCount: Int
-    }
-
-    var totalDuration: Int  // in seconds
-}
-
 class PomodoroTimerManager: NSObject {
     private var channel: FlutterMethodChannel
     private var timer: Timer?
@@ -136,22 +123,20 @@ class PomodoroTimerManager: NSObject {
     private func startRepeatingTimer() {
         timer?.invalidate()
 
+        // 1초 후부터 반복 (초기값은 startTimer에서 이미 보냄)
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            guard let self = self else { return }
+            self?.sendTick()
+        }
+    }
 
-            let remaining = self.getRemainingTime()
+    private func sendTick() {
+        let remaining = Int(self.getRemainingTime())
 
-            // Send update to Flutter
-            self.channel.invokeMethod("onTick", arguments: ["remainingTime": Int(remaining)])
+        // Flutter로 업데이트 보내지 않음 (Flutter 자체 타이머 사용)
+        // Live Activity는 자동으로 카운트다운됨
 
-            // Update Live Activity
-            if #available(iOS 16.1, *) {
-                self.updateLiveActivity(status: "running")
-            }
-
-            if remaining <= 0 {
-                self.onTimerComplete()
-            }
+        if remaining <= 0 {
+            self.onTimerComplete()
         }
     }
 
@@ -244,11 +229,19 @@ class PomodoroTimerManager: NSObject {
         }
 
         let attributes = PomodoroActivityAttributes(totalDuration: duration)
+        let endTime = Date().addingTimeInterval(TimeInterval(duration))
         let contentState = PomodoroActivityAttributes.ContentState(
-            remainingTime: duration,
+            endTime: endTime,
             status: "running",
-            sessionCount: sessionCount
+            sessionCount: sessionCount,
+            pausedRemainingSeconds: nil
         )
+
+        // Check if Live Activities are enabled
+        guard ActivityAuthorizationInfo().areActivitiesEnabled else {
+            print("⚠️ Live Activities are not enabled in Settings")
+            return
+        }
 
         do {
             let activity = try Activity.request(
@@ -257,9 +250,13 @@ class PomodoroTimerManager: NSObject {
                 pushType: nil
             )
             currentActivity = activity
-            print("Live Activity started")
+            print("✅ Live Activity started successfully")
+            print("   - Activity ID: \(activity.id)")
+            print("   - End time: \(endTime)")
+            print("   - Duration: \(duration)s")
         } catch {
-            print("Error starting Live Activity: \(error)")
+            print("❌ Error starting Live Activity: \(error)")
+            print("   - Error details: \(error.localizedDescription)")
         }
     }
 
@@ -267,22 +264,41 @@ class PomodoroTimerManager: NSObject {
     private func updateLiveActivity(status: String) {
         guard let activity = currentActivity as? Activity<PomodoroActivityAttributes> else { return }
 
-        let remainingTime = Int(getRemainingTime())
-        let contentState = PomodoroActivityAttributes.ContentState(
-            remainingTime: remainingTime,
-            status: status,
-            sessionCount: sessionCount
-        )
+        let contentState: PomodoroActivityAttributes.ContentState
+
+        if status == "paused" {
+            // 일시정지: 남은 시간을 초로 저장
+            let remaining = Int(getRemainingTime())
+            contentState = PomodoroActivityAttributes.ContentState(
+                endTime: Date(), // paused일 때는 의미 없음
+                status: status,
+                sessionCount: sessionCount,
+                pausedRemainingSeconds: remaining
+            )
+        } else if status == "running" {
+            // 재개: 새로운 종료 시각 계산
+            let remaining = getRemainingTime()
+            let newEndTime = Date().addingTimeInterval(remaining)
+            contentState = PomodoroActivityAttributes.ContentState(
+                endTime: newEndTime,
+                status: status,
+                sessionCount: sessionCount,
+                pausedRemainingSeconds: nil
+            )
+        } else {
+            // break 등
+            let remaining = getRemainingTime()
+            let endTime = Date().addingTimeInterval(remaining)
+            contentState = PomodoroActivityAttributes.ContentState(
+                endTime: endTime,
+                status: status,
+                sessionCount: sessionCount,
+                pausedRemainingSeconds: nil
+            )
+        }
 
         Task {
-            // AlertConfiguration으로 즉시 업데이트 보장
-            await activity.update(
-                ActivityContent(
-                    state: contentState,
-                    staleDate: nil
-                ),
-                alertConfiguration: nil
-            )
+            await activity.update(using: contentState)
         }
     }
 
