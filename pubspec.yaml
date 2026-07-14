@@ -32,7 +32,8 @@ dependencies:
     sdk: flutter
 
   custom_fluid_background:
-      path: packages/custom_fluid_background
+    git:
+      url: https://github.com/DosConfig/custom_fluid_background.git
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

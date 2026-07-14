@@ -6,7 +6,9 @@ class ResetPomodoroUseCase {
 
   ResetPomodoroUseCase(this.repository);
 
-  void call() {
+  Future<void> call() async {
+    // 네이티브 타이머 정지 + Live Activity 종료까지 함께
+    await repository.stopTimer();
     repository.updatePomodoro(Pomodoro.initial());
   }
 }

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/datasources/pomodoro_local_datasource.dart';
 import '../../data/repositories/pomodoro_repository_impl.dart';
@@ -48,8 +49,18 @@ class PomodoroNotifier extends Notifier<Pomodoro> {
     return Pomodoro.initial();
   }
 
-  void start() {
-    if (state.status == PomodoroStatus.idle || state.status == PomodoroStatus.paused) {
+  Future<void> start() async {
+    debugPrint('[Pomodoro/Dart] start() — status=${state.status}');
+    if (state.status == PomodoroStatus.paused) {
+      // 재개: 네이티브 resume — Live Activity를 끊지 않고 이어감.
+      // tick은 유지 중인 구독으로 계속 흘러옴 (네이티브가 재개되면 onTick 재개)
+      await repository.resumeTimer();
+      state = state.copyWith(status: PomodoroStatus.running);
+      repository.updatePomodoro(state);
+      return;
+    }
+
+    if (state.status == PomodoroStatus.idle) {
       state = state.copyWith(status: PomodoroStatus.running);
       repository.updatePomodoro(state);
 
@@ -64,15 +75,17 @@ class PomodoroNotifier extends Notifier<Pomodoro> {
     }
   }
 
-  void pause() {
-    pauseUseCase();
-    state = repository.getPomodoro();
-    _timerSubscription?.cancel();
+  Future<void> pause() async {
+    // 구독은 유지 — 네이티브 타이머가 멈추면 tick이 안 오는 것뿐.
+    // 재개 시 같은 구독으로 tick이 다시 흐른다.
+    await pauseUseCase();
+    state = state.copyWith(status: PomodoroStatus.paused);
+    repository.updatePomodoro(state);
   }
 
-  void reset() {
+  Future<void> reset() async {
     _timerSubscription?.cancel();
-    resetUseCase();
+    await resetUseCase(); // 네이티브 stop + Live Activity 종료 포함
     state = repository.getPomodoro();
   }
 

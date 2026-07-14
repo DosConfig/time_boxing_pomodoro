@@ -1,20 +1,24 @@
+import 'dart:async';
+
 import '../../domain/entities/pomodoro.dart';
 import 'pomodoro_platform_channel.dart';
 
 class PomodoroLocalDataSource {
   Pomodoro _currentPomodoro = Pomodoro.initial();
-  Function(int)? _onTickCallback;
-  Function()? _onCompleteCallback;
+
+  // 네이티브 onTick을 UI로 흘리는 단일 통로 (진실의 원천 = 네이티브 타이머)
+  final StreamController<int> _tickController = StreamController<int>.broadcast();
 
   PomodoroLocalDataSource() {
-    // Setup platform channel callbacks
     PomodoroPlatformChannel.setMethodCallHandler(
       (remainingTime) {
         _currentPomodoro = _currentPomodoro.copyWith(remainingTime: remainingTime);
-        _onTickCallback?.call(remainingTime);
+        _tickController.add(remainingTime);
       },
       () {
-        _onCompleteCallback?.call();
+        // 완료: 0을 흘려 provider의 완료 처리를 트리거
+        _currentPomodoro = _currentPomodoro.copyWith(remainingTime: 0);
+        _tickController.add(0);
       },
     );
   }
@@ -26,28 +30,14 @@ class PomodoroLocalDataSource {
   }
 
   Stream<int> startTimer() async* {
-    // Use platform channel for native timer
+    // 네이티브 타이머 시작 (Live Activity 포함)
     await PomodoroPlatformChannel.startTimer(
       _currentPomodoro.remainingTime,
       sessionCount: _currentPomodoro.completedSessions,
     );
 
-    // Setup callbacks
-    _onTickCallback = (remainingTime) {
-      // This will be called from platform channel
-    };
-
-    _onCompleteCallback = () {
-      // Timer completed
-    };
-
-    // Yield updates when platform channel sends them
-    while (_currentPomodoro.remainingTime > 0) {
-      await Future.delayed(const Duration(seconds: 1));
-      if (_currentPomodoro.status == PomodoroStatus.running) {
-        yield _currentPomodoro.remainingTime;
-      }
-    }
+    // 이후의 모든 tick은 네이티브 onTick에서 공급됨
+    yield* _tickController.stream;
   }
 
   Future<void> pauseTimer() async {

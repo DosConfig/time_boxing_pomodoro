@@ -1,0 +1,32 @@
+{
+  "source": "/Users/seongwoo/Documents/GitHub/pomodoro_method_channel/ios/PomodoroWidgetExtension/PomodoroWidgetLiveActivity.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Pomodoro",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 18
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld/5",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 25
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld/5",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 105
+        }
+      }
+    ]
+  },
+  "version": 1
+}

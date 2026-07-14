@@ -16,6 +16,9 @@ class PomodoroTimerManager: NSObject {
 
     private var currentActivity: Any?
 
+    // LA 진단용 — 마지막 시도 결과를 채널로 노출
+    var lastActivityStatus: String = "not-attempted"
+
     init(channel: FlutterMethodChannel) {
         self.channel = channel
         super.init()
@@ -43,6 +46,7 @@ class PomodoroTimerManager: NSObject {
     // MARK: - Timer Control
 
     func startTimer(duration: Int, sessionCount: Int = 0) {
+        NSLog("[Pomodoro] native startTimer called — duration=%d session=%d", duration, sessionCount)
         stopTimer()
 
         startTime = Date()
@@ -62,8 +66,10 @@ class PomodoroTimerManager: NSObject {
     func pauseTimer() {
         guard !isPaused else { return }
 
-        isPaused = true
+        // 순서 중요: isPaused를 먼저 세우면 getRemainingTime()이
+        // 갱신 전의 pausedRemainingTime(첫 pause 시 0)을 반환해 남은 시간이 오염됨
         pausedRemainingTime = getRemainingTime()
+        isPaused = true
 
         timer?.invalidate()
         timer = nil
@@ -132,8 +138,9 @@ class PomodoroTimerManager: NSObject {
     private func sendTick() {
         let remaining = Int(self.getRemainingTime())
 
-        // Flutter로 업데이트 보내지 않음 (Flutter 자체 타이머 사용)
-        // Live Activity는 자동으로 카운트다운됨
+        // 네이티브 타이머가 진실의 원천 — 매초 Flutter UI에 잔여 시간 전달
+        // (Live Activity는 Text(timerInterval:)로 OS가 자체 카운트다운)
+        channel.invokeMethod("onTick", arguments: ["remainingTime": remaining])
 
         if remaining <= 0 {
             self.onTimerComplete()
@@ -239,7 +246,8 @@ class PomodoroTimerManager: NSObject {
 
         // Check if Live Activities are enabled
         guard ActivityAuthorizationInfo().areActivitiesEnabled else {
-            print("⚠️ Live Activities are not enabled in Settings")
+            lastActivityStatus = "DISABLED — 설정에서 Live Activities 꺼짐"
+            NSLog("[Pomodoro] ⚠️ Live Activities are NOT enabled (ActivityAuthorizationInfo)")
             return
         }
 
@@ -250,13 +258,11 @@ class PomodoroTimerManager: NSObject {
                 pushType: nil
             )
             currentActivity = activity
-            print("✅ Live Activity started successfully")
-            print("   - Activity ID: \(activity.id)")
-            print("   - End time: \(endTime)")
-            print("   - Duration: \(duration)s")
+            lastActivityStatus = "STARTED — id=\(activity.id.prefix(8))"
+            NSLog("[Pomodoro] ✅ Live Activity started — id=%@ duration=%d", activity.id, duration)
         } catch {
-            print("❌ Error starting Live Activity: \(error)")
-            print("   - Error details: \(error.localizedDescription)")
+            lastActivityStatus = "ERROR — \(error.localizedDescription)"
+            NSLog("[Pomodoro] ❌ Live Activity request failed: %@", String(describing: error))
         }
     }
 

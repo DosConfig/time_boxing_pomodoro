@@ -1,0 +1,49 @@
+{
+  "" : {
+    "diagnostics" : "/Users/seongwoo/Documents/GitHub/pomodoro_method_channel/ios/build/Runner.build/Debug-iphonesimulator/PomodoroWidgetExtensionExtension.build/Objects-normal/x86_64/PomodoroWidgetExtensionExtension-primary.dia",
+    "emit-module-dependencies" : "/Users/seongwoo/Documents/GitHub/pomodoro_method_channel/ios/build/Runner.build/Debug-iphonesimulator/PomodoroWidgetExtensionExtension.build/Objects-normal/x86_64/PomodoroWidgetExtensionExtension-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/seongwoo/Documents/GitHub/pomodoro_method_channel/ios/build/Runner.build/Debug-iphonesimulator/PomodoroWidgetExtensionExtension.build/Objects-normal/x86_64/PomodoroWidgetExtensionExtension-primary-emit-module.dia",
+    "pch" : "/Users/seongwoo/Documents/GitHub/pomodoro_method_channel/ios/build/Runner.build/Debug-iphonesimulator/PomodoroWidgetExtensionExtension.build/Objects-normal/x86_64/PomodoroWidgetExtensionExtension-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/seongwoo/Documents/GitHub/pomodoro_method_channel/ios/build/Runner.build/Debug-iphonesimulator/PomodoroWidgetExtensionExtension.build/Objects-normal/x86_64/PomodoroWidgetExtensionExtension-primary.swiftdeps"
+  },
+  "/Users/seongwoo/Documents/GitHub/pomodoro_method_channel/ios/PomodoroWidgetExtension/PomodoroActivityAttributes.swift" : {
+    "const-values" : "/Users/seongwoo/Documents/GitHub/pomodoro_method_channel/ios/build/Runner.build/Debug-iphonesimulator/PomodoroWidgetExtensionExtension.build/Objects-normal/x86_64/PomodoroActivityAttributes.swiftconstvalues",
+    "dependencies" : "/Users/seongwoo/Documents/GitHub/pomodoro_method_channel/ios/build/Runner.build/Debug-iphonesimulator/PomodoroWidgetExtensionExtension.build/Objects-normal/x86_64/PomodoroActivityAttributes.d",
+    "diagnostics" : "/Users/seongwoo/Documents/GitHub/pomodoro_method_channel/ios/build/Runner.build/Debug-iphonesimulator/PomodoroWidgetExtensionExtension.build/Objects-normal/x86_64/PomodoroActivityAttributes.dia",
+    "index-unit-output-path" : "/Runner.build/Debug-iphonesimulator/PomodoroWidgetExtensionExtension.build/Objects-normal/x86_64/PomodoroActivityAttributes.o",
+    "llvm-bc" : "/Users/seongwoo/Documents/GitHub/pomodoro_method_channel/ios/build/Runner.build/Debug-iphonesimulator/PomodoroWidgetExtensionExtension.build/Objects-normal/x86_64/PomodoroActivityAttributes.bc",
+    "object" : "/Users/seongwoo/Documents/GitHub/pomodoro_method_channel/ios/build/Runner.build/Debug-iphonesimulator/PomodoroWidgetExtensionExtension.build/Objects-normal/x86_64/PomodoroActivityAttributes.o",
+    "swift-dependencies" : "/Users/seongwoo/Documents/GitHub/pomodoro_method_channel/ios/build/Runner.build/Debug-iphonesimulator/PomodoroWidgetExtensionExtension.build/Objects-normal/x86_64/PomodoroActivityAttributes.swiftdeps",
+    "swiftmodule" : "/Users/seongwoo/Documents/GitHub/pomodoro_method_channel/ios/build/Runner.build/Debug-iphonesimulator/PomodoroWidgetExtensionExtension.build/Objects-normal/x86_64/PomodoroActivityAttributes~partial.swiftmodule"
+  },
+  "/Users/seongwoo/Documents/GitHub/pomodoro_method_channel/ios/PomodoroWidgetExtension/PomodoroWidgetBundle.swift" : {
+    "const-values" : "/Users/seongwoo/Documents/GitHub/pomodoro_method_channel/ios/build/Runner.build/Debug-iphonesimulator/PomodoroWidgetExtensionExtension.build/Objects-normal/x86_64/PomodoroWidgetBundle.swiftconstvalues",
+    "dependencies" : "/Users/seongwoo/Documents/GitHub/pomodoro_method_channel/ios/build/Runner.build/Debug-iphonesimulator/PomodoroWidgetExtensionExtension.build/Objects-normal/x86_64/PomodoroWidgetBundle.d",
+    "diagnostics" : "/Users/seongwoo/Documents/GitHub/pomodoro_method_channel/ios/build/Runner.build/Debug-iphonesimulator/PomodoroWidgetExtensionExtension.build/Objects-normal/x86_64/PomodoroWidgetBundle.dia",
+    "index-unit-output-path" : "/Runner.build/Debug-iphonesimulator/PomodoroWidgetExtensionExtension.build/Objects-normal/x86_64/PomodoroWidgetBundle.o",
+    "llvm-bc" : "/Users/seongwoo/Documents/GitHub/pomodoro_method_channel/ios/build/Runner.build/Debug-iphonesimulator/PomodoroWidgetExtensionExtension.build/Objects-normal/x86_64/PomodoroWidgetBundle.bc",
+    "object" : "/Users/seongwoo/Documents/GitHub/pomodoro_method_channel/ios/build/Runner.build/Debug-iphonesimulator/PomodoroWidgetExtensionExtension.build/Objects-normal/x86_64/PomodoroWidgetBundle.o",
+    "swift-dependencies" : "/Users/seongwoo/Documents/GitHub/pomodoro_method_channel/ios/build/Runner.build/Debug-iphonesimulator/PomodoroWidgetExtensionExtension.build/Objects-normal/x86_64/PomodoroWidgetBundle.swiftdeps",
+    "swiftmodule" : "/Users/seongwoo/Documents/GitHub/pomodoro_method_channel/ios/build/Runner.build/Debug-iphonesimulator/PomodoroWidgetExtensionExtension.build/Objects-normal/x86_64/PomodoroWidgetBundle~partial.swiftmodule"
+  },
+  "/Users/seongwoo/Documents/GitHub/pomodoro_method_channel/ios/PomodoroWidgetExtension/PomodoroWidgetLiveActivity.swift" : {
+    "const-values" : "/Users/seongwoo/Documents/GitHub/pomodoro_method_channel/ios/build/Runner.build/Debug-iphonesimulator/PomodoroWidgetExtensionExtension.build/Objects-normal/x86_64/PomodoroWidgetLiveActivity.swiftconstvalues",
+    "dependencies" : "/Users/seongwoo/Documents/GitHub/pomodoro_method_channel/ios/build/Runner.build/Debug-iphonesimulator/PomodoroWidgetExtensionExtension.build/Objects-normal/x86_64/PomodoroWidgetLiveActivity.d",
+    "diagnostics" : "/Users/seongwoo/Documents/GitHub/pomodoro_method_channel/ios/build/Runner.build/Debug-iphonesimulator/PomodoroWidgetExtensionExtension.build/Objects-normal/x86_64/PomodoroWidgetLiveActivity.dia",
+    "index-unit-output-path" : "/Runner.build/Debug-iphonesimulator/PomodoroWidgetExtensionExtension.build/Objects-normal/x86_64/PomodoroWidgetLiveActivity.o",
+    "llvm-bc" : "/Users/seongwoo/Documents/GitHub/pomodoro_method_channel/ios/build/Runner.build/Debug-iphonesimulator/PomodoroWidgetExtensionExtension.build/Objects-normal/x86_64/PomodoroWidgetLiveActivity.bc",
+    "object" : "/Users/seongwoo/Documents/GitHub/pomodoro_method_channel/ios/build/Runner.build/Debug-iphonesimulator/PomodoroWidgetExtensionExtension.build/Objects-normal/x86_64/PomodoroWidgetLiveActivity.o",
+    "swift-dependencies" : "/Users/seongwoo/Documents/GitHub/pomodoro_method_channel/ios/build/Runner.build/Debug-iphonesimulator/PomodoroWidgetExtensionExtension.build/Objects-normal/x86_64/PomodoroWidgetLiveActivity.swiftdeps",
+    "swiftmodule" : "/Users/seongwoo/Documents/GitHub/pomodoro_method_channel/ios/build/Runner.build/Debug-iphonesimulator/PomodoroWidgetExtensionExtension.build/Objects-normal/x86_64/PomodoroWidgetLiveActivity~partial.swiftmodule"
+  },
+  "/Users/seongwoo/Documents/GitHub/pomodoro_method_channel/ios/build/Runner.build/Debug-iphonesimulator/PomodoroWidgetExtensionExtension.build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "const-values" : "/Users/seongwoo/Documents/GitHub/pomodoro_method_channel/ios/build/Runner.build/Debug-iphonesimulator/PomodoroWidgetExtensionExtension.build/Objects-normal/x86_64/GeneratedAssetSymbols.swiftconstvalues",
+    "dependencies" : "/Users/seongwoo/Documents/GitHub/pomodoro_method_channel/ios/build/Runner.build/Debug-iphonesimulator/PomodoroWidgetExtensionExtension.build/Objects-normal/x86_64/GeneratedAssetSymbols.d",
+    "diagnostics" : "/Users/seongwoo/Documents/GitHub/pomodoro_method_channel/ios/build/Runner.build/Debug-iphonesimulator/PomodoroWidgetExtensionExtension.build/Objects-normal/x86_64/GeneratedAssetSymbols.dia",
+    "index-unit-output-path" : "/Runner.build/Debug-iphonesimulator/PomodoroWidgetExtensionExtension.build/Objects-normal/x86_64/GeneratedAssetSymbols.o",
+    "llvm-bc" : "/Users/seongwoo/Documents/GitHub/pomodoro_method_channel/ios/build/Runner.build/Debug-iphonesimulator/PomodoroWidgetExtensionExtension.build/Objects-normal/x86_64/GeneratedAssetSymbols.bc",
+    "object" : "/Users/seongwoo/Documents/GitHub/pomodoro_method_channel/ios/build/Runner.build/Debug-iphonesimulator/PomodoroWidgetExtensionExtension.build/Objects-normal/x86_64/GeneratedAssetSymbols.o",
+    "swift-dependencies" : "/Users/seongwoo/Documents/GitHub/pomodoro_method_channel/ios/build/Runner.build/Debug-iphonesimulator/PomodoroWidgetExtensionExtension.build/Objects-normal/x86_64/GeneratedAssetSymbols.swiftdeps",
+    "swiftmodule" : "/Users/seongwoo/Documents/GitHub/pomodoro_method_channel/ios/build/Runner.build/Debug-iphonesimulator/PomodoroWidgetExtensionExtension.build/Objects-normal/x86_64/GeneratedAssetSymbols~partial.swiftmodule"
+  }
+}

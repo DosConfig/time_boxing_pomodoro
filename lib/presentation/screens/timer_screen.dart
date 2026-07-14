@@ -2,9 +2,13 @@ import 'package:custom_fluid_background/custom_fluid_background.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../data/datasources/pomodoro_platform_channel.dart';
 import '../../domain/entities/pomodoro.dart';
 import '../providers/pomodoro_provider.dart';
 import '../widgets/crt_timer_widget.dart';
+
+// LA 진단용 임시 표시 (해결 후 제거)
+final ValueNotifier<String> _laDiag = ValueNotifier<String>('');
 
 class TimerScreen extends ConsumerWidget {
   const TimerScreen({super.key});
@@ -58,11 +62,15 @@ class TimerScreen extends ConsumerWidget {
                 children: [
                   _buildPixelButton(
                     icon: pomodoro.status == PomodoroStatus.running ? Icons.pause : Icons.play_arrow,
-                    onPressed: () {
+                    onPressed: () async {
                       if (pomodoro.status == PomodoroStatus.running) {
-                        pomodoroNotifier.pause();
+                        await pomodoroNotifier.pause();
+                        _laDiag.value = 'pause 호출됨';
                       } else {
-                        pomodoroNotifier.start();
+                        await pomodoroNotifier.start();
+                        // 네이티브의 LA 시작 결과를 화면에 직접 표시
+                        final status = await PomodoroPlatformChannel.getActivityStatus();
+                        _laDiag.value = 'LA: $status';
                       }
                     },
                     color: Colors.green,
@@ -74,6 +82,20 @@ class TimerScreen extends ConsumerWidget {
                     color: Colors.orange,
                   ),
                 ],
+              ),
+              const SizedBox(height: 24),
+
+              // LA 진단 표시 (임시)
+              ValueListenableBuilder<String>(
+                valueListenable: _laDiag,
+                builder: (_, value, __) => Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.yellowAccent,
+                    shadows: [Shadow(color: Colors.black, blurRadius: 6)],
+                  ),
+                ),
               ),
             ],
           ),

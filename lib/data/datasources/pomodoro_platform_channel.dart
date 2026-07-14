@@ -66,6 +66,15 @@ class PomodoroPlatformChannel {
     }
   }
 
+  static Future<String> getActivityStatus() async {
+    try {
+      final result = await _channel.invokeMethod('getActivityStatus');
+      return result as String? ?? 'null';
+    } catch (e) {
+      return '채널 에러: $e';
+    }
+  }
+
   static Future<int> getRemainingTime() async {
     try {
       final result = await _channel.invokeMethod('getRemainingTime');

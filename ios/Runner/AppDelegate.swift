@@ -31,6 +31,8 @@ import UserNotifications
     timerChannel.setMethodCallHandler { [weak self] (call: FlutterMethodCall, result: @escaping FlutterResult) in
       guard let self = self else { return }
 
+      NSLog("[Pomodoro] channel call received: %@", call.method)
+
       switch call.method {
       case "startTimer":
         if let args = call.arguments as? [String: Any],
@@ -57,6 +59,9 @@ import UserNotifications
       case "getRemainingTime":
         let remaining = self.pomodoroTimer?.getRemainingTime() ?? 0
         result(remaining)
+
+      case "getActivityStatus":
+        result(self.pomodoroTimer?.lastActivityStatus ?? "no-manager")
 
       default:
         result(FlutterMethodNotImplemented)

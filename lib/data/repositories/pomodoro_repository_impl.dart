@@ -15,4 +15,13 @@ class PomodoroRepositoryImpl implements PomodoroRepository {
 
   @override
   Stream<int> startTimer() => localDataSource.startTimer();
+
+  @override
+  Future<void> pauseTimer() => localDataSource.pauseTimer();
+
+  @override
+  Future<void> resumeTimer() => localDataSource.resumeTimer();
+
+  @override
+  Future<void> stopTimer() => localDataSource.stopTimer();
 }
