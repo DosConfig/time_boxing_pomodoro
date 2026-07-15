@@ -426,16 +426,22 @@ class PomodoroNotifier extends Notifier<Pomodoro> with WidgetsBindingObserver {
     repository.updatePomodoro(state);
   }
 
-  void addTimeBox() {
+  TimeBox addTimeBox() {
     final boxes = List<TimeBox>.from(state.timeBoxes);
     final start = _nextStartMinutes(boxes);
+    return addTimeBoxAtStart(start);
+  }
+
+  TimeBox addTimeBoxAtStart(int startMinutes, {String title = 'New time box'}) {
+    final boxes = List<TimeBox>.from(state.timeBoxes);
     final nextBox = TimeBox(
       id: 'box-${DateTime.now().microsecondsSinceEpoch}',
-      title: 'New time box',
-      timeRange: _formatTimeRange(start, _slotDurationSeconds),
+      title: title.trim().isEmpty ? 'New time box' : title.trim(),
+      timeRange: _formatTimeRange(startMinutes, _slotDurationSeconds),
       durationSeconds: _slotDurationSeconds,
     );
     boxes.add(nextBox);
+    _sortTimeBoxes(boxes);
 
     state = state.copyWith(
       timeBoxes: boxes,
@@ -444,6 +450,7 @@ class PomodoroNotifier extends Notifier<Pomodoro> with WidgetsBindingObserver {
           : state.activeTimeBoxId,
     );
     repository.updatePomodoro(state);
+    return nextBox;
   }
 
   Future<void> removeTimeBox(String id) async {
@@ -529,6 +536,7 @@ class PomodoroNotifier extends Notifier<Pomodoro> with WidgetsBindingObserver {
       durationSeconds: _slotDurationSeconds,
     );
     boxes[index] = nextBox;
+    _sortTimeBoxes(boxes);
     final remainingTime = _remainingForTimeBox(nextBox);
 
     final updatingActiveBox = id == state.activeTimeBoxId;
@@ -563,6 +571,7 @@ class PomodoroNotifier extends Notifier<Pomodoro> with WidgetsBindingObserver {
       durationSeconds: _slotDurationSeconds,
     );
     boxes[index] = nextBox;
+    _sortTimeBoxes(boxes);
     final updatingActiveBox = id == state.activeTimeBoxId;
     final remainingTime = _remainingForTimeBox(nextBox);
 
@@ -736,6 +745,14 @@ class PomodoroNotifier extends Notifier<Pomodoro> with WidgetsBindingObserver {
   int _nextStartMinutes(List<TimeBox> boxes) {
     final lastEnd = boxes.isEmpty ? null : boxes.last.endMinutes;
     return lastEnd ?? (9 * 60);
+  }
+
+  void _sortTimeBoxes(List<TimeBox> boxes) {
+    boxes.sort((a, b) {
+      final startA = a.startMinutes ?? (24 * 60);
+      final startB = b.startMinutes ?? (24 * 60);
+      return startA.compareTo(startB);
+    });
   }
 
   String _formatClock(int minutes) {

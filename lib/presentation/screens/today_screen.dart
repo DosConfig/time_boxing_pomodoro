@@ -23,6 +23,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
   Timer? _clockTimer;
   Timer? _dragAutoScrollTimer;
   double _dragAutoScrollDelta = 0;
+  bool _isTimeBoxDragging = false;
   DateTime _now = DateTime.now();
   final _scrollController = ScrollController();
   final _priorityFocusNode = FocusNode();
@@ -62,77 +63,91 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     _draftPriorities ??= priorities;
 
     return SafeArea(
-      child: ScrollConfiguration(
-        behavior: const _AppScrollBehavior(),
-        child: CustomScrollView(
-          controller: _scrollController,
-          physics: const ClampingScrollPhysics(),
-          slivers: [
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(24, 22, 24, 32),
-              sliver: SliverToBoxAdapter(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _TodayHeader(),
-                    const SizedBox(height: 18),
-                    _BrainDumpPanel(pomodoro: pomodoro, notifier: notifier),
-                    const SizedBox(height: 16),
-                    _PriorityBuilder(
-                      priorities: priorities,
-                      priorityIndex: _priorityIndex,
-                      focusNode: _priorityFocusNode,
-                      onPriorityChanged: _setDraftPriority,
-                      onPriorityIndexChanged: _setPriorityIndex,
-                    ),
-                    const SizedBox(height: 16),
-                    _TimeBoxBoard(
-                      pomodoro: pomodoro,
-                      notifier: notifier,
-                      now: _now,
-                      onDragUpdate: _handleTimeBoxDragUpdate,
-                      onDragEnd: _stopDragAutoScroll,
-                    ),
-                    const SizedBox(height: 18),
-                    FilledButton.icon(
-                      onPressed: () async {
-                        _commitPriority(_priorityIndex);
-                        FocusScope.of(context).unfocus();
-                        HapticFeedback.mediumImpact();
-                        await notifier.selectCurrentTimeBoxForNow();
-                        await notifier.start();
-                        if (context.mounted) {
-                          widget.onOpenFocus();
-                        }
-                      },
-                      icon: const Icon(Icons.play_arrow_rounded),
-                      label: const Text('Start focus'),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFFF6F3EC),
-                        foregroundColor: const Color(0xFF080808),
-                        minimumSize: const Size.fromHeight(54),
-                        textStyle: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
+      child: Stack(
+        children: [
+          ScrollConfiguration(
+            behavior: const _AppScrollBehavior(),
+            child: CustomScrollView(
+              controller: _scrollController,
+              physics: const ClampingScrollPhysics(),
+              slivers: [
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(24, 22, 24, 32),
+                  sliver: SliverToBoxAdapter(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _TodayHeader(),
+                        const SizedBox(height: 18),
+                        _BrainDumpPanel(pomodoro: pomodoro, notifier: notifier),
+                        const SizedBox(height: 16),
+                        _PriorityBuilder(
+                          priorities: priorities,
+                          priorityIndex: _priorityIndex,
+                          focusNode: _priorityFocusNode,
+                          onPriorityChanged: _setDraftPriority,
+                          onPriorityIndexChanged: _setPriorityIndex,
                         ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                        const SizedBox(height: 16),
+                        _TimeBoxBoard(
+                          pomodoro: pomodoro,
+                          notifier: notifier,
+                          now: _now,
+                          onDragStarted: _beginTimeBoxDrag,
+                          onDragUpdate: _handleTimeBoxDragUpdate,
+                          onDragEnd: _endTimeBoxDrag,
                         ),
-                      ),
+                        const SizedBox(height: 18),
+                        FilledButton.icon(
+                          onPressed: () async {
+                            _commitPriority(_priorityIndex);
+                            FocusScope.of(context).unfocus();
+                            HapticFeedback.mediumImpact();
+                            await notifier.selectCurrentTimeBoxForNow();
+                            await notifier.start();
+                            if (context.mounted) {
+                              widget.onOpenFocus();
+                            }
+                          },
+                          icon: const Icon(Icons.play_arrow_rounded),
+                          label: const Text('Start focus'),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: const Color(0xFFF6F3EC),
+                            foregroundColor: const Color(0xFF080808),
+                            minimumSize: const Size.fromHeight(54),
+                            textStyle: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        _DailyProgressStrip(
+                          pomodoro: pomodoro,
+                          priorities: priorities,
+                          now: _now,
+                          onOpenFocus: widget.onOpenFocus,
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 16),
-                    _DailyProgressStrip(
-                      pomodoro: pomodoro,
-                      priorities: priorities,
-                      now: _now,
-                      onOpenFocus: widget.onOpenFocus,
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
+          ),
+          _TimeBoxTrashTarget(
+            visible: _isTimeBoxDragging,
+            enabled: pomodoro.timeBoxes.length > 1,
+            onAccept: (id) {
+              HapticFeedback.heavyImpact();
+              unawaited(notifier.removeTimeBox(id));
+              _endTimeBoxDrag();
+            },
+          ),
+        ],
       ),
     );
   }
@@ -210,6 +225,20 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     _stopDragAutoScroll();
   }
 
+  void _beginTimeBoxDrag() {
+    HapticFeedback.mediumImpact();
+    if (mounted) {
+      setState(() => _isTimeBoxDragging = true);
+    }
+  }
+
+  void _endTimeBoxDrag() {
+    _stopDragAutoScroll();
+    if (mounted && _isTimeBoxDragging) {
+      setState(() => _isTimeBoxDragging = false);
+    }
+  }
+
   void _startDragAutoScroll() {
     _dragAutoScrollTimer ??= Timer.periodic(
       const Duration(milliseconds: 16),
@@ -270,6 +299,91 @@ class _TodayHeader extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _TimeBoxTrashTarget extends StatelessWidget {
+  final bool visible;
+  final bool enabled;
+  final ValueChanged<String> onAccept;
+
+  const _TimeBoxTrashTarget({
+    required this.visible,
+    required this.enabled,
+    required this.onAccept,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      left: 24,
+      right: 24,
+      bottom: 18,
+      child: IgnorePointer(
+        ignoring: !visible,
+        child: AnimatedSlide(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOutCubic,
+          offset: visible ? Offset.zero : const Offset(0, 0.35),
+          child: AnimatedOpacity(
+            duration: const Duration(milliseconds: 180),
+            opacity: visible ? 1 : 0,
+            child: DragTarget<String>(
+              onWillAcceptWithDetails: (_) => enabled,
+              onAcceptWithDetails: (details) => onAccept(details.data),
+              builder: (context, candidates, rejected) {
+                final targeted = candidates.isNotEmpty;
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 140),
+                  curve: Curves.easeOutCubic,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: targeted
+                        ? const Color(0xFFF6F3EC)
+                        : const Color(0xFF151515),
+                    border: Border.all(
+                      color: targeted
+                          ? const Color(0xFFF6F3EC)
+                          : Colors.white.withValues(alpha: 0.18),
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.34),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.delete_outline_rounded,
+                        color: targeted
+                            ? const Color(0xFF080808)
+                            : const Color(0xFFF6F3EC),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        enabled ? 'Drop to delete' : 'Keep one time box',
+                        style: TextStyle(
+                          color: targeted
+                              ? const Color(0xFF080808)
+                              : const Color(0xFFF6F3EC),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -971,6 +1085,7 @@ class _TimeBoxBoard extends StatelessWidget {
   final Pomodoro pomodoro;
   final PomodoroNotifier notifier;
   final DateTime now;
+  final VoidCallback onDragStarted;
   final ValueChanged<DragUpdateDetails> onDragUpdate;
   final VoidCallback onDragEnd;
 
@@ -978,6 +1093,7 @@ class _TimeBoxBoard extends StatelessWidget {
     required this.pomodoro,
     required this.notifier,
     required this.now,
+    required this.onDragStarted,
     required this.onDragUpdate,
     required this.onDragEnd,
   });
@@ -998,34 +1114,22 @@ class _TimeBoxBoard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'Time boxes',
-                  style: TextStyle(
-                    color: Color(0xFFF6F3EC),
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              Tooltip(
-                message: 'Add time box',
-                child: IconButton.filled(
-                  onPressed: () {
-                    HapticFeedback.lightImpact();
-                    notifier.addTimeBox();
-                  },
-                  icon: const Icon(Icons.add_rounded),
-                  style: IconButton.styleFrom(
-                    backgroundColor: const Color(0xFFF6F3EC),
-                    foregroundColor: const Color(0xFF080808),
-                    minimumSize: const Size.square(36),
-                  ),
-                ),
-              ),
-            ],
+          const Text(
+            'Time boxes',
+            style: TextStyle(
+              color: Color(0xFFF6F3EC),
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Tap an empty slot to add. Tap a box to edit.',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.42),
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 14),
           ClipRRect(
@@ -1040,6 +1144,7 @@ class _TimeBoxBoard extends StatelessWidget {
                     final isCurrentSlot =
                         nowMinutes >= slotStart &&
                         nowMinutes < slotStart + _slotMinutes;
+                    final occupied = _slotOccupied(slotStart);
 
                     return Positioned(
                       top: index * _slotHeight,
@@ -1053,47 +1158,54 @@ class _TimeBoxBoard extends StatelessWidget {
                         },
                         builder: (context, candidates, rejected) {
                           final isTargeted = candidates.isNotEmpty;
-                          return AnimatedContainer(
-                            duration: const Duration(milliseconds: 140),
-                            curve: Curves.easeOutCubic,
-                            color: isTargeted
-                                ? const Color(
-                                    0xFFF6F3EC,
-                                  ).withValues(alpha: 0.12)
-                                : isCurrentSlot
-                                ? Colors.white.withValues(alpha: 0.055)
-                                : Colors.transparent,
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                SizedBox(
-                                  width: _timelineWidth,
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(top: 7),
-                                    child: Text(
-                                      _formatClock(slotStart),
-                                      style: TextStyle(
-                                        color: isCurrentSlot
-                                            ? const Color(0xFFF6F3EC)
-                                            : Colors.white.withValues(
-                                                alpha: 0.36,
-                                              ),
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w800,
+                          return GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: occupied
+                                ? null
+                                : () =>
+                                      _openNewTimeBoxEditor(context, slotStart),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 140),
+                              curve: Curves.easeOutCubic,
+                              color: isTargeted
+                                  ? const Color(
+                                      0xFFF6F3EC,
+                                    ).withValues(alpha: 0.12)
+                                  : isCurrentSlot
+                                  ? Colors.white.withValues(alpha: 0.055)
+                                  : Colors.transparent,
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  SizedBox(
+                                    width: _timelineWidth,
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(top: 7),
+                                      child: Text(
+                                        _formatClock(slotStart),
+                                        style: TextStyle(
+                                          color: isCurrentSlot
+                                              ? const Color(0xFFF6F3EC)
+                                              : Colors.white.withValues(
+                                                  alpha: 0.36,
+                                                ),
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w800,
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                                Expanded(
-                                  child: Container(
-                                    margin: const EdgeInsets.only(top: 13),
-                                    height: 1,
-                                    color: Colors.white.withValues(
-                                      alpha: isCurrentSlot ? 0.2 : 0.08,
+                                  Expanded(
+                                    child: Container(
+                                      margin: const EdgeInsets.only(top: 13),
+                                      height: 1,
+                                      color: Colors.white.withValues(
+                                        alpha: isCurrentSlot ? 0.2 : 0.08,
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           );
                         },
@@ -1172,19 +1284,32 @@ class _TimeBoxBoard extends StatelessWidget {
         box: box,
         selected: box.id == pomodoro.activeTimeBox?.id,
         current: _containsNow(box),
-        canDelete: pomodoro.timeBoxes.length > 1,
+        onDragStarted: onDragStarted,
         onDragUpdate: onDragUpdate,
         onDragEnd: onDragEnd,
         onTap: () {
-          HapticFeedback.selectionClick();
-          unawaited(notifier.selectTimeBox(box.id));
-        },
-        onEdit: () => _openTimeBoxEditor(context, box),
-        onDelete: () {
-          HapticFeedback.mediumImpact();
-          unawaited(notifier.removeTimeBox(box.id));
+          _openTimeBoxEditor(context, box);
         },
       ),
+    );
+  }
+
+  void _openNewTimeBoxEditor(BuildContext context, int slotStart) {
+    HapticFeedback.selectionClick();
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF101010),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (context) {
+        return _TimeBoxEditorSheet(
+          notifier: notifier,
+          startMinutes: slotStart,
+          timeRange: _formatTimeRange(slotStart),
+        );
+      },
     );
   }
 
@@ -1198,48 +1323,21 @@ class _TimeBoxBoard extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
       ),
       builder: (context) {
-        return _TimeBoxEditorSheet(box: box, notifier: notifier);
+        return _TimeBoxEditorSheet(
+          box: box,
+          notifier: notifier,
+          timeRange: box.timeRange,
+        );
       },
     );
   }
 
   int _dayStartMinutes() {
-    var start = 8 * 60;
-    final nowMinutes = _nowMinutes();
-    if (nowMinutes >= 7 * 60 && nowMinutes <= 22 * 60) {
-      start = nowMinutes - 60;
-      if (start < 0) {
-        start = 0;
-      }
-    }
-
-    for (final box in pomodoro.timeBoxes) {
-      final boxStart = box.startMinutes;
-      if (boxStart != null && boxStart < start) {
-        start = (boxStart ~/ 60) * 60;
-      }
-    }
-    return (start ~/ _slotMinutes) * _slotMinutes;
+    return 0;
   }
 
   int _dayEndMinutes(int dayStart) {
-    var end = 18 * 60;
-    final nowMinutes = _nowMinutes();
-    if (nowMinutes >= 7 * 60 && nowMinutes <= 22 * 60) {
-      end = nowMinutes + 90;
-    }
-
-    for (final box in pomodoro.timeBoxes) {
-      final boxEnd = box.endMinutes;
-      if (boxEnd != null && boxEnd > end) {
-        end = ((((boxEnd + 60) + 29) ~/ 30) * 30);
-      }
-    }
-
-    if (end <= dayStart) {
-      return dayStart + (4 * 60);
-    }
-    return (((end + _slotMinutes - 1) ~/ _slotMinutes) * _slotMinutes);
+    return 24 * 60;
   }
 
   int _nowMinutes() => (now.hour * 60) + now.minute;
@@ -1264,29 +1362,33 @@ class _TimeBoxBoard extends StatelessWidget {
     final minute = normalized % 60;
     return '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
   }
+
+  String _formatTimeRange(int startMinutes) {
+    return '${_formatClock(startMinutes)}-${_formatClock(startMinutes + _slotMinutes)}';
+  }
+
+  bool _slotOccupied(int slotStart) {
+    return pomodoro.timeBoxes.any((box) => box.startMinutes == slotStart);
+  }
 }
 
 class _TimeBoxBoardCard extends StatefulWidget {
   final TimeBox box;
   final bool selected;
   final bool current;
-  final bool canDelete;
+  final VoidCallback onDragStarted;
   final ValueChanged<DragUpdateDetails> onDragUpdate;
   final VoidCallback onDragEnd;
   final VoidCallback onTap;
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
 
   const _TimeBoxBoardCard({
     required this.box,
     required this.selected,
     required this.current,
-    required this.canDelete,
+    required this.onDragStarted,
     required this.onDragUpdate,
     required this.onDragEnd,
     required this.onTap,
-    required this.onEdit,
-    required this.onDelete,
   });
 
   @override
@@ -1294,106 +1396,36 @@ class _TimeBoxBoardCard extends StatefulWidget {
 }
 
 class _TimeBoxBoardCardState extends State<_TimeBoxBoardCard> {
-  bool _revealed = false;
-
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: SizedBox(
-                width: 76,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    _BoardActionButton(
-                      icon: Icons.edit_rounded,
-                      onPressed: () {
-                        setState(() => _revealed = false);
-                        widget.onEdit();
-                      },
-                    ),
-                    const SizedBox(width: 4),
-                    _BoardActionButton(
-                      icon: Icons.delete_outline_rounded,
-                      onPressed: widget.canDelete
-                          ? () {
-                              setState(() => _revealed = false);
-                              widget.onDelete();
-                            }
-                          : null,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Positioned.fill(
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              curve: Curves.easeOutCubic,
-              transform: Matrix4.translationValues(_revealed ? -84 : 0, 0, 0),
-              child: LongPressDraggable<String>(
-                data: widget.box.id,
-                delay: const Duration(milliseconds: 220),
-                dragAnchorStrategy: pointerDragAnchorStrategy,
-                feedback: Material(
-                  color: Colors.transparent,
-                  child: SizedBox(
-                    width: MediaQuery.sizeOf(context).width - 110,
-                    child: _surface(feedback: true),
-                  ),
-                ),
-                childWhenDragging: Opacity(
-                  opacity: 0.28,
-                  child: _cardGesture(child: _surface()),
-                ),
-                onDragStarted: () {
-                  HapticFeedback.mediumImpact();
-                  setState(() => _revealed = false);
-                },
-                onDragUpdate: widget.onDragUpdate,
-                onDragEnd: (_) => widget.onDragEnd(),
-                onDragCompleted: widget.onDragEnd,
-                onDraggableCanceled: (_, _) => widget.onDragEnd(),
-                child: _cardGesture(child: _surface()),
-              ),
-            ),
-          ),
-        ],
+    return LongPressDraggable<String>(
+      data: widget.box.id,
+      delay: const Duration(milliseconds: 220),
+      dragAnchorStrategy: pointerDragAnchorStrategy,
+      feedback: Material(
+        color: Colors.transparent,
+        child: SizedBox(
+          width: MediaQuery.sizeOf(context).width - 110,
+          child: _surface(feedback: true),
+        ),
       ),
+      childWhenDragging: Opacity(
+        opacity: 0.28,
+        child: _cardGesture(child: _surface()),
+      ),
+      onDragStarted: widget.onDragStarted,
+      onDragUpdate: widget.onDragUpdate,
+      onDragEnd: (_) => widget.onDragEnd(),
+      onDragCompleted: widget.onDragEnd,
+      onDraggableCanceled: (_, _) => widget.onDragEnd(),
+      child: _cardGesture(child: _surface()),
     );
   }
 
   Widget _cardGesture({required Widget child}) {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: () {
-        if (_revealed) {
-          setState(() => _revealed = false);
-          return;
-        }
-        widget.onTap();
-      },
-      onHorizontalDragUpdate: (details) {
-        if (details.delta.dx < -2) {
-          setState(() => _revealed = true);
-        } else if (details.delta.dx > 2) {
-          setState(() => _revealed = false);
-        }
-      },
-      onHorizontalDragEnd: (details) {
-        final velocity = details.primaryVelocity ?? 0;
-        if (velocity < -180) {
-          setState(() => _revealed = true);
-        } else if (velocity > 180) {
-          setState(() => _revealed = false);
-        }
-      },
+      onTap: widget.onTap,
       child: child,
     );
   }
@@ -1476,37 +1508,18 @@ class _TimeBoxBoardCardState extends State<_TimeBoxBoardCard> {
   }
 }
 
-class _BoardActionButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback? onPressed;
-
-  const _BoardActionButton({required this.icon, required this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    return IconButton.filled(
-      onPressed: onPressed,
-      icon: Icon(icon),
-      style: IconButton.styleFrom(
-        backgroundColor: Colors.white.withValues(alpha: 0.12),
-        foregroundColor: const Color(0xFFF6F3EC),
-        disabledBackgroundColor: Colors.white.withValues(alpha: 0.06),
-        disabledForegroundColor: Colors.white.withValues(alpha: 0.24),
-        fixedSize: const Size.square(34),
-        minimumSize: const Size.square(34),
-        padding: EdgeInsets.zero,
-        iconSize: 18,
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      ),
-    );
-  }
-}
-
 class _TimeBoxEditorSheet extends StatefulWidget {
-  final TimeBox box;
+  final TimeBox? box;
   final PomodoroNotifier notifier;
+  final int? startMinutes;
+  final String timeRange;
 
-  const _TimeBoxEditorSheet({required this.box, required this.notifier});
+  const _TimeBoxEditorSheet({
+    this.box,
+    required this.notifier,
+    this.startMinutes,
+    required this.timeRange,
+  });
 
   @override
   State<_TimeBoxEditorSheet> createState() => _TimeBoxEditorSheetState();
@@ -1514,19 +1527,16 @@ class _TimeBoxEditorSheet extends StatefulWidget {
 
 class _TimeBoxEditorSheetState extends State<_TimeBoxEditorSheet> {
   late final TextEditingController _titleController;
-  late final TextEditingController _rangeController;
 
   @override
   void initState() {
     super.initState();
-    _titleController = TextEditingController(text: widget.box.title);
-    _rangeController = TextEditingController(text: widget.box.timeRange);
+    _titleController = TextEditingController(text: widget.box?.title ?? '');
   }
 
   @override
   void dispose() {
     _titleController.dispose();
-    _rangeController.dispose();
     super.dispose();
   }
 
@@ -1543,10 +1553,10 @@ class _TimeBoxEditorSheetState extends State<_TimeBoxEditorSheet> {
           children: [
             Row(
               children: [
-                const Expanded(
+                Expanded(
                   child: Text(
-                    'Time box',
-                    style: TextStyle(
+                    widget.box == null ? 'New time box' : 'Edit time box',
+                    style: const TextStyle(
                       color: Color(0xFFF6F3EC),
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
@@ -1564,14 +1574,35 @@ class _TimeBoxEditorSheetState extends State<_TimeBoxEditorSheet> {
             _TimeBoxTextField(
               controller: _titleController,
               label: 'Title',
-              textInputAction: TextInputAction.next,
+              textInputAction: TextInputAction.done,
+              autofocus: true,
+              onSubmitted: (_) => _save(context),
             ),
             const SizedBox(height: 10),
-            _TimeBoxTextField(
-              controller: _rangeController,
-              label: 'Start time',
-              textInputAction: TextInputAction.done,
-              onSubmitted: (_) => _save(context),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.schedule_rounded,
+                    size: 18,
+                    color: Colors.white.withValues(alpha: 0.46),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    widget.timeRange,
+                    style: const TextStyle(
+                      color: Color(0xFFF6F3EC),
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 16),
             FilledButton.icon(
@@ -1599,11 +1630,18 @@ class _TimeBoxEditorSheetState extends State<_TimeBoxEditorSheet> {
 
   void _save(BuildContext context) {
     HapticFeedback.lightImpact();
-    widget.notifier.updateTimeBox(
-      widget.box.id,
-      title: _titleController.text,
-      timeRange: _rangeController.text,
-    );
+    final box = widget.box;
+    if (box == null) {
+      final startMinutes = widget.startMinutes;
+      if (startMinutes != null) {
+        widget.notifier.addTimeBoxAtStart(
+          startMinutes,
+          title: _titleController.text,
+        );
+      }
+    } else {
+      widget.notifier.updateTimeBox(box.id, title: _titleController.text);
+    }
     Navigator.of(context).pop();
   }
 }
@@ -1612,12 +1650,14 @@ class _TimeBoxTextField extends StatelessWidget {
   final TextEditingController controller;
   final String label;
   final TextInputAction textInputAction;
+  final bool autofocus;
   final ValueChanged<String>? onSubmitted;
 
   const _TimeBoxTextField({
     required this.controller,
     required this.label,
     required this.textInputAction,
+    this.autofocus = false,
     this.onSubmitted,
   });
 
@@ -1627,6 +1667,7 @@ class _TimeBoxTextField extends StatelessWidget {
       controller: controller,
       cursorColor: const Color(0xFFF6F3EC),
       textInputAction: textInputAction,
+      autofocus: autofocus,
       onSubmitted: onSubmitted,
       maxLines: 1,
       style: const TextStyle(
