@@ -4,6 +4,67 @@ enum PomodoroPhase { focus, shortBreak, longBreak }
 
 enum PomodoroPreset { classic, deepWork, sprint }
 
+class TimeBox {
+  final String id;
+  final String title;
+  final String timeRange;
+  final int durationSeconds;
+
+  const TimeBox({
+    required this.id,
+    required this.title,
+    required this.timeRange,
+    required this.durationSeconds,
+  });
+
+  TimeBox copyWith({
+    String? id,
+    String? title,
+    String? timeRange,
+    int? durationSeconds,
+  }) {
+    return TimeBox(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      timeRange: timeRange ?? this.timeRange,
+      durationSeconds: durationSeconds ?? this.durationSeconds,
+    );
+  }
+
+  static const List<TimeBox> defaultDay = [
+    TimeBox(
+      id: 'box-0900',
+      title: 'Top priority',
+      timeRange: '09:00-09:50',
+      durationSeconds: 50 * 60,
+    ),
+    TimeBox(
+      id: 'box-1000',
+      title: 'Deep work',
+      timeRange: '10:00-10:50',
+      durationSeconds: 50 * 60,
+    ),
+    TimeBox(
+      id: 'box-1100',
+      title: 'Admin',
+      timeRange: '11:00-11:25',
+      durationSeconds: 25 * 60,
+    ),
+    TimeBox(
+      id: 'box-1330',
+      title: 'Second priority',
+      timeRange: '13:30-14:20',
+      durationSeconds: 50 * 60,
+    ),
+    TimeBox(
+      id: 'box-1500',
+      title: 'Follow-up',
+      timeRange: '15:00-15:25',
+      durationSeconds: 25 * 60,
+    ),
+  ];
+}
+
 class Pomodoro {
   final int workDuration; // in seconds
   final int breakDuration; // in seconds
@@ -21,6 +82,8 @@ class Pomodoro {
   final List<String> topPriorities;
   final String currentTimeBoxTitle;
   final String currentTimeBoxTimeRange;
+  final List<TimeBox> timeBoxes;
+  final String activeTimeBoxId;
 
   const Pomodoro({
     required this.workDuration,
@@ -39,6 +102,8 @@ class Pomodoro {
     required this.topPriorities,
     required this.currentTimeBoxTitle,
     required this.currentTimeBoxTimeRange,
+    required this.timeBoxes,
+    required this.activeTimeBoxId,
   });
 
   factory Pomodoro.initial() {
@@ -59,6 +124,8 @@ class Pomodoro {
       topPriorities: ['', '', ''],
       currentTimeBoxTitle: '',
       currentTimeBoxTimeRange: '',
+      timeBoxes: TimeBox.defaultDay,
+      activeTimeBoxId: 'box-0900',
     );
   }
 
@@ -79,6 +146,8 @@ class Pomodoro {
     List<String>? topPriorities,
     String? currentTimeBoxTitle,
     String? currentTimeBoxTimeRange,
+    List<TimeBox>? timeBoxes,
+    String? activeTimeBoxId,
   }) {
     return Pomodoro(
       workDuration: workDuration ?? this.workDuration,
@@ -99,6 +168,8 @@ class Pomodoro {
       currentTimeBoxTitle: currentTimeBoxTitle ?? this.currentTimeBoxTitle,
       currentTimeBoxTimeRange:
           currentTimeBoxTimeRange ?? this.currentTimeBoxTimeRange,
+      timeBoxes: timeBoxes ?? this.timeBoxes,
+      activeTimeBoxId: activeTimeBoxId ?? this.activeTimeBoxId,
     );
   }
 
@@ -140,10 +211,29 @@ class Pomodoro {
     if (trimmed.isNotEmpty) {
       return trimmed;
     }
+    final box = activeTimeBox;
+    if (box != null) {
+      return box.title;
+    }
     return isBreakPhase ? 'Break block' : 'Focus block';
   }
 
-  String get liveActivityTimeBoxRange => currentTimeBoxTimeRange.trim();
+  String get liveActivityTimeBoxRange {
+    final trimmed = currentTimeBoxTimeRange.trim();
+    if (trimmed.isNotEmpty) {
+      return trimmed;
+    }
+    return activeTimeBox?.timeRange ?? '';
+  }
+
+  TimeBox? get activeTimeBox {
+    for (final box in timeBoxes) {
+      if (box.id == activeTimeBoxId) {
+        return box;
+      }
+    }
+    return timeBoxes.isEmpty ? null : timeBoxes.first;
+  }
 
   String get phaseValue {
     switch (phase) {

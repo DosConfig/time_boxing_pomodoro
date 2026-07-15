@@ -117,9 +117,9 @@ struct LockScreenLiveActivityView: View {
     let context: ActivityViewContext<PomodoroActivityAttributes>
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 13) {
+        VStack(alignment: .leading, spacing: 16) {
             if !context.state.topPriorities.isEmpty {
-                VStack(alignment: .leading, spacing: 5) {
+                VStack(alignment: .leading, spacing: 7) {
                     Text("Top priorities")
                         .font(.caption2.weight(.bold))
                         .foregroundStyle(.white.opacity(0.48))
@@ -151,7 +151,7 @@ struct LockScreenLiveActivityView: View {
                     .foregroundStyle(.white.opacity(0.65))
             }
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text("Now")
                     .font(.caption2.weight(.bold))
                     .foregroundStyle(.white.opacity(0.48))
@@ -185,7 +185,8 @@ struct LockScreenLiveActivityView: View {
             ProgressView(value: progressValue, total: Double(context.attributes.totalDuration))
                 .tint(.white)
         }
-        .padding(18)
+        .padding(.horizontal, 22)
+        .padding(.vertical, 20)
         .activityBackgroundTint(Color.black)
         .activitySystemActionForegroundColor(.white)
     }

@@ -7,6 +7,7 @@
 - [x] Stabilize timer screen scroll behavior.
 - [x] Lower timer text inside the dial for better optical centering.
 - [x] Add Top 3 and current time box metadata path into Live Activity.
+- [x] Add default time boxes and one-tap active box selection.
 - [x] Document menu structure.
 - [x] Keep photo capture out of the current primary flow.
 
@@ -16,7 +17,7 @@
 - [ ] Add fast Brain Dump list with minimal typing friction.
 - [ ] Add Top 3 Priorities editor with one-tap promote from Brain Dump.
 - [ ] Add day time-box grid with quick add and drag-to-adjust.
-- [ ] Let users select a box and start Focus mode from it.
+- [x] Let users select a box and start Focus mode from it.
 - [ ] Persist Today Plan locally.
 - [ ] Add Review screen for planned versus completed boxes.
 - [ ] Add default templates so users do not start from an empty screen.

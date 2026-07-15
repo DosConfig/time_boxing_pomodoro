@@ -12,6 +12,8 @@ void main() {
       expect(pomodoro.phase, PomodoroPhase.focus);
       expect(pomodoro.notificationsEnabled, isTrue);
       expect(pomodoro.soundEnabled, isTrue);
+      expect(pomodoro.timeBoxes, isNotEmpty);
+      expect(pomodoro.activeTimeBox?.title, 'Top priority');
     });
 
     test('deep work preset resets the active segment', () {
@@ -68,6 +70,13 @@ void main() {
       ]);
       expect(pomodoro.liveActivityTimeBoxTitle, 'Write proposal');
       expect(pomodoro.liveActivityTimeBoxRange, '09:00-10:00');
+    });
+
+    test('live activity context falls back to active time box', () {
+      final pomodoro = Pomodoro.initial();
+
+      expect(pomodoro.liveActivityTimeBoxTitle, 'Top priority');
+      expect(pomodoro.liveActivityTimeBoxRange, '09:00-09:50');
     });
   });
 }

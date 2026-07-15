@@ -260,6 +260,8 @@ class PomodoroNotifier extends Notifier<Pomodoro> with WidgetsBindingObserver {
       topPriorities: previous.topPriorities,
       currentTimeBoxTitle: previous.currentTimeBoxTitle,
       currentTimeBoxTimeRange: previous.currentTimeBoxTimeRange,
+      timeBoxes: previous.timeBoxes,
+      activeTimeBoxId: previous.activeTimeBoxId,
     );
     repository.updatePomodoro(state);
   }
@@ -327,6 +329,36 @@ class PomodoroNotifier extends Notifier<Pomodoro> with WidgetsBindingObserver {
 
   void setCurrentTimeBoxTimeRange(String value) {
     state = state.copyWith(currentTimeBoxTimeRange: value);
+    repository.updatePomodoro(state);
+  }
+
+  Future<void> selectTimeBox(String id) async {
+    TimeBox? selected;
+    for (final box in state.timeBoxes) {
+      if (box.id == id) {
+        selected = box;
+        break;
+      }
+    }
+    if (selected == null) {
+      return;
+    }
+
+    if (state.status == PomodoroStatus.running ||
+        state.status == PomodoroStatus.paused) {
+      _timerSubscription?.cancel();
+      await resetUseCase();
+    }
+
+    state = state.copyWith(
+      activeTimeBoxId: selected.id,
+      currentTimeBoxTitle: selected.title,
+      currentTimeBoxTimeRange: selected.timeRange,
+      workDuration: selected.durationSeconds,
+      remainingTime: selected.durationSeconds,
+      status: PomodoroStatus.idle,
+      phase: PomodoroPhase.focus,
+    );
     repository.updatePomodoro(state);
   }
 

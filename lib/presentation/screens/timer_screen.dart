@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -27,7 +28,7 @@ class TimerScreen extends ConsumerWidget {
             );
             final preferredDialSize = math.max(
               220.0,
-              math.min(360.0, constraints.maxHeight * 0.39),
+              math.min(330.0, constraints.maxHeight * 0.35),
             );
             final dialSize = math.min(contentWidth, preferredDialSize);
             final isCompactHeight = constraints.maxHeight < 720;
@@ -49,7 +50,12 @@ class TimerScreen extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           _Header(pomodoro: pomodoro),
-                          SizedBox(height: isCompactHeight ? 24 : 34),
+                          SizedBox(height: isCompactHeight ? 18 : 24),
+                          _TodayPlanPanel(
+                            pomodoro: pomodoro,
+                            notifier: notifier,
+                          ),
+                          SizedBox(height: isCompactHeight ? 22 : 28),
                           Align(
                             child: SizedBox(
                               width: dialSize,
@@ -326,11 +332,6 @@ class _SettingsPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _PlanContextSummary(
-            pomodoro: pomodoro,
-            onEdit: () => _openPlanEditor(context),
-          ),
-          Divider(height: 28, color: Colors.white.withValues(alpha: 0.1)),
           const Text(
             'Session design',
             style: TextStyle(
@@ -400,6 +401,43 @@ class _SettingsPanel extends StatelessWidget {
     );
   }
 
+  static String _presetLabel(PomodoroPreset preset) {
+    switch (preset) {
+      case PomodoroPreset.classic:
+        return '25 / 5';
+      case PomodoroPreset.deepWork:
+        return '50 / 10';
+      case PomodoroPreset.sprint:
+        return '15 / 3';
+    }
+  }
+}
+
+class _TodayPlanPanel extends StatelessWidget {
+  final Pomodoro pomodoro;
+  final PomodoroNotifier notifier;
+
+  const _TodayPlanPanel({required this.pomodoro, required this.notifier});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.055),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: _PlanContextSummary(
+        pomodoro: pomodoro,
+        onSelectTimeBox: (id) {
+          unawaited(notifier.selectTimeBox(id));
+        },
+        onEdit: () => _openPlanEditor(context),
+      ),
+    );
+  }
+
   void _openPlanEditor(BuildContext context) {
     showModalBottomSheet<void>(
       context: context,
@@ -413,24 +451,18 @@ class _SettingsPanel extends StatelessWidget {
       },
     );
   }
-
-  static String _presetLabel(PomodoroPreset preset) {
-    switch (preset) {
-      case PomodoroPreset.classic:
-        return '25 / 5';
-      case PomodoroPreset.deepWork:
-        return '50 / 10';
-      case PomodoroPreset.sprint:
-        return '15 / 3';
-    }
-  }
 }
 
 class _PlanContextSummary extends StatelessWidget {
   final Pomodoro pomodoro;
+  final ValueChanged<String> onSelectTimeBox;
   final VoidCallback onEdit;
 
-  const _PlanContextSummary({required this.pomodoro, required this.onEdit});
+  const _PlanContextSummary({
+    required this.pomodoro,
+    required this.onSelectTimeBox,
+    required this.onEdit,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -516,7 +548,103 @@ class _PlanContextSummary extends StatelessWidget {
             ),
           ),
         ],
+        if (pomodoro.timeBoxes.isNotEmpty) ...[
+          const SizedBox(height: 14),
+          Text(
+            'Time boxes',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.48),
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 76,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              physics: const ClampingScrollPhysics(),
+              itemCount: pomodoro.timeBoxes.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
+              itemBuilder: (context, index) {
+                final box = pomodoro.timeBoxes[index];
+                return _TimeBoxPill(
+                  box: box,
+                  selected: box.id == pomodoro.activeTimeBox?.id,
+                  onTap: () => onSelectTimeBox(box.id),
+                );
+              },
+            ),
+          ),
+        ],
       ],
+    );
+  }
+}
+
+class _TimeBoxPill extends StatelessWidget {
+  final TimeBox box;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _TimeBoxPill({
+    required this.box,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        width: 132,
+        padding: const EdgeInsets.all(11),
+        decoration: BoxDecoration(
+          color: selected
+              ? const Color(0xFFF6F3EC)
+              : Colors.white.withValues(alpha: 0.045),
+          border: Border.all(
+            color: selected
+                ? const Color(0xFFF6F3EC)
+                : Colors.white.withValues(alpha: 0.12),
+          ),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              box.timeRange,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: selected
+                    ? const Color(0xFF0A0A0A)
+                    : Colors.white.withValues(alpha: 0.48),
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              box.title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: selected
+                    ? const Color(0xFF0A0A0A)
+                    : const Color(0xFFF6F3EC),
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
