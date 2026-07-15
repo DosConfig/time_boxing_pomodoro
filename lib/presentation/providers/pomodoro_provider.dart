@@ -251,6 +251,12 @@ class PomodoroNotifier extends Notifier<Pomodoro> with WidgetsBindingObserver {
         );
       }
       syncFocusWithClock();
+      if (state.remainingTime <= 0) {
+        debugPrint(
+          '[Pomodoro/Dart] start() skipped - no active timebox time left',
+        );
+        return;
+      }
       state = state.copyWith(status: PomodoroStatus.running);
       repository.updatePomodoro(state);
 
@@ -283,6 +289,7 @@ class PomodoroNotifier extends Notifier<Pomodoro> with WidgetsBindingObserver {
       notificationsEnabled: previous.notificationsEnabled,
       soundEnabled: previous.soundEnabled,
       brainDump: previous.brainDump,
+      reminders: previous.reminders,
       topPriorities: previous.topPriorities,
       currentTimeBoxTitle: previous.currentTimeBoxTitle,
       currentTimeBoxTimeRange: previous.currentTimeBoxTimeRange,
@@ -350,6 +357,40 @@ class PomodoroNotifier extends Notifier<Pomodoro> with WidgetsBindingObserver {
 
     final items = List<String>.from(state.brainDump)..removeAt(index);
     state = state.copyWith(brainDump: items);
+    repository.updatePomodoro(state);
+  }
+
+  void addReminder(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) {
+      return;
+    }
+
+    state = state.copyWith(reminders: [...state.reminders, trimmed]);
+    repository.updatePomodoro(state);
+  }
+
+  void removeReminder(int index) {
+    if (index < 0 || index >= state.reminders.length) {
+      return;
+    }
+
+    final items = List<String>.from(state.reminders)..removeAt(index);
+    state = state.copyWith(reminders: items);
+    repository.updatePomodoro(state);
+  }
+
+  void moveBrainDumpItemToReminder(int index) {
+    if (index < 0 || index >= state.brainDump.length) {
+      return;
+    }
+
+    final brainDump = List<String>.from(state.brainDump);
+    final reminder = brainDump.removeAt(index);
+    state = state.copyWith(
+      brainDump: brainDump,
+      reminders: [...state.reminders, reminder],
+    );
     repository.updatePomodoro(state);
   }
 

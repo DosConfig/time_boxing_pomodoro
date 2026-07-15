@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../providers/app_preferences_provider.dart';
 import '../providers/pomodoro_provider.dart';
+import 'onboarding_screen.dart' show formatClock, normalizeAwakeRange;
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -9,6 +11,7 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final pomodoro = ref.watch(pomodoroProvider);
+    final preferences = ref.watch(appPreferencesProvider);
     final notifier = ref.read(pomodoroProvider.notifier);
 
     return SafeArea(
@@ -33,6 +36,45 @@ class SettingsScreen extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: 22),
+                    _SectionCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const Text(
+                            'Awake window',
+                            style: TextStyle(
+                              color: Color(0xFFF6F3EC),
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  '${formatClock(preferences.awakeStartMinutes)} - ${formatClock(preferences.awakeEndMinutes)}',
+                                  style: const TextStyle(
+                                    color: Color(0xFFF6F3EC),
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () => _openAwakeWindowSheet(
+                                  context,
+                                  ref,
+                                  preferences,
+                                ),
+                                child: const Text('Edit'),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 14),
                     _SectionCard(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -90,6 +132,104 @@ class SettingsScreen extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+
+  void _openAwakeWindowSheet(
+    BuildContext context,
+    WidgetRef ref,
+    AppPreferences preferences,
+  ) {
+    var range = RangeValues(
+      preferences.awakeStartMinutes.toDouble(),
+      preferences.awakeEndMinutes.toDouble(),
+    );
+
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: const Color(0xFF101010),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Text(
+                      'Awake window',
+                      style: TextStyle(
+                        color: Color(0xFFF6F3EC),
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      '${formatClock(range.start.round())} - ${formatClock(range.end.round())}',
+                      style: const TextStyle(
+                        color: Color(0xFFF6F3EC),
+                        fontSize: 28,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    RangeSlider(
+                      values: range,
+                      min: 0,
+                      max: 24 * 60,
+                      divisions: 48,
+                      activeColor: const Color(0xFFF6F3EC),
+                      inactiveColor: Colors.white.withValues(alpha: 0.16),
+                      labels: RangeLabels(
+                        formatClock(range.start.round()),
+                        formatClock(range.end.round()),
+                      ),
+                      onChanged: (next) {
+                        setModalState(() {
+                          range = normalizeAwakeRange(next);
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    FilledButton(
+                      onPressed: () async {
+                        await ref
+                            .read(appPreferencesProvider.notifier)
+                            .saveAwakeWindow(
+                              range.start.round(),
+                              range.end.round(),
+                            );
+                        if (context.mounted) {
+                          Navigator.of(context).pop();
+                        }
+                      },
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFFF6F3EC),
+                        foregroundColor: const Color(0xFF080808),
+                        minimumSize: const Size.fromHeight(50),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        textStyle: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      child: const Text('Save'),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

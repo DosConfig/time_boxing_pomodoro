@@ -129,7 +129,13 @@ class PomodoroPlatformChannel {
   static Future<int> getRemainingTime() async {
     try {
       final result = await _channel.invokeMethod('getRemainingTime');
-      return result as int;
+      if (result is int) {
+        return result;
+      }
+      if (result is num) {
+        return result.toInt();
+      }
+      return 0;
     } catch (e) {
       debugPrint('Error getting remaining time: $e');
       return 0;

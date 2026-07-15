@@ -118,6 +118,7 @@ class Pomodoro {
   final bool notificationsEnabled;
   final bool soundEnabled;
   final List<String> brainDump;
+  final List<String> reminders;
   final List<String> topPriorities;
   final String currentTimeBoxTitle;
   final String currentTimeBoxTimeRange;
@@ -139,6 +140,7 @@ class Pomodoro {
     required this.notificationsEnabled,
     required this.soundEnabled,
     required this.brainDump,
+    required this.reminders,
     required this.topPriorities,
     required this.currentTimeBoxTitle,
     required this.currentTimeBoxTimeRange,
@@ -162,6 +164,7 @@ class Pomodoro {
       notificationsEnabled: true,
       soundEnabled: true,
       brainDump: [],
+      reminders: [],
       topPriorities: ['', '', ''],
       currentTimeBoxTitle: '',
       currentTimeBoxTimeRange: '',
@@ -185,6 +188,7 @@ class Pomodoro {
     bool? notificationsEnabled,
     bool? soundEnabled,
     List<String>? brainDump,
+    List<String>? reminders,
     List<String>? topPriorities,
     String? currentTimeBoxTitle,
     String? currentTimeBoxTimeRange,
@@ -207,6 +211,7 @@ class Pomodoro {
       notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
       soundEnabled: soundEnabled ?? this.soundEnabled,
       brainDump: brainDump ?? this.brainDump,
+      reminders: reminders ?? this.reminders,
       topPriorities: topPriorities ?? this.topPriorities,
       currentTimeBoxTitle: currentTimeBoxTitle ?? this.currentTimeBoxTitle,
       currentTimeBoxTimeRange:

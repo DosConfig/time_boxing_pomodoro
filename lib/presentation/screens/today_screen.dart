@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 
 import '../../domain/entities/pomodoro.dart';
+import '../providers/app_preferences_provider.dart';
 import '../providers/pomodoro_provider.dart';
 
 class TodayScreen extends ConsumerStatefulWidget {
@@ -58,6 +59,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
   @override
   Widget build(BuildContext context) {
     final pomodoro = ref.watch(pomodoroProvider);
+    final preferences = ref.watch(appPreferencesProvider);
     final notifier = ref.read(pomodoroProvider.notifier);
     final priorities = _draftPriorities ?? _normalizedPriorities(pomodoro);
     _draftPriorities ??= priorities;
@@ -81,6 +83,8 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                         const SizedBox(height: 18),
                         _BrainDumpPanel(pomodoro: pomodoro, notifier: notifier),
                         const SizedBox(height: 16),
+                        _ReminderPanel(pomodoro: pomodoro, notifier: notifier),
+                        const SizedBox(height: 16),
                         _PriorityBuilder(
                           priorities: priorities,
                           priorityIndex: _priorityIndex,
@@ -93,6 +97,8 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                           pomodoro: pomodoro,
                           notifier: notifier,
                           now: _now,
+                          awakeStartMinutes: preferences.awakeStartMinutes,
+                          awakeEndMinutes: preferences.awakeEndMinutes,
                           onDragStarted: _beginTimeBoxDrag,
                           onDragUpdate: _handleTimeBoxDragUpdate,
                           onDragEnd: _endTimeBoxDrag,
@@ -485,14 +491,7 @@ class _BrainDumpPanelState extends State<_BrainDumpPanel> {
                 ),
                 child: _BrainDumpRow(
                   item: item,
-                  onPromote: () {
-                    HapticFeedback.selectionClick();
-                    widget.notifier.promoteBrainDumpItem(index);
-                  },
-                  onDelete: () {
-                    HapticFeedback.lightImpact();
-                    widget.notifier.removeBrainDumpItem(index);
-                  },
+                  onTap: () => _showBrainDumpActions(index),
                 ),
               );
             }),
@@ -510,62 +509,359 @@ class _BrainDumpPanelState extends State<_BrainDumpPanel> {
       _controller.clear();
     }
   }
+
+  void _showBrainDumpActions(int index) {
+    if (index < 0 || index >= widget.pomodoro.brainDump.length) {
+      return;
+    }
+
+    final item = widget.pomodoro.brainDump[index];
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: const Color(0xFF101010),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  item,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFFF6F3EC),
+                    fontSize: 17,
+                    fontWeight: FontWeight.w900,
+                    height: 1.15,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                _ActionSheetButton(
+                  icon: Icons.flag_rounded,
+                  label: 'Make priority',
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    widget.notifier.promoteBrainDumpItem(index);
+                    Navigator.of(context).pop();
+                  },
+                ),
+                const SizedBox(height: 8),
+                _ActionSheetButton(
+                  icon: Icons.event_note_rounded,
+                  label: 'Move to reminder',
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    widget.notifier.moveBrainDumpItemToReminder(index);
+                    Navigator.of(context).pop();
+                  },
+                ),
+                const SizedBox(height: 8),
+                _ActionSheetButton(
+                  icon: Icons.delete_outline_rounded,
+                  label: 'Delete',
+                  destructive: true,
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    widget.notifier.removeBrainDumpItem(index);
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
 
 class _BrainDumpRow extends StatelessWidget {
   final String item;
-  final VoidCallback onPromote;
-  final VoidCallback onDelete;
+  final VoidCallback onTap;
 
-  const _BrainDumpRow({
-    required this.item,
-    required this.onPromote,
-    required this.onDelete,
+  const _BrainDumpRow({required this.item, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white.withValues(alpha: 0.045),
+      shape: RoundedRectangleBorder(
+        side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 11, 12, 11),
+          child: Text(
+            item,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Color(0xFFF6F3EC),
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              height: 1.18,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ReminderPanel extends StatefulWidget {
+  final Pomodoro pomodoro;
+  final PomodoroNotifier notifier;
+
+  const _ReminderPanel({required this.pomodoro, required this.notifier});
+
+  @override
+  State<_ReminderPanel> createState() => _ReminderPanelState();
+}
+
+class _ReminderPanelState extends State<_ReminderPanel> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _SectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'Keep in mind',
+            style: TextStyle(
+              color: Color(0xFFF6F3EC),
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _controller,
+                  cursorColor: const Color(0xFFF6F3EC),
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (_) => _addItem(),
+                  style: const TextStyle(
+                    color: Color(0xFFF6F3EC),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  decoration: InputDecoration(
+                    isDense: true,
+                    labelText: 'Reminder',
+                    labelStyle: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.46),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 14,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(
+                        color: Colors.white.withValues(alpha: 0.14),
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: Color(0xFFF6F3EC)),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Tooltip(
+                message: 'Add reminder',
+                child: IconButton.filled(
+                  onPressed: _addItem,
+                  icon: const Icon(Icons.add_rounded),
+                  style: IconButton.styleFrom(
+                    backgroundColor: const Color(0xFFF6F3EC),
+                    foregroundColor: const Color(0xFF080808),
+                    minimumSize: const Size.square(46),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (widget.pomodoro.reminders.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            ...List.generate(widget.pomodoro.reminders.length, (index) {
+              final item = widget.pomodoro.reminders[index];
+              return Padding(
+                padding: EdgeInsets.only(
+                  bottom: index == widget.pomodoro.reminders.length - 1 ? 0 : 8,
+                ),
+                child: _ReminderRow(
+                  item: item,
+                  onTap: () => _showReminderActions(index),
+                ),
+              );
+            }),
+          ],
+        ],
+      ),
+    );
+  }
+
+  void _addItem() {
+    final value = _controller.text;
+    widget.notifier.addReminder(value);
+    if (value.trim().isNotEmpty) {
+      HapticFeedback.lightImpact();
+      _controller.clear();
+    }
+  }
+
+  void _showReminderActions(int index) {
+    if (index < 0 || index >= widget.pomodoro.reminders.length) {
+      return;
+    }
+
+    final item = widget.pomodoro.reminders[index];
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: const Color(0xFF101010),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  item,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFFF6F3EC),
+                    fontSize: 17,
+                    fontWeight: FontWeight.w900,
+                    height: 1.15,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                _ActionSheetButton(
+                  icon: Icons.delete_outline_rounded,
+                  label: 'Delete',
+                  destructive: true,
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    widget.notifier.removeReminder(index);
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _ReminderRow extends StatelessWidget {
+  final String item;
+  final VoidCallback onTap;
+
+  const _ReminderRow({required this.item, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white.withValues(alpha: 0.035),
+      shape: RoundedRectangleBorder(
+        side: BorderSide(color: Colors.white.withValues(alpha: 0.09)),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 11, 12, 11),
+          child: Text(
+            item,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.78),
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              height: 1.18,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ActionSheetButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final bool destructive;
+
+  const _ActionSheetButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.destructive = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.045),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+    final foreground = destructive
+        ? const Color(0xFFFF8D8D)
+        : const Color(0xFFF6F3EC);
+
+    return Material(
+      color: Colors.white.withValues(alpha: 0.055),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              item,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: Color(0xFFF6F3EC),
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                height: 1.18,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          child: Row(
+            children: [
+              Icon(icon, color: foreground, size: 20),
+              const SizedBox(width: 12),
+              Text(
+                label,
+                style: TextStyle(
+                  color: foreground,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
-            ),
+            ],
           ),
-          Tooltip(
-            message: 'Promote to priority',
-            child: IconButton(
-              onPressed: onPromote,
-              icon: const Icon(Icons.north_rounded),
-              visualDensity: VisualDensity.compact,
-              color: Colors.white.withValues(alpha: 0.62),
-            ),
-          ),
-          Tooltip(
-            message: 'Delete',
-            child: IconButton(
-              onPressed: onDelete,
-              icon: const Icon(Icons.close_rounded),
-              visualDensity: VisualDensity.compact,
-              color: Colors.white.withValues(alpha: 0.48),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -1085,6 +1381,8 @@ class _TimeBoxBoard extends StatelessWidget {
   final Pomodoro pomodoro;
   final PomodoroNotifier notifier;
   final DateTime now;
+  final int awakeStartMinutes;
+  final int awakeEndMinutes;
   final VoidCallback onDragStarted;
   final ValueChanged<DragUpdateDetails> onDragUpdate;
   final VoidCallback onDragEnd;
@@ -1093,6 +1391,8 @@ class _TimeBoxBoard extends StatelessWidget {
     required this.pomodoro,
     required this.notifier,
     required this.now,
+    required this.awakeStartMinutes,
+    required this.awakeEndMinutes,
     required this.onDragStarted,
     required this.onDragUpdate,
     required this.onDragEnd,
@@ -1333,11 +1633,16 @@ class _TimeBoxBoard extends StatelessWidget {
   }
 
   int _dayStartMinutes() {
-    return 0;
+    return (awakeStartMinutes ~/ _slotMinutes) * _slotMinutes;
   }
 
   int _dayEndMinutes(int dayStart) {
-    return 24 * 60;
+    final end =
+        ((awakeEndMinutes + _slotMinutes - 1) ~/ _slotMinutes) * _slotMinutes;
+    if (end <= dayStart) {
+      return dayStart + (4 * 60);
+    }
+    return end.clamp(dayStart + _slotMinutes, 24 * 60);
   }
 
   int _nowMinutes() => (now.hour * 60) + now.minute;
@@ -1578,30 +1883,17 @@ class _TimeBoxEditorSheetState extends State<_TimeBoxEditorSheet> {
               autofocus: true,
               onSubmitted: (_) => _save(context),
             ),
-            const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.schedule_rounded,
-                    size: 18,
-                    color: Colors.white.withValues(alpha: 0.46),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    widget.timeRange,
-                    style: const TextStyle(
-                      color: Color(0xFFF6F3EC),
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ],
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.only(left: 2),
+              child: Text(
+                'Time box ${widget.timeRange}',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.52),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0,
+                ),
               ),
             ),
             const SizedBox(height: 16),

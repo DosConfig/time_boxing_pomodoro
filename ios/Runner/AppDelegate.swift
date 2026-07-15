@@ -82,7 +82,7 @@ import UserNotifications
         result(true)
 
       case "getRemainingTime":
-        let remaining = self.pomodoroTimer?.getRemainingTime() ?? 0
+        let remaining = Int(ceil(self.pomodoroTimer?.getRemainingTime() ?? 0))
         result(remaining)
 
       case "getActivityStatus":
