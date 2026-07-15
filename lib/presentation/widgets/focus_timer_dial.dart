@@ -28,29 +28,32 @@ class FocusTimerDial extends StatelessWidget {
       child: CustomPaint(
         painter: _FocusDialPainter(progress: progress),
         child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                timeString,
-                style: const TextStyle(
-                  color: Color(0xFFF5F5F0),
-                  fontSize: 68,
-                  fontWeight: FontWeight.w600,
-                  height: 0.95,
-                  fontFeatures: [FontFeature.tabularFigures()],
+          child: Transform.translate(
+            offset: const Offset(0, 10),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  timeString,
+                  style: const TextStyle(
+                    color: Color(0xFFF5F5F0),
+                    fontSize: 68,
+                    fontWeight: FontWeight.w600,
+                    height: 0.98,
+                    fontFeatures: [FontFeature.tabularFigures()],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 14),
-              Text(
-                isPaused ? 'Paused' : label,
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.58),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
+                const SizedBox(height: 14),
+                Text(
+                  isPaused ? 'Paused' : label,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.58),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

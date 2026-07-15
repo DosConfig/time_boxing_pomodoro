@@ -17,6 +17,9 @@ class PomodoroTimerManager: NSObject {
     private var currentPhase: String = "focus"
     private var notificationsEnabled: Bool = true
     private var soundEnabled: Bool = true
+    private var topPriorities: [String] = []
+    private var currentTimeBoxTitle: String = ""
+    private var currentTimeBoxTimeRange: String = ""
 
     private var currentActivity: Any?
 
@@ -39,6 +42,9 @@ class PomodoroTimerManager: NSObject {
         static let phase = "pomodoro.phase"
         static let notificationsEnabled = "pomodoro.notificationsEnabled"
         static let soundEnabled = "pomodoro.soundEnabled"
+        static let topPriorities = "pomodoro.topPriorities"
+        static let currentTimeBoxTitle = "pomodoro.currentTimeBoxTitle"
+        static let currentTimeBoxTimeRange = "pomodoro.currentTimeBoxTimeRange"
     }
 
     private func persistState() {
@@ -51,6 +57,9 @@ class PomodoroTimerManager: NSObject {
         d.set(sessionCount, forKey: PersistKeys.sessionCount)
         d.set(sessionGoal, forKey: PersistKeys.sessionGoal)
         d.set(currentPhase, forKey: PersistKeys.phase)
+        d.set(topPriorities, forKey: PersistKeys.topPriorities)
+        d.set(currentTimeBoxTitle, forKey: PersistKeys.currentTimeBoxTitle)
+        d.set(currentTimeBoxTimeRange, forKey: PersistKeys.currentTimeBoxTimeRange)
         persistNotificationSettings()
     }
 
@@ -78,7 +87,10 @@ class PomodoroTimerManager: NSObject {
     private var notificationSettingsPayload: [String: Any] {
         return [
             "notificationsEnabled": notificationsEnabled,
-            "soundEnabled": soundEnabled
+            "soundEnabled": soundEnabled,
+            "topPriorities": topPriorities,
+            "currentTimeBoxTitle": currentTimeBoxTitle,
+            "currentTimeBoxTimeRange": currentTimeBoxTimeRange
         ]
     }
 
@@ -93,6 +105,9 @@ class PomodoroTimerManager: NSObject {
         d.removeObject(forKey: PersistKeys.sessionCount)
         d.removeObject(forKey: PersistKeys.sessionGoal)
         d.removeObject(forKey: PersistKeys.phase)
+        d.removeObject(forKey: PersistKeys.topPriorities)
+        d.removeObject(forKey: PersistKeys.currentTimeBoxTitle)
+        d.removeObject(forKey: PersistKeys.currentTimeBoxTimeRange)
     }
 
     private func restoredEndTime(from defaults: UserDefaults) -> Date? {
@@ -128,6 +143,9 @@ class PomodoroTimerManager: NSObject {
         }
         isPaused = d.bool(forKey: PersistKeys.isPaused)
         currentPhase = d.string(forKey: PersistKeys.phase) ?? "focus"
+        topPriorities = d.stringArray(forKey: PersistKeys.topPriorities) ?? []
+        currentTimeBoxTitle = d.string(forKey: PersistKeys.currentTimeBoxTitle) ?? ""
+        currentTimeBoxTimeRange = d.string(forKey: PersistKeys.currentTimeBoxTimeRange) ?? ""
 
         if isPaused {
             pausedRemainingTime = d.double(forKey: PersistKeys.pausedRemaining)
@@ -200,7 +218,17 @@ class PomodoroTimerManager: NSObject {
 
     // MARK: - Timer Control
 
-    func startTimer(duration: Int, sessionCount: Int = 0, sessionGoal: Int = 5, phase: String = "focus", notificationsEnabled: Bool = true, soundEnabled: Bool = true) {
+    func startTimer(
+        duration: Int,
+        sessionCount: Int = 0,
+        sessionGoal: Int = 5,
+        phase: String = "focus",
+        notificationsEnabled: Bool = true,
+        soundEnabled: Bool = true,
+        topPriorities: [String] = [],
+        currentTimeBoxTitle: String = "",
+        currentTimeBoxTimeRange: String = ""
+    ) {
         NSLog("[Pomodoro] native startTimer called — duration=%d session=%d", duration, sessionCount)
         stopTimer()
 
@@ -213,6 +241,13 @@ class PomodoroTimerManager: NSObject {
         currentPhase = phase
         self.notificationsEnabled = notificationsEnabled
         self.soundEnabled = soundEnabled
+        self.topPriorities = topPriorities
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .prefix(3)
+            .map { String($0) }
+        self.currentTimeBoxTitle = currentTimeBoxTitle.isEmpty ? "Focus block" : currentTimeBoxTitle
+        self.currentTimeBoxTimeRange = currentTimeBoxTimeRange
 
         if notificationsEnabled {
             requestNotificationAuthorizationIfNeeded()
@@ -271,6 +306,9 @@ class PomodoroTimerManager: NSObject {
         isPaused = false
         sessionGoal = 5
         currentPhase = "focus"
+        topPriorities = []
+        currentTimeBoxTitle = ""
+        currentTimeBoxTimeRange = ""
 
         cancelLocalNotification()
         endBackgroundTask()
@@ -433,7 +471,10 @@ class PomodoroTimerManager: NSObject {
             phase: currentPhase,
             sessionCount: sessionCount,
             sessionGoal: sessionGoal,
-            pausedRemainingSeconds: nil
+            pausedRemainingSeconds: nil,
+            topPriorities: topPriorities,
+            currentTimeBoxTitle: currentTimeBoxTitle,
+            currentTimeBoxTimeRange: currentTimeBoxTimeRange
         )
 
         // Check if Live Activities are enabled
@@ -473,7 +514,10 @@ class PomodoroTimerManager: NSObject {
                 phase: currentPhase,
                 sessionCount: sessionCount,
                 sessionGoal: sessionGoal,
-                pausedRemainingSeconds: remaining
+                pausedRemainingSeconds: remaining,
+                topPriorities: topPriorities,
+                currentTimeBoxTitle: currentTimeBoxTitle,
+                currentTimeBoxTimeRange: currentTimeBoxTimeRange
             )
         } else if status == "running" {
             // 재개: 새로운 종료 시각 계산
@@ -483,7 +527,10 @@ class PomodoroTimerManager: NSObject {
                 phase: currentPhase,
                 sessionCount: sessionCount,
                 sessionGoal: sessionGoal,
-                pausedRemainingSeconds: nil
+                pausedRemainingSeconds: nil,
+                topPriorities: topPriorities,
+                currentTimeBoxTitle: currentTimeBoxTitle,
+                currentTimeBoxTimeRange: currentTimeBoxTimeRange
             )
         } else {
             // break 등
@@ -493,7 +540,10 @@ class PomodoroTimerManager: NSObject {
                 phase: currentPhase,
                 sessionCount: sessionCount,
                 sessionGoal: sessionGoal,
-                pausedRemainingSeconds: nil
+                pausedRemainingSeconds: nil,
+                topPriorities: topPriorities,
+                currentTimeBoxTitle: currentTimeBoxTitle,
+                currentTimeBoxTimeRange: currentTimeBoxTimeRange
             )
         }
 

@@ -1,22 +1,24 @@
-# Focus Mark
+# Timebox Mark
 
-![Focus Mark app icon](assets/logo/focus_mark.svg)
+![Timebox Mark app icon](assets/logo/focus_mark.svg)
 
-Focus Mark is a minimal Pomodoro timer built with Flutter and a native iOS Live Activity integration. The project focuses on one hard product problem: keeping a Flutter timer, local notifications, and an ActivityKit Live Activity synchronized across foreground, background, and cold-launch states.
+Timebox Mark is an app-first timeboxing planner built with Flutter and a native iOS Live Activity integration. The project focuses on one hard product problem: turning a daily timeboxed plan into an executable timer, notification, Live Activity, and calendar workflow.
 
-The product direction is evolving toward a daily timeboxing planner: brain dump, top three priorities, time box grid, focus execution, and review.
+The product direction is inspired by explicit timeboxing: brain dump, top three priorities, time box grid, focus execution, and review.
 
 ## Highlights
 
 - Flutter UI with Riverpod state management
 - Native iOS timer source of truth through `MethodChannel`
 - ActivityKit Live Activity for Lock Screen and Dynamic Island
+- Top priorities and current time box metadata in Live Activity
 - Local notifications for focus and break completion
 - Session presets: `25/5`, `50/10`, and `15/3`
 - Auto-start options for breaks and next focus sessions
 - Local alert and sound preferences
 - Cold-launch restoration using persisted native `endTime`
 - Monotone visual system and custom SVG-based app icon
+- Notebook capture and multi-calendar sync roadmap for later expansion
 
 ## Why This Project Matters
 
@@ -47,10 +49,12 @@ The feature set is intentionally small and portfolio-friendly:
 - Local alerts can be disabled independently from Live Activity.
 - Alert sound can be disabled while keeping visual notifications.
 - Notification permission is requested contextually when the user starts a timer, not on first launch.
-- Live Activity stays glanceable: status, remaining time, and session progress only.
+- Live Activity stays glanceable: top priorities, current time box, remaining time, and progress.
 
 ## Product Roadmap
 
+- [Product TODO](docs/product/TODO.md)
+- [Menu structure](docs/product/MENU_STRUCTURE.md)
 - [Naming direction](docs/product/NAMING.md)
 - [Timeboxing strategy](docs/product/TIMEBOXING_STRATEGY.md)
 - [Notifications and calendar plan](docs/product/NOTIFICATIONS_AND_CALENDAR.md)

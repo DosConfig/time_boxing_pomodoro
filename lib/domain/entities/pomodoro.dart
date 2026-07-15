@@ -18,6 +18,9 @@ class Pomodoro {
   final bool autoStartFocus;
   final bool notificationsEnabled;
   final bool soundEnabled;
+  final List<String> topPriorities;
+  final String currentTimeBoxTitle;
+  final String currentTimeBoxTimeRange;
 
   const Pomodoro({
     required this.workDuration,
@@ -33,6 +36,9 @@ class Pomodoro {
     required this.autoStartFocus,
     required this.notificationsEnabled,
     required this.soundEnabled,
+    required this.topPriorities,
+    required this.currentTimeBoxTitle,
+    required this.currentTimeBoxTimeRange,
   });
 
   factory Pomodoro.initial() {
@@ -50,6 +56,9 @@ class Pomodoro {
       autoStartFocus: false,
       notificationsEnabled: true,
       soundEnabled: true,
+      topPriorities: ['', '', ''],
+      currentTimeBoxTitle: '',
+      currentTimeBoxTimeRange: '',
     );
   }
 
@@ -67,6 +76,9 @@ class Pomodoro {
     bool? autoStartFocus,
     bool? notificationsEnabled,
     bool? soundEnabled,
+    List<String>? topPriorities,
+    String? currentTimeBoxTitle,
+    String? currentTimeBoxTimeRange,
   }) {
     return Pomodoro(
       workDuration: workDuration ?? this.workDuration,
@@ -83,6 +95,10 @@ class Pomodoro {
       autoStartFocus: autoStartFocus ?? this.autoStartFocus,
       notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
       soundEnabled: soundEnabled ?? this.soundEnabled,
+      topPriorities: topPriorities ?? this.topPriorities,
+      currentTimeBoxTitle: currentTimeBoxTitle ?? this.currentTimeBoxTitle,
+      currentTimeBoxTimeRange:
+          currentTimeBoxTimeRange ?? this.currentTimeBoxTimeRange,
     );
   }
 
@@ -112,6 +128,22 @@ class Pomodoro {
 
   bool get nextBreakIsLong =>
       (completedSessions + 1) % sessionsUntilLongBreak == 0;
+
+  List<String> get visibleTopPriorities => topPriorities
+      .map((priority) => priority.trim())
+      .where((priority) => priority.isNotEmpty)
+      .take(3)
+      .toList();
+
+  String get liveActivityTimeBoxTitle {
+    final trimmed = currentTimeBoxTitle.trim();
+    if (trimmed.isNotEmpty) {
+      return trimmed;
+    }
+    return isBreakPhase ? 'Break block' : 'Focus block';
+  }
+
+  String get liveActivityTimeBoxRange => currentTimeBoxTimeRange.trim();
 
   String get phaseValue {
     switch (phase) {

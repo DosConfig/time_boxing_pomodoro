@@ -53,5 +53,21 @@ void main() {
       expect(Pomodoro.phaseFromValue('longBreak'), PomodoroPhase.longBreak);
       expect(Pomodoro.phaseFromValue(null), PomodoroPhase.focus);
     });
+
+    test('live activity context keeps only visible priority text', () {
+      final pomodoro = Pomodoro.initial().copyWith(
+        topPriorities: ['Plan launch', '  ', 'Review calendar', 'Overflow'],
+        currentTimeBoxTitle: 'Write proposal',
+        currentTimeBoxTimeRange: '09:00-10:00',
+      );
+
+      expect(pomodoro.visibleTopPriorities, [
+        'Plan launch',
+        'Review calendar',
+        'Overflow',
+      ]);
+      expect(pomodoro.liveActivityTimeBoxTitle, 'Write proposal');
+      expect(pomodoro.liveActivityTimeBoxRange, '09:00-10:00');
+    });
   });
 }

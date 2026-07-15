@@ -42,6 +42,9 @@ class PomodoroLocalDataSource {
     required String phase,
     required bool notificationsEnabled,
     required bool soundEnabled,
+    required List<String> topPriorities,
+    required String currentTimeBoxTitle,
+    required String currentTimeBoxTimeRange,
   }) async* {
     // 네이티브 타이머 시작 (Live Activity 포함)
     await PomodoroPlatformChannel.startTimer(
@@ -51,6 +54,9 @@ class PomodoroLocalDataSource {
       phase: phase,
       notificationsEnabled: notificationsEnabled,
       soundEnabled: soundEnabled,
+      topPriorities: topPriorities,
+      currentTimeBoxTitle: currentTimeBoxTitle,
+      currentTimeBoxTimeRange: currentTimeBoxTimeRange,
     );
 
     // 이후의 모든 tick은 네이티브 onTick에서 공급됨

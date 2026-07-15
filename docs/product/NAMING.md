@@ -2,9 +2,7 @@
 
 ## Recommendation
 
-Use **Timebox Mark** if the product pivots from a Pomodoro timer into the daily planning sheet shown in the design references.
-
-Keep **Focus Mark** if the app remains primarily a focus timer with Live Activity support.
+Use **Timebox Mark** now that the product is pivoting from a Pomodoro timer into the daily planning sheet shown in the design references.
 
 ## Why Timebox Mark
 
@@ -22,4 +20,4 @@ Keep **Focus Mark** if the app remains primarily a focus timer with Live Activit
 
 ## Current Decision
 
-Do not rename the bundle yet. The app currently ships as **Focus Mark**. Rename after the timeboxing planner becomes the first screen, because changing the app name before the core flow exists can make the portfolio story feel ahead of the product.
+The visible app name is **Timebox Mark**. Keep the current bundle identifier until Apple Developer setup is finalized, then decide whether to migrate from `com.seongwoo.focusmark` to a matching reverse-DNS identifier.

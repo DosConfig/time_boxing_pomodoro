@@ -7,6 +7,9 @@ abstract class PomodoroRepository {
     required String phase,
     required bool notificationsEnabled,
     required bool soundEnabled,
+    required List<String> topPriorities,
+    required String currentTimeBoxTitle,
+    required String currentTimeBoxTimeRange,
   });
   Stream<int> ticks();
   Future<void> pauseTimer();

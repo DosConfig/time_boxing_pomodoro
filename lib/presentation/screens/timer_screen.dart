@@ -139,7 +139,7 @@ class _Header extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               const Text(
-                'Focus Mark',
+                'Timebox Mark',
                 style: TextStyle(
                   color: Color(0xFFF6F3EC),
                   fontSize: 34,
@@ -326,6 +326,11 @@ class _SettingsPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          _PlanContextSummary(
+            pomodoro: pomodoro,
+            onEdit: () => _openPlanEditor(context),
+          ),
+          Divider(height: 28, color: Colors.white.withValues(alpha: 0.1)),
           const Text(
             'Session design',
             style: TextStyle(
@@ -395,6 +400,20 @@ class _SettingsPanel extends StatelessWidget {
     );
   }
 
+  void _openPlanEditor(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF101010),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (context) {
+        return _PlanEditorSheet(pomodoro: pomodoro, notifier: notifier);
+      },
+    );
+  }
+
   static String _presetLabel(PomodoroPreset preset) {
     switch (preset) {
       case PomodoroPreset.classic:
@@ -404,6 +423,224 @@ class _SettingsPanel extends StatelessWidget {
       case PomodoroPreset.sprint:
         return '15 / 3';
     }
+  }
+}
+
+class _PlanContextSummary extends StatelessWidget {
+  final Pomodoro pomodoro;
+  final VoidCallback onEdit;
+
+  const _PlanContextSummary({required this.pomodoro, required this.onEdit});
+
+  @override
+  Widget build(BuildContext context) {
+    final priorities = pomodoro.visibleTopPriorities;
+    final title = pomodoro.liveActivityTimeBoxTitle;
+    final range = pomodoro.liveActivityTimeBoxRange;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            const Expanded(
+              child: Text(
+                'Today plan',
+                style: TextStyle(
+                  color: Color(0xFFF6F3EC),
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            Tooltip(
+              message: 'Edit plan',
+              child: IconButton(
+                onPressed: onEdit,
+                icon: const Icon(Icons.edit_note_rounded),
+                color: const Color(0xFFF6F3EC),
+                visualDensity: VisualDensity.compact,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            color: Color(0xFFF6F3EC),
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        if (range.isNotEmpty) ...[
+          const SizedBox(height: 3),
+          Text(
+            range,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.48),
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+        if (priorities.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          ...priorities.map(
+            (priority) => Padding(
+              padding: const EdgeInsets.only(bottom: 5),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.check_box_outline_blank_rounded,
+                    size: 15,
+                    color: Colors.white.withValues(alpha: 0.48),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      priority,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.72),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _PlanEditorSheet extends StatelessWidget {
+  final Pomodoro pomodoro;
+  final PomodoroNotifier notifier;
+
+  const _PlanEditorSheet({required this.pomodoro, required this.notifier});
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(20, 18, 20, bottomInset + 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    'Plan context',
+                    style: TextStyle(
+                      color: Color(0xFFF6F3EC),
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close_rounded),
+                  color: const Color(0xFFF6F3EC),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ...List.generate(
+              3,
+              (index) => Padding(
+                padding: EdgeInsets.only(bottom: index == 2 ? 0 : 8),
+                child: _SettingsTextField(
+                  initialValue: _priorityAt(index),
+                  label: 'Top ${index + 1}',
+                  onChanged: (value) => notifier.setTopPriority(index, value),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            _SettingsTextField(
+              initialValue: pomodoro.currentTimeBoxTitle,
+              label: 'Current time box',
+              onChanged: notifier.setCurrentTimeBoxTitle,
+            ),
+            const SizedBox(height: 8),
+            _SettingsTextField(
+              initialValue: pomodoro.currentTimeBoxTimeRange,
+              label: 'Time range',
+              onChanged: notifier.setCurrentTimeBoxTimeRange,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _priorityAt(int index) {
+    if (index >= pomodoro.topPriorities.length) {
+      return '';
+    }
+    return pomodoro.topPriorities[index];
+  }
+}
+
+class _SettingsTextField extends StatelessWidget {
+  final String initialValue;
+  final String label;
+  final ValueChanged<String> onChanged;
+
+  const _SettingsTextField({
+    required this.initialValue,
+    required this.label,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      initialValue: initialValue,
+      onChanged: onChanged,
+      minLines: 1,
+      maxLines: 1,
+      cursorColor: const Color(0xFFF6F3EC),
+      style: const TextStyle(
+        color: Color(0xFFF6F3EC),
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+      ),
+      decoration: InputDecoration(
+        isDense: true,
+        labelText: label,
+        labelStyle: TextStyle(
+          color: Colors.white.withValues(alpha: 0.46),
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 12,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.14)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Color(0xFFF6F3EC)),
+        ),
+      ),
+    );
   }
 }
 

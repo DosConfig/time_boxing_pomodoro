@@ -10,7 +10,7 @@ struct PomodoroWidgetLiveActivity: Widget {
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    Label(phaseTitle(context), systemImage: phaseIcon(context))
+                    Label(currentTimeBoxTitle(context), systemImage: phaseIcon(context))
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.white)
                 }
@@ -26,8 +26,17 @@ struct PomodoroWidgetLiveActivity: Widget {
                 }
 
                 DynamicIslandExpandedRegion(.bottom) {
-                    ProgressView(value: progressValue(context), total: Double(context.attributes.totalDuration))
-                        .tint(.white)
+                    VStack(alignment: .leading, spacing: 6) {
+                        if let firstPriority = context.state.topPriorities.first {
+                            Text(firstPriority)
+                                .font(.caption2.weight(.semibold))
+                                .foregroundStyle(.white.opacity(0.72))
+                                .lineLimit(1)
+                        }
+
+                        ProgressView(value: progressValue(context), total: Double(context.attributes.totalDuration))
+                            .tint(.white)
+                    }
                 }
             } compactLeading: {
                 Image(systemName: phaseIcon(context))
@@ -91,6 +100,11 @@ struct PomodoroWidgetLiveActivity: Widget {
         }
     }
 
+    private func currentTimeBoxTitle(_ context: ActivityViewContext<PomodoroActivityAttributes>) -> String {
+        let title = context.state.currentTimeBoxTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+        return title.isEmpty ? phaseTitle(context) : title
+    }
+
     private func formatTime(seconds: Int) -> String {
         let minutes = seconds / 60
         let secs = seconds % 60
@@ -103,7 +117,28 @@ struct LockScreenLiveActivityView: View {
     let context: ActivityViewContext<PomodoroActivityAttributes>
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 13) {
+            if !context.state.topPriorities.isEmpty {
+                VStack(alignment: .leading, spacing: 5) {
+                    Text("Top priorities")
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(.white.opacity(0.48))
+                        .textCase(.uppercase)
+
+                    ForEach(Array(context.state.topPriorities.prefix(3).enumerated()), id: \.offset) { _, priority in
+                        HStack(spacing: 6) {
+                            Image(systemName: "square")
+                                .font(.system(size: 9, weight: .semibold))
+                                .foregroundStyle(.white.opacity(0.55))
+                            Text(priority)
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.white.opacity(0.86))
+                                .lineLimit(1)
+                        }
+                    }
+                }
+            }
+
             HStack {
                 Label(phaseTitle, systemImage: phaseIcon)
                     .font(.headline.weight(.semibold))
@@ -114,6 +149,27 @@ struct LockScreenLiveActivityView: View {
                 Text("\(context.state.sessionCount)/\(context.state.sessionGoal)")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.white.opacity(0.65))
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Now")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(.white.opacity(0.48))
+                    .textCase(.uppercase)
+
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text(currentTimeBoxTitle)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+
+                    if !context.state.currentTimeBoxTimeRange.isEmpty {
+                        Text(context.state.currentTimeBoxTimeRange)
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.white.opacity(0.58))
+                            .lineLimit(1)
+                    }
+                }
             }
 
             HStack(alignment: .lastTextBaseline) {
@@ -182,6 +238,11 @@ struct LockScreenLiveActivityView: View {
         default:
             return "target"
         }
+    }
+
+    private var currentTimeBoxTitle: String {
+        let title = context.state.currentTimeBoxTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+        return title.isEmpty ? phaseTitle : title
     }
 
     private func formatTime(seconds: Int) -> String {

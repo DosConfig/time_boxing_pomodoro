@@ -47,7 +47,7 @@ Use after the user starts or configures a focus session.
 Suggested purpose:
 
 ```text
-Focus Mark sends local alerts when a focus block or break ends.
+Timebox Mark sends local alerts when a focus block or break ends.
 ```
 
 ### Calendar
@@ -57,7 +57,7 @@ Add only when calendar export/sync is implemented.
 Suggested purpose:
 
 ```text
-Focus Mark adds selected time boxes to your calendar so your daily plan stays visible in your schedule.
+Timebox Mark adds selected time boxes to your calendar so your daily plan stays visible in your schedule.
 ```
 
 ### Sign In
@@ -73,7 +73,7 @@ Sign in to sync your time boxes and connect calendar providers across devices.
 ## App Review Notes Draft
 
 ```text
-Focus Mark is a local-first timeboxing and focus timer app. It uses local notifications to alert users when a focus block or break ends. Live Activity displays the active timer on the Lock Screen and Dynamic Island. The current version does not require an account and does not send remote push notifications.
+Timebox Mark is a local-first timeboxing and focus timer app. It uses local notifications to alert users when a focus block or break ends. Live Activity displays the active timer on the Lock Screen and Dynamic Island. The current version does not require an account and does not send remote push notifications.
 ```
 
 If calendar sync is added:

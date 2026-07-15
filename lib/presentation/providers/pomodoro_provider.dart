@@ -94,6 +94,18 @@ class PomodoroNotifier extends Notifier<Pomodoro> with WidgetsBindingObserver {
         state.notificationsEnabled,
       ),
       soundEnabled: _asBool(restored['soundEnabled'], state.soundEnabled),
+      topPriorities: _asStringList(
+        restored['topPriorities'],
+        state.topPriorities,
+      ),
+      currentTimeBoxTitle: _asString(
+        restored['currentTimeBoxTitle'],
+        state.currentTimeBoxTitle,
+      ),
+      currentTimeBoxTimeRange: _asString(
+        restored['currentTimeBoxTimeRange'],
+        state.currentTimeBoxTimeRange,
+      ),
     );
 
     switch (status) {
@@ -147,6 +159,24 @@ class PomodoroNotifier extends Notifier<Pomodoro> with WidgetsBindingObserver {
     return fallback;
   }
 
+  String _asString(Object? value, String fallback) {
+    if (value is String) {
+      return value;
+    }
+    return fallback;
+  }
+
+  List<String> _asStringList(Object? value, List<String> fallback) {
+    if (value is List) {
+      final strings = value.whereType<String>().take(3).toList();
+      while (strings.length < 3) {
+        strings.add('');
+      }
+      return strings;
+    }
+    return fallback;
+  }
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
@@ -169,6 +199,9 @@ class PomodoroNotifier extends Notifier<Pomodoro> with WidgetsBindingObserver {
       phase: state.phaseValue,
       notificationsEnabled: state.notificationsEnabled,
       soundEnabled: state.soundEnabled,
+      topPriorities: state.visibleTopPriorities,
+      currentTimeBoxTitle: state.liveActivityTimeBoxTitle,
+      currentTimeBoxTimeRange: state.liveActivityTimeBoxRange,
     ).listen((remainingTime) {
       state = state.copyWith(remainingTime: remainingTime);
 
@@ -224,6 +257,9 @@ class PomodoroNotifier extends Notifier<Pomodoro> with WidgetsBindingObserver {
       autoStartFocus: previous.autoStartFocus,
       notificationsEnabled: previous.notificationsEnabled,
       soundEnabled: previous.soundEnabled,
+      topPriorities: previous.topPriorities,
+      currentTimeBoxTitle: previous.currentTimeBoxTitle,
+      currentTimeBoxTimeRange: previous.currentTimeBoxTimeRange,
     );
     repository.updatePomodoro(state);
   }
@@ -267,6 +303,31 @@ class PomodoroNotifier extends Notifier<Pomodoro> with WidgetsBindingObserver {
         soundEnabled: state.soundEnabled,
       ),
     );
+  }
+
+  void setTopPriority(int index, String value) {
+    if (index < 0 || index >= 3) {
+      return;
+    }
+
+    final priorities = List<String>.from(state.topPriorities);
+    while (priorities.length < 3) {
+      priorities.add('');
+    }
+    priorities[index] = value;
+
+    state = state.copyWith(topPriorities: priorities.take(3).toList());
+    repository.updatePomodoro(state);
+  }
+
+  void setCurrentTimeBoxTitle(String value) {
+    state = state.copyWith(currentTimeBoxTitle: value);
+    repository.updatePomodoro(state);
+  }
+
+  void setCurrentTimeBoxTimeRange(String value) {
+    state = state.copyWith(currentTimeBoxTimeRange: value);
+    repository.updatePomodoro(state);
   }
 
   void _onTimerComplete() {

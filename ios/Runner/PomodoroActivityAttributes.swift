@@ -12,6 +12,9 @@ struct PomodoroActivityAttributes: ActivityAttributes {
         var sessionCount: Int
         var sessionGoal: Int
         var pausedRemainingSeconds: Int?  // 일시정지 시 남은 시간
+        var topPriorities: [String]
+        var currentTimeBoxTitle: String
+        var currentTimeBoxTimeRange: String
     }
 
     var totalDuration: Int  // in seconds

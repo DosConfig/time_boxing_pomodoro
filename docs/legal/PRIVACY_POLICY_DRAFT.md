@@ -2,11 +2,11 @@
 
 This is a product draft for review before public release. It is not legal advice.
 
-## Focus Mark Privacy Policy
+## Timebox Mark Privacy Policy
 
 Effective date: TBD
 
-Focus Mark helps you plan focus blocks and manage Pomodoro-style timers.
+Timebox Mark helps you plan focus blocks and manage Pomodoro-style timers.
 
 ## Data We Store
 
@@ -22,11 +22,11 @@ This may include:
 
 ## Notifications
 
-Focus Mark uses local notifications to alert you when a focus block or break ends. Local notifications are scheduled on your device.
+Timebox Mark uses local notifications to alert you when a focus block or break ends. Local notifications are scheduled on your device.
 
 ## Live Activity
 
-Focus Mark uses iOS Live Activity to display the active timer on the Lock Screen and Dynamic Island.
+Timebox Mark uses iOS Live Activity to display the active timer on the Lock Screen and Dynamic Island.
 
 ## Accounts
 
@@ -38,7 +38,7 @@ If Firebase Auth or calendar sync is added, this policy must be updated before r
 
 The current version does not access your calendar.
 
-If calendar export or sync is added, Focus Mark will request permission before creating or reading calendar events.
+If calendar export or sync is added, Timebox Mark will request permission before creating or reading calendar events.
 
 ## Remote Push
 

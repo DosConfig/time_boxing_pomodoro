@@ -35,13 +35,19 @@ import UserNotifications
           let phase = args["phase"] as? String ?? "focus"
           let notificationsEnabled = args["notificationsEnabled"] as? Bool ?? true
           let soundEnabled = args["soundEnabled"] as? Bool ?? true
+          let topPriorities = args["topPriorities"] as? [String] ?? []
+          let currentTimeBoxTitle = args["currentTimeBoxTitle"] as? String ?? ""
+          let currentTimeBoxTimeRange = args["currentTimeBoxTimeRange"] as? String ?? ""
           self.pomodoroTimer?.startTimer(
             duration: seconds,
             sessionCount: sessionCount,
             sessionGoal: sessionGoal,
             phase: phase,
             notificationsEnabled: notificationsEnabled,
-            soundEnabled: soundEnabled
+            soundEnabled: soundEnabled,
+            topPriorities: topPriorities,
+            currentTimeBoxTitle: currentTimeBoxTitle,
+            currentTimeBoxTimeRange: currentTimeBoxTimeRange
           )
           result(true)
         } else {
