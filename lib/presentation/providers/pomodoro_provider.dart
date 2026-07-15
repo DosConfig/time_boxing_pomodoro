@@ -47,17 +47,23 @@ class PomodoroNotifier extends Notifier<Pomodoro> with WidgetsBindingObserver {
       ref.read(resetPomodoroUseCaseProvider);
 
   StreamSubscription? _timerSubscription;
+  Timer? _clockSyncTimer;
   Future<void>? _restoreFuture;
 
   @override
   Pomodoro build() {
     WidgetsBinding.instance.addObserver(this);
+    _startClockSyncTimer();
     ref.onDispose(() {
       WidgetsBinding.instance.removeObserver(this);
       _timerSubscription?.cancel();
+      _clockSyncTimer?.cancel();
     });
-    // 프로세스 재시작 대비: 네이티브에 이전 상태 질의 후 복원
-    Future.microtask(_restoreFromNative);
+    Future.microtask(() async {
+      // 프로세스 재시작 대비: 네이티브에 이전 상태 질의 후 복원
+      await _restoreFromNative();
+      syncFocusWithClock();
+    });
     return Pomodoro.initial();
   }
 
@@ -182,8 +188,18 @@ class PomodoroNotifier extends Notifier<Pomodoro> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      Future.microtask(_restoreFromNative);
+      Future.microtask(() async {
+        await _restoreFromNative();
+        syncFocusWithClock();
+      });
     }
+  }
+
+  void _startClockSyncTimer() {
+    _clockSyncTimer?.cancel();
+    _clockSyncTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      syncFocusWithClock();
+    });
   }
 
   void _subscribeTicks() {
@@ -228,6 +244,10 @@ class PomodoroNotifier extends Notifier<Pomodoro> with WidgetsBindingObserver {
 
     if (state.status == PomodoroStatus.idle ||
         state.status == PomodoroStatus.break_) {
+      if (state.status == PomodoroStatus.idle &&
+          state.phase == PomodoroPhase.focus) {
+        syncFocusWithClock();
+      }
       state = state.copyWith(status: PomodoroStatus.running);
       repository.updatePomodoro(state);
 
@@ -594,12 +614,88 @@ class PomodoroNotifier extends Notifier<Pomodoro> with WidgetsBindingObserver {
       return;
     }
 
+    syncFocusWithClock();
+  }
+
+  void syncFocusWithClock() {
+    if (state.status != PomodoroStatus.idle ||
+        state.phase != PomodoroPhase.focus) {
+      return;
+    }
+
+    final currentBox = _currentTimeBoxForNow();
+    if (currentBox != null) {
+      _applyClockSyncedTimeBox(
+        currentBox,
+        _clockRemainingForTimeBox(currentBox),
+      );
+      return;
+    }
+
+    final nextBox = _nextUpcomingTimeBox();
+    if (nextBox != null) {
+      _applyClockSyncedTimeBox(nextBox, nextBox.durationSeconds);
+      return;
+    }
+
+    final activeBox = state.activeTimeBox;
+    if (activeBox == null || !_timeBoxHasEnded(activeBox)) {
+      return;
+    }
+
+    _applyClockSyncedTimeBox(activeBox, 0);
+  }
+
+  void _applyClockSyncedTimeBox(TimeBox box, int remainingTime) {
+    final nextRemainingTime = remainingTime
+        .clamp(0, box.durationSeconds)
+        .toInt();
+    final nextTitle = _titleForTimeBox(box);
+    final nextRange = box.timeRange;
+    final isAlreadySynced =
+        state.activeTimeBoxId == box.id &&
+        state.currentTimeBoxTitle == nextTitle &&
+        state.currentTimeBoxTimeRange == nextRange &&
+        state.workDuration == box.durationSeconds &&
+        state.remainingTime == nextRemainingTime;
+
+    if (isAlreadySynced) {
+      return;
+    }
+
+    state = state.copyWith(
+      activeTimeBoxId: box.id,
+      currentTimeBoxTitle: nextTitle,
+      currentTimeBoxTimeRange: nextRange,
+      workDuration: box.durationSeconds,
+      remainingTime: nextRemainingTime,
+      status: PomodoroStatus.idle,
+      phase: PomodoroPhase.focus,
+    );
+    repository.updatePomodoro(state);
+  }
+
+  TimeBox? _currentTimeBoxForNow() {
     for (final box in state.timeBoxes) {
       if (_timeBoxContainsNow(box)) {
-        await selectTimeBox(box.id);
-        return;
+        return box;
       }
     }
+    return null;
+  }
+
+  TimeBox? _nextUpcomingTimeBox() {
+    final now = DateTime.now();
+    final upcomingBoxes = state.timeBoxes.where((box) {
+      final start = box.startMinutes;
+      final end = box.endMinutes;
+      if (start == null || end == null) {
+        return false;
+      }
+      return _normalizedNowMinutes(start, end, now) < start;
+    }).toList()..sort((a, b) => a.startMinutes!.compareTo(b.startMinutes!));
+
+    return upcomingBoxes.isEmpty ? null : upcomingBoxes.first;
   }
 
   String _titleForTimeBox(TimeBox box) {
@@ -638,6 +734,14 @@ class PomodoroNotifier extends Notifier<Pomodoro> with WidgetsBindingObserver {
   }
 
   int _remainingForTimeBox(TimeBox box) {
+    final remainingTime = _clockRemainingForTimeBox(box);
+    if (remainingTime == 0 && !_timeBoxContainsNow(box)) {
+      return box.durationSeconds;
+    }
+    return remainingTime;
+  }
+
+  int _clockRemainingForTimeBox(TimeBox box) {
     final start = box.startMinutes;
     final end = box.endMinutes;
     if (start == null || end == null) {
@@ -645,13 +749,15 @@ class PomodoroNotifier extends Notifier<Pomodoro> with WidgetsBindingObserver {
     }
 
     final now = DateTime.now();
-    var nowMinutes = (now.hour * 60) + now.minute;
-    if (end >= 24 * 60 && nowMinutes < start) {
-      nowMinutes += 24 * 60;
-    }
+    final nowMinutes = _normalizedNowMinutes(start, end, now);
 
     if (nowMinutes >= start && nowMinutes < end) {
-      return ((end - nowMinutes) * 60) - now.second;
+      return (((end - nowMinutes) * 60) - now.second)
+          .clamp(0, box.durationSeconds)
+          .toInt();
+    }
+    if (nowMinutes >= end) {
+      return 0;
     }
     return box.durationSeconds;
   }
@@ -664,11 +770,26 @@ class PomodoroNotifier extends Notifier<Pomodoro> with WidgetsBindingObserver {
     }
 
     final now = DateTime.now();
+    final nowMinutes = _normalizedNowMinutes(start, end, now);
+    return nowMinutes >= start && nowMinutes < end;
+  }
+
+  bool _timeBoxHasEnded(TimeBox box) {
+    final start = box.startMinutes;
+    final end = box.endMinutes;
+    if (start == null || end == null) {
+      return false;
+    }
+
+    return _normalizedNowMinutes(start, end, DateTime.now()) >= end;
+  }
+
+  int _normalizedNowMinutes(int start, int end, DateTime now) {
     var nowMinutes = (now.hour * 60) + now.minute;
     if (end >= 24 * 60 && nowMinutes < start) {
       nowMinutes += 24 * 60;
     }
-    return nowMinutes >= start && nowMinutes < end;
+    return nowMinutes;
   }
 
   void _onTimerComplete() {

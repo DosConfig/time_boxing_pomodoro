@@ -93,6 +93,9 @@ class _AppShellState extends ConsumerState<AppShell> {
   }
 
   void _setIndex(int index) {
+    if (index == 1) {
+      ref.read(pomodoroProvider.notifier).syncFocusWithClock();
+    }
     setState(() => _index = index);
   }
 
