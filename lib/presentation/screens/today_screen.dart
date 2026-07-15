@@ -21,7 +21,11 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
   List<String>? _draftPriorities;
   Timer? _prioritySaveTimer;
   Timer? _clockTimer;
+  Timer? _dragAutoScrollTimer;
+  double _dragAutoScrollDelta = 0;
   DateTime _now = DateTime.now();
+  final _scrollController = ScrollController();
+  final _priorityFocusNode = FocusNode();
 
   @override
   void initState() {
@@ -36,6 +40,9 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
   @override
   void dispose() {
     _clockTimer?.cancel();
+    _stopDragAutoScroll();
+    _scrollController.dispose();
+    _priorityFocusNode.dispose();
     _prioritySaveTimer?.cancel();
     final priorities = _draftPriorities;
     if (priorities != null) {
@@ -58,6 +65,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
       child: ScrollConfiguration(
         behavior: const _AppScrollBehavior(),
         child: CustomScrollView(
+          controller: _scrollController,
           physics: const ClampingScrollPhysics(),
           slivers: [
             SliverPadding(
@@ -73,6 +81,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                     _PriorityBuilder(
                       priorities: priorities,
                       priorityIndex: _priorityIndex,
+                      focusNode: _priorityFocusNode,
                       onPriorityChanged: _setDraftPriority,
                       onPriorityIndexChanged: _setPriorityIndex,
                     ),
@@ -81,6 +90,8 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                       pomodoro: pomodoro,
                       notifier: notifier,
                       now: _now,
+                      onDragUpdate: _handleTimeBoxDragUpdate,
+                      onDragEnd: _stopDragAutoScroll,
                     ),
                     const SizedBox(height: 18),
                     FilledButton.icon(
@@ -114,6 +125,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                       pomodoro: pomodoro,
                       priorities: priorities,
                       now: _now,
+                      onOpenFocus: widget.onOpenFocus,
                     ),
                   ],
                 ),
@@ -153,6 +165,11 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     _commitPriority(_priorityIndex);
     HapticFeedback.selectionClick();
     setState(() => _priorityIndex = index);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _priorityFocusNode.requestFocus();
+      }
+    });
   }
 
   void _commitPriority(int index) {
@@ -164,6 +181,65 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     ref
         .read(pomodoroProvider.notifier)
         .setTopPriority(index, priorities[index]);
+  }
+
+  void _handleTimeBoxDragUpdate(DragUpdateDetails details) {
+    if (!_scrollController.hasClients) {
+      return;
+    }
+
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    final topEdge = MediaQuery.paddingOf(context).top + 92;
+    final bottomEdge = screenHeight - 150;
+    final y = details.globalPosition.dy;
+
+    if (y < topEdge) {
+      final intensity = ((topEdge - y) / 96).clamp(0.0, 1.0);
+      _dragAutoScrollDelta = -(2.5 + (intensity * 10));
+      _startDragAutoScroll();
+      return;
+    }
+
+    if (y > bottomEdge) {
+      final intensity = ((y - bottomEdge) / 96).clamp(0.0, 1.0);
+      _dragAutoScrollDelta = 2.5 + (intensity * 10);
+      _startDragAutoScroll();
+      return;
+    }
+
+    _stopDragAutoScroll();
+  }
+
+  void _startDragAutoScroll() {
+    _dragAutoScrollTimer ??= Timer.periodic(
+      const Duration(milliseconds: 16),
+      (_) => _tickDragAutoScroll(),
+    );
+  }
+
+  void _tickDragAutoScroll() {
+    if (!_scrollController.hasClients || _dragAutoScrollDelta == 0) {
+      _stopDragAutoScroll();
+      return;
+    }
+
+    final position = _scrollController.position;
+    final nextOffset = (position.pixels + _dragAutoScrollDelta).clamp(
+      position.minScrollExtent,
+      position.maxScrollExtent,
+    );
+
+    if (nextOffset == position.pixels) {
+      _stopDragAutoScroll();
+      return;
+    }
+    _scrollController.jumpTo(nextOffset);
+  }
+
+  void _stopDragAutoScroll() {
+    _dragAutoScrollDelta = 0;
+    _dragAutoScrollTimer?.cancel();
+    _dragAutoScrollTimer = null;
   }
 }
 
@@ -385,11 +461,13 @@ class _DailyProgressStrip extends StatelessWidget {
   final Pomodoro pomodoro;
   final List<String> priorities;
   final DateTime now;
+  final VoidCallback onOpenFocus;
 
   const _DailyProgressStrip({
     required this.pomodoro,
     required this.priorities,
     required this.now,
+    required this.onOpenFocus,
   });
 
   @override
@@ -403,50 +481,111 @@ class _DailyProgressStrip extends StatelessWidget {
         .toDouble();
     final todayIndex = now.weekday - 1;
 
+    return _DailyProgressCard(
+      progress: progress,
+      plannedCount: plannedCount,
+      focusCount: focusCount,
+      todayIndex: todayIndex,
+      onOpenFocus: onOpenFocus,
+    );
+  }
+}
+
+class _DailyProgressCard extends StatefulWidget {
+  final double progress;
+  final int plannedCount;
+  final int focusCount;
+  final int todayIndex;
+  final VoidCallback onOpenFocus;
+
+  const _DailyProgressCard({
+    required this.progress,
+    required this.plannedCount,
+    required this.focusCount,
+    required this.todayIndex,
+    required this.onOpenFocus,
+  });
+
+  @override
+  State<_DailyProgressCard> createState() => _DailyProgressCardState();
+}
+
+class _DailyProgressCardState extends State<_DailyProgressCard> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
     return _SectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'Daily progress',
-                  style: TextStyle(
-                    color: Color(0xFFF6F3EC),
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
+          InkWell(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              setState(() => _expanded = !_expanded);
+            },
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Daily progress',
+                      style: TextStyle(
+                        color: Color(0xFFF6F3EC),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 220),
-                child: Text(
-                  '${(progress * 100).round()}%',
-                  key: ValueKey(progress),
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.54),
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 220),
+                    child: Text(
+                      '${(widget.progress * 100).round()}%',
+                      key: ValueKey(widget.progress),
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.54),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 8),
+                  AnimatedRotation(
+                    turns: _expanded ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 180),
+                    curve: Curves.easeOutCubic,
+                    child: Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: Colors.white.withValues(alpha: 0.52),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
           const SizedBox(height: 14),
           Row(
             children: List.generate(7, (index) {
-              final isToday = index == todayIndex;
-              final isPast = index < todayIndex;
-              final fill = isToday ? progress : (isPast ? 0.16 : 0.06);
+              final isToday = index == widget.todayIndex;
+              final isPast = index < widget.todayIndex;
+              final fill = isToday ? widget.progress : (isPast ? 0.16 : 0.06);
 
               return Expanded(
                 child: Padding(
                   padding: EdgeInsets.only(right: index == 6 ? 0 : 6),
-                  child: _DailyProgressCell(
-                    label: _weekdayLabel(index),
-                    fill: fill,
-                    selected: isToday,
+                  child: InkWell(
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      setState(() => _expanded = true);
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    child: _DailyProgressCell(
+                      label: _weekdayLabel(index),
+                      fill: fill,
+                      selected: isToday,
+                    ),
                   ),
                 ),
               );
@@ -455,10 +594,47 @@ class _DailyProgressStrip extends StatelessWidget {
           const SizedBox(height: 12),
           Row(
             children: [
-              _DailyProgressMetric(label: 'Plan', value: '$plannedCount/3'),
+              _DailyProgressMetric(
+                label: 'Plan',
+                value: '${widget.plannedCount}/3',
+                onTap: () => setState(() => _expanded = true),
+              ),
               const SizedBox(width: 10),
-              _DailyProgressMetric(label: 'Focus', value: '$focusCount/3'),
+              _DailyProgressMetric(
+                label: 'Focus',
+                value: '${widget.focusCount}/3',
+                onTap: widget.onOpenFocus,
+              ),
             ],
+          ),
+          AnimatedCrossFade(
+            firstChild: const SizedBox.shrink(),
+            secondChild: Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.045),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'Plan fills as Top priorities are written. Focus fills when focus blocks finish.',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.58),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    height: 1.25,
+                  ),
+                ),
+              ),
+            ),
+            crossFadeState: _expanded
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
+            duration: const Duration(milliseconds: 180),
+            firstCurve: Curves.easeOutCubic,
+            secondCurve: Curves.easeOutCubic,
+            sizeCurve: Curves.easeOutCubic,
           ),
         ],
       ),
@@ -539,40 +715,52 @@ class _DailyProgressCell extends StatelessWidget {
 class _DailyProgressMetric extends StatelessWidget {
   final String label;
   final String value;
+  final VoidCallback onTap;
 
-  const _DailyProgressMetric({required this.label, required this.value});
+  const _DailyProgressMetric({
+    required this.label,
+    required this.value,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 220),
-        curve: Curves.easeOutCubic,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.045),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.5),
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          onTap();
+        },
+        borderRadius: BorderRadius.circular(8),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.045),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.5),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-            ),
-            const Spacer(),
-            Text(
-              value,
-              style: const TextStyle(
-                color: Color(0xFFF6F3EC),
-                fontSize: 13,
-                fontWeight: FontWeight.w900,
+              const Spacer(),
+              Text(
+                value,
+                style: const TextStyle(
+                  color: Color(0xFFF6F3EC),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -582,12 +770,14 @@ class _DailyProgressMetric extends StatelessWidget {
 class _PriorityBuilder extends StatelessWidget {
   final List<String> priorities;
   final int priorityIndex;
+  final FocusNode focusNode;
   final ValueChanged<String> onPriorityChanged;
   final ValueChanged<int> onPriorityIndexChanged;
 
   const _PriorityBuilder({
     required this.priorities,
     required this.priorityIndex,
+    required this.focusNode,
     required this.onPriorityChanged,
     required this.onPriorityIndexChanged,
   });
@@ -632,8 +822,12 @@ class _PriorityBuilder extends StatelessWidget {
             switchOutCurve: Curves.easeInCubic,
             child: TextFormField(
               key: ValueKey('priority-$priorityIndex'),
+              focusNode: focusNode,
               initialValue: priority,
               onChanged: onPriorityChanged,
+              textInputAction: priorityIndex < 2
+                  ? TextInputAction.next
+                  : TextInputAction.done,
               onFieldSubmitted: (_) {
                 if (priorityIndex < 2) {
                   onPriorityIndexChanged(priorityIndex + 1);
@@ -777,11 +971,15 @@ class _TimeBoxBoard extends StatelessWidget {
   final Pomodoro pomodoro;
   final PomodoroNotifier notifier;
   final DateTime now;
+  final ValueChanged<DragUpdateDetails> onDragUpdate;
+  final VoidCallback onDragEnd;
 
   const _TimeBoxBoard({
     required this.pomodoro,
     required this.notifier,
     required this.now,
+    required this.onDragUpdate,
+    required this.onDragEnd,
   });
 
   static const _slotMinutes = 30;
@@ -975,6 +1173,8 @@ class _TimeBoxBoard extends StatelessWidget {
         selected: box.id == pomodoro.activeTimeBox?.id,
         current: _containsNow(box),
         canDelete: pomodoro.timeBoxes.length > 1,
+        onDragUpdate: onDragUpdate,
+        onDragEnd: onDragEnd,
         onTap: () {
           HapticFeedback.selectionClick();
           unawaited(notifier.selectTimeBox(box.id));
@@ -1071,6 +1271,8 @@ class _TimeBoxBoardCard extends StatefulWidget {
   final bool selected;
   final bool current;
   final bool canDelete;
+  final ValueChanged<DragUpdateDetails> onDragUpdate;
+  final VoidCallback onDragEnd;
   final VoidCallback onTap;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
@@ -1080,6 +1282,8 @@ class _TimeBoxBoardCard extends StatefulWidget {
     required this.selected,
     required this.current,
     required this.canDelete,
+    required this.onDragUpdate,
+    required this.onDragEnd,
     required this.onTap,
     required this.onEdit,
     required this.onDelete,
@@ -1102,7 +1306,7 @@ class _TimeBoxBoardCardState extends State<_TimeBoxBoardCard> {
             child: Align(
               alignment: Alignment.centerRight,
               child: SizedBox(
-                width: 96,
+                width: 76,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
@@ -1113,7 +1317,7 @@ class _TimeBoxBoardCardState extends State<_TimeBoxBoardCard> {
                         widget.onEdit();
                       },
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 4),
                     _BoardActionButton(
                       icon: Icons.delete_outline_rounded,
                       onPressed: widget.canDelete
@@ -1132,7 +1336,7 @@ class _TimeBoxBoardCardState extends State<_TimeBoxBoardCard> {
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 180),
               curve: Curves.easeOutCubic,
-              transform: Matrix4.translationValues(_revealed ? -104 : 0, 0, 0),
+              transform: Matrix4.translationValues(_revealed ? -84 : 0, 0, 0),
               child: LongPressDraggable<String>(
                 data: widget.box.id,
                 delay: const Duration(milliseconds: 220),
@@ -1152,6 +1356,10 @@ class _TimeBoxBoardCardState extends State<_TimeBoxBoardCard> {
                   HapticFeedback.mediumImpact();
                   setState(() => _revealed = false);
                 },
+                onDragUpdate: widget.onDragUpdate,
+                onDragEnd: (_) => widget.onDragEnd(),
+                onDragCompleted: widget.onDragEnd,
+                onDraggableCanceled: (_, _) => widget.onDragEnd(),
                 child: _cardGesture(child: _surface()),
               ),
             ),
@@ -1284,7 +1492,11 @@ class _BoardActionButton extends StatelessWidget {
         foregroundColor: const Color(0xFFF6F3EC),
         disabledBackgroundColor: Colors.white.withValues(alpha: 0.06),
         disabledForegroundColor: Colors.white.withValues(alpha: 0.24),
-        minimumSize: const Size.square(40),
+        fixedSize: const Size.square(34),
+        minimumSize: const Size.square(34),
+        padding: EdgeInsets.zero,
+        iconSize: 18,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
       ),
     );
   }
