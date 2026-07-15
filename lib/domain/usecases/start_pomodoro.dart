@@ -5,7 +5,7 @@ class StartPomodoroUseCase {
 
   StartPomodoroUseCase(this.repository);
 
-  Stream<int> call() {
-    return repository.startTimer();
+  Stream<int> call({required String phase}) {
+    return repository.startTimer(phase: phase);
   }
 }

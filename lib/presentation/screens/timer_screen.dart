@@ -1,14 +1,9 @@
-import 'package:custom_fluid_background/custom_fluid_background.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../data/datasources/pomodoro_platform_channel.dart';
 import '../../domain/entities/pomodoro.dart';
 import '../providers/pomodoro_provider.dart';
-import '../widgets/crt_timer_widget.dart';
-
-// LA 진단용 임시 표시 (해결 후 제거)
-final ValueNotifier<String> _laDiag = ValueNotifier<String>('');
+import '../widgets/focus_timer_dial.dart';
 
 class TimerScreen extends ConsumerWidget {
   const TimerScreen({super.key});
@@ -16,134 +11,364 @@ class TimerScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final pomodoro = ref.watch(pomodoroProvider);
-    final pomodoroNotifier = ref.read(pomodoroProvider.notifier);
+    final notifier = ref.read(pomodoroProvider.notifier);
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: CustomFluidBackground(
-        themePreset: _getThemePreset(pomodoro.status),
-        animationPattern: AnimationPattern.floating,
-        performanceMode: PerformanceMode.balanced,
-        enableInteractive: true,
-        child: SafeArea(
+      backgroundColor: const Color(0xFF080808),
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final dialSize = constraints.maxWidth.clamp(280.0, 430.0);
+
+            return SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(24, 22, 24, 28),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _Header(pomodoro: pomodoro),
+                    const SizedBox(height: 34),
+                    Align(
+                      child: SizedBox(
+                        width: dialSize,
+                        child: FocusTimerDial(
+                          minutes: pomodoro.minutes,
+                          seconds: pomodoro.seconds,
+                          progress: pomodoro.progress,
+                          label: _phaseLabel(pomodoro.phase),
+                          isPaused: pomodoro.status == PomodoroStatus.paused,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+                    _SessionDots(pomodoro: pomodoro),
+                    const SizedBox(height: 26),
+                    _Controls(pomodoro: pomodoro, notifier: notifier),
+                    const SizedBox(height: 28),
+                    _SettingsPanel(pomodoro: pomodoro, notifier: notifier),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  static String _phaseLabel(PomodoroPhase phase) {
+    switch (phase) {
+      case PomodoroPhase.focus:
+        return 'Focus';
+      case PomodoroPhase.shortBreak:
+        return 'Short break';
+      case PomodoroPhase.longBreak:
+        return 'Long break';
+    }
+  }
+}
+
+class _Header extends StatelessWidget {
+  final Pomodoro pomodoro;
+
+  const _Header({required this.pomodoro});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Status Text
               Text(
-                _getStatusText(pomodoro.status),
-                style: const TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  shadows: [Shadow(color: Colors.black, blurRadius: 10)],
+                pomodoro.presetLabel,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.48),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 20),
-
-              // Session Counter
-              Text(
-                '${pomodoro.completedSessions}/5',
-                style: const TextStyle(
-                  fontSize: 20,
-                  color: Colors.white,
-                  shadows: [Shadow(color: Colors.black, blurRadius: 5)],
-                ),
-              ),
-              const SizedBox(height: 40),
-
-              // Timer Widget
-              CRTTimerWidget(minutes: pomodoro.minutes, seconds: pomodoro.seconds),
-              const SizedBox(height: 40),
-
-              // Control Buttons
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _buildPixelButton(
-                    icon: pomodoro.status == PomodoroStatus.running ? Icons.pause : Icons.play_arrow,
-                    onPressed: () async {
-                      if (pomodoro.status == PomodoroStatus.running) {
-                        await pomodoroNotifier.pause();
-                        _laDiag.value = 'pause 호출됨';
-                      } else {
-                        await pomodoroNotifier.start();
-                        // 네이티브의 LA 시작 결과를 화면에 직접 표시
-                        final status = await PomodoroPlatformChannel.getActivityStatus();
-                        _laDiag.value = 'LA: $status';
-                      }
-                    },
-                    color: Colors.green,
-                  ),
-                  const SizedBox(width: 20),
-                  _buildPixelButton(
-                    icon: Icons.refresh,
-                    onPressed: () => pomodoroNotifier.reset(),
-                    color: Colors.orange,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-
-              // LA 진단 표시 (임시)
-              ValueListenableBuilder<String>(
-                valueListenable: _laDiag,
-                builder: (_, value, __) => Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.yellowAccent,
-                    shadows: [Shadow(color: Colors.black, blurRadius: 6)],
-                  ),
+              const SizedBox(height: 8),
+              const Text(
+                'Focus Mark',
+                style: TextStyle(
+                  color: Color(0xFFF6F3EC),
+                  fontSize: 34,
+                  fontWeight: FontWeight.w700,
+                  height: 1,
                 ),
               ),
             ],
           ),
         ),
-      ),
+        _StatusBadge(pomodoro: pomodoro),
+      ],
     );
   }
+}
 
-  Widget _buildPixelButton({required IconData icon, required VoidCallback onPressed, required Color color}) {
-    return GestureDetector(
-      onTap: onPressed,
-      child: Container(
-        width: 80,
-        height: 80,
-        decoration: BoxDecoration(
-          color: color,
-          border: Border.all(color: Colors.white, width: 4),
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(4, 4))],
+class _StatusBadge extends StatelessWidget {
+  final Pomodoro pomodoro;
+
+  const _StatusBadge({required this.pomodoro});
+
+  @override
+  Widget build(BuildContext context) {
+    final label = switch (pomodoro.status) {
+      PomodoroStatus.idle => 'Ready',
+      PomodoroStatus.running => pomodoro.isBreakPhase ? 'Break' : 'Running',
+      PomodoroStatus.paused => 'Paused',
+      PomodoroStatus.break_ => 'Break',
+    };
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Color(0xFFF6F3EC),
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
         ),
-        child: Icon(icon, size: 40, color: Colors.white),
+      ),
+    );
+  }
+}
+
+class _SessionDots extends StatelessWidget {
+  final Pomodoro pomodoro;
+
+  const _SessionDots({required this.pomodoro});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(
+          '${pomodoro.completedSessions} of ${pomodoro.sessionsUntilLongBreak} focus blocks',
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.58),
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(
+            pomodoro.sessionsUntilLongBreak,
+            (index) => AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              width: index < pomodoro.completedSessions ? 28 : 9,
+              height: 9,
+              decoration: BoxDecoration(
+                color: index < pomodoro.completedSessions
+                    ? const Color(0xFFF6F3EC)
+                    : Colors.white.withValues(alpha: 0.18),
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _Controls extends StatelessWidget {
+  final Pomodoro pomodoro;
+  final PomodoroNotifier notifier;
+
+  const _Controls({required this.pomodoro, required this.notifier});
+
+  @override
+  Widget build(BuildContext context) {
+    final isRunning = pomodoro.status == PomodoroStatus.running;
+    final primaryIcon = isRunning
+        ? Icons.pause_rounded
+        : Icons.play_arrow_rounded;
+    final primaryLabel = isRunning ? 'Pause' : 'Start';
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _RoundActionButton(
+          icon: Icons.restart_alt_rounded,
+          label: 'Reset',
+          onTap: notifier.reset,
+          isPrimary: false,
+        ),
+        const SizedBox(width: 18),
+        _RoundActionButton(
+          icon: primaryIcon,
+          label: primaryLabel,
+          onTap: isRunning ? notifier.pause : notifier.start,
+          isPrimary: true,
+        ),
+      ],
+    );
+  }
+}
+
+class _RoundActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final bool isPrimary;
+
+  const _RoundActionButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    required this.isPrimary,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: label,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: Container(
+          width: isPrimary ? 82 : 62,
+          height: isPrimary ? 82 : 62,
+          decoration: BoxDecoration(
+            color: isPrimary ? const Color(0xFFF6F3EC) : Colors.transparent,
+            border: Border.all(
+              color: Colors.white.withValues(alpha: isPrimary ? 0 : 0.18),
+            ),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            icon,
+            size: isPrimary ? 38 : 28,
+            color: isPrimary
+                ? const Color(0xFF0A0A0A)
+                : const Color(0xFFF6F3EC),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SettingsPanel extends StatelessWidget {
+  final Pomodoro pomodoro;
+  final PomodoroNotifier notifier;
+
+  const _SettingsPanel({required this.pomodoro, required this.notifier});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.055),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'Session design',
+            style: TextStyle(
+              color: Color(0xFFF6F3EC),
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: PomodoroPreset.values.map((preset) {
+              final selected = preset == pomodoro.preset;
+              return ChoiceChip(
+                label: Text(_presetLabel(preset)),
+                selected: selected,
+                onSelected: (_) => notifier.applyPreset(preset),
+                backgroundColor: Colors.transparent,
+                selectedColor: const Color(0xFFF6F3EC),
+                side: BorderSide(color: Colors.white.withValues(alpha: 0.16)),
+                labelStyle: TextStyle(
+                  color: selected
+                      ? const Color(0xFF0A0A0A)
+                      : const Color(0xFFF6F3EC),
+                  fontWeight: FontWeight.w700,
+                ),
+                showCheckmark: false,
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 16),
+          _SettingsSwitch(
+            label: 'Auto-start breaks',
+            value: pomodoro.autoStartBreaks,
+            onChanged: notifier.setAutoStartBreaks,
+          ),
+          _SettingsSwitch(
+            label: 'Auto-start next focus',
+            value: pomodoro.autoStartFocus,
+            onChanged: notifier.setAutoStartFocus,
+          ),
+        ],
       ),
     );
   }
 
-  String _getStatusText(PomodoroStatus status) {
-    switch (status) {
-      case PomodoroStatus.idle:
-        return 'Ready to Focus!';
-      case PomodoroStatus.running:
-        return 'Focus Time!';
-      case PomodoroStatus.paused:
-        return 'Paused';
-      case PomodoroStatus.break_:
-        return 'Break Time!';
+  static String _presetLabel(PomodoroPreset preset) {
+    switch (preset) {
+      case PomodoroPreset.classic:
+        return '25 / 5';
+      case PomodoroPreset.deepWork:
+        return '50 / 10';
+      case PomodoroPreset.sprint:
+        return '15 / 3';
     }
   }
+}
 
-  ThemePreset _getThemePreset(PomodoroStatus status) {
-    switch (status) {
-      case PomodoroStatus.idle:
-        return ThemePreset.oceanWaves;
-      case PomodoroStatus.running:
-        return ThemePreset.sunsetGlow;
-      case PomodoroStatus.paused:
-        return ThemePreset.oceanWaves;
-      case PomodoroStatus.break_:
-        return ThemePreset.auroraLights;
-    }
+class _SettingsSwitch extends StatelessWidget {
+  final String label;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  const _SettingsSwitch({
+    required this.label,
+    required this.value,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SwitchListTile.adaptive(
+      contentPadding: EdgeInsets.zero,
+      dense: true,
+      title: Text(
+        label,
+        style: const TextStyle(
+          color: Color(0xFFF6F3EC),
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      value: value,
+      activeTrackColor: const Color(0xFFF6F3EC),
+      activeThumbColor: const Color(0xFF0A0A0A),
+      inactiveTrackColor: Colors.white.withValues(alpha: 0.18),
+      inactiveThumbColor: const Color(0xFFF6F3EC),
+      onChanged: onChanged,
+    );
   }
 }

@@ -13,13 +13,6 @@ import UserNotifications
   ) -> Bool {
     GeneratedPluginRegistrant.register(with: self)
 
-    // Request notification permission
-    UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
-      if granted {
-        print("Notification permission granted")
-      }
-    }
-
     // Setup Method Channel
     guard let controller = window?.rootViewController as? FlutterViewController else {
       fatalError("rootViewController is not type FlutterViewController")
@@ -38,7 +31,9 @@ import UserNotifications
         if let args = call.arguments as? [String: Any],
            let seconds = args["seconds"] as? Int {
           let sessionCount = args["sessionCount"] as? Int ?? 0
-          self.pomodoroTimer?.startTimer(duration: seconds, sessionCount: sessionCount)
+          let sessionGoal = args["sessionGoal"] as? Int ?? 5
+          let phase = args["phase"] as? String ?? "focus"
+          self.pomodoroTimer?.startTimer(duration: seconds, sessionCount: sessionCount, sessionGoal: sessionGoal, phase: phase)
           result(true)
         } else {
           result(FlutterError(code: "INVALID_ARGUMENTS", message: "seconds required", details: nil))
@@ -62,6 +57,9 @@ import UserNotifications
 
       case "getActivityStatus":
         result(self.pomodoroTimer?.lastActivityStatus ?? "no-manager")
+
+      case "restoreState":
+        result(self.pomodoroTimer?.restoreState() ?? ["status": "idle"])
 
       default:
         result(FlutterMethodNotImplemented)

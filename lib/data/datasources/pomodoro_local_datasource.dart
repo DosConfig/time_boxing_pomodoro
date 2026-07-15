@@ -7,12 +7,15 @@ class PomodoroLocalDataSource {
   Pomodoro _currentPomodoro = Pomodoro.initial();
 
   // 네이티브 onTick을 UI로 흘리는 단일 통로 (진실의 원천 = 네이티브 타이머)
-  final StreamController<int> _tickController = StreamController<int>.broadcast();
+  final StreamController<int> _tickController =
+      StreamController<int>.broadcast();
 
   PomodoroLocalDataSource() {
     PomodoroPlatformChannel.setMethodCallHandler(
       (remainingTime) {
-        _currentPomodoro = _currentPomodoro.copyWith(remainingTime: remainingTime);
+        _currentPomodoro = _currentPomodoro.copyWith(
+          remainingTime: remainingTime,
+        );
         _tickController.add(remainingTime);
       },
       () {
@@ -25,15 +28,23 @@ class PomodoroLocalDataSource {
 
   Pomodoro getPomodoro() => _currentPomodoro;
 
+  /// 네이티브 tick 스트림 (startTimer 없이 구독만 — 상태 복원 시 사용)
+  Stream<int> ticks() => _tickController.stream;
+
+  Future<Map<String, dynamic>> restoreState() =>
+      PomodoroPlatformChannel.restoreState();
+
   void updatePomodoro(Pomodoro pomodoro) {
     _currentPomodoro = pomodoro;
   }
 
-  Stream<int> startTimer() async* {
+  Stream<int> startTimer({required String phase}) async* {
     // 네이티브 타이머 시작 (Live Activity 포함)
     await PomodoroPlatformChannel.startTimer(
       _currentPomodoro.remainingTime,
       sessionCount: _currentPomodoro.completedSessions,
+      sessionGoal: _currentPomodoro.sessionsUntilLongBreak,
+      phase: phase,
     );
 
     // 이후의 모든 tick은 네이티브 onTick에서 공급됨

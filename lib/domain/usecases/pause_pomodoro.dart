@@ -11,8 +11,6 @@ class PausePomodoroUseCase {
     await repository.pauseTimer();
 
     final pomodoro = repository.getPomodoro();
-    repository.updatePomodoro(
-      pomodoro.copyWith(status: PomodoroStatus.paused),
-    );
+    repository.updatePomodoro(pomodoro.copyWith(status: PomodoroStatus.paused));
   }
 }

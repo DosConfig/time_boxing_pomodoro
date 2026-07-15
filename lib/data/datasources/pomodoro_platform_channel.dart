@@ -1,10 +1,14 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 class PomodoroPlatformChannel {
   static const _channel = MethodChannel('com.pomodoro/timer');
 
   // Callback for timer tick updates
-  static void setMethodCallHandler(Function(int remainingTime)? onTick, Function()? onComplete) {
+  static void setMethodCallHandler(
+    Function(int remainingTime)? onTick,
+    Function()? onComplete,
+  ) {
     _channel.setMethodCallHandler((call) async {
       switch (call.method) {
         case 'onTick':
@@ -23,15 +27,22 @@ class PomodoroPlatformChannel {
     });
   }
 
-  static Future<bool> startTimer(int seconds, {int sessionCount = 0}) async {
+  static Future<bool> startTimer(
+    int seconds, {
+    int sessionCount = 0,
+    int sessionGoal = 5,
+    required String phase,
+  }) async {
     try {
       final result = await _channel.invokeMethod('startTimer', {
         'seconds': seconds,
         'sessionCount': sessionCount,
+        'sessionGoal': sessionGoal,
+        'phase': phase,
       });
       return result == true;
     } catch (e) {
-      print('Error starting timer: $e');
+      debugPrint('Error starting timer: $e');
       return false;
     }
   }
@@ -41,7 +52,7 @@ class PomodoroPlatformChannel {
       final result = await _channel.invokeMethod('pauseTimer');
       return result == true;
     } catch (e) {
-      print('Error pausing timer: $e');
+      debugPrint('Error pausing timer: $e');
       return false;
     }
   }
@@ -51,7 +62,7 @@ class PomodoroPlatformChannel {
       final result = await _channel.invokeMethod('resumeTimer');
       return result == true;
     } catch (e) {
-      print('Error resuming timer: $e');
+      debugPrint('Error resuming timer: $e');
       return false;
     }
   }
@@ -61,8 +72,22 @@ class PomodoroPlatformChannel {
       final result = await _channel.invokeMethod('stopTimer');
       return result == true;
     } catch (e) {
-      print('Error stopping timer: $e');
+      debugPrint('Error stopping timer: $e');
       return false;
+    }
+  }
+
+  /// 앱 재실행 시 네이티브에 이전 타이머 상태 질의 (프로세스 종료 대비 복원)
+  static Future<Map<String, dynamic>> restoreState() async {
+    try {
+      final result = await _channel.invokeMethod('restoreState');
+      if (result is Map) {
+        return Map<String, dynamic>.from(result);
+      }
+      return {'status': 'idle'};
+    } catch (e) {
+      debugPrint('Error restoring state: $e');
+      return {'status': 'idle'};
     }
   }
 
@@ -80,7 +105,7 @@ class PomodoroPlatformChannel {
       final result = await _channel.invokeMethod('getRemainingTime');
       return result as int;
     } catch (e) {
-      print('Error getting remaining time: $e');
+      debugPrint('Error getting remaining time: $e');
       return 0;
     }
   }

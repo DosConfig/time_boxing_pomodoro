@@ -11,10 +11,12 @@ class PomodoroRepositoryImpl implements PomodoroRepository {
   Pomodoro getPomodoro() => localDataSource.getPomodoro();
 
   @override
-  void updatePomodoro(Pomodoro pomodoro) => localDataSource.updatePomodoro(pomodoro);
+  void updatePomodoro(Pomodoro pomodoro) =>
+      localDataSource.updatePomodoro(pomodoro);
 
   @override
-  Stream<int> startTimer() => localDataSource.startTimer();
+  Stream<int> startTimer({required String phase}) =>
+      localDataSource.startTimer(phase: phase);
 
   @override
   Future<void> pauseTimer() => localDataSource.pauseTimer();
@@ -24,4 +26,10 @@ class PomodoroRepositoryImpl implements PomodoroRepository {
 
   @override
   Future<void> stopTimer() => localDataSource.stopTimer();
+
+  @override
+  Stream<int> ticks() => localDataSource.ticks();
+
+  @override
+  Future<Map<String, dynamic>> restoreState() => localDataSource.restoreState();
 }
