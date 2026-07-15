@@ -33,6 +33,7 @@
 
 ## P2 - Calendar Sync
 
+- [x] Add Calendar tab and provider connection hub.
 - [ ] Add Apple Calendar write-only export with EventKit.
 - [ ] Add calendar event mapping for TimeBox.
 - [ ] Add conflict detection against existing calendars.
@@ -47,10 +48,40 @@
 - [ ] Add Firebase Auth.
 - [ ] Use Sign in with Apple as the primary iOS login.
 - [ ] Use Google sign-in where Google Calendar is connected.
+- [ ] Add anonymous/local user migration path into Firebase account.
+- [ ] Add local-first repository boundary for free local mode versus paid sync mode.
+- [ ] Add Firestore data model for days, time boxes, settings, devices, and entitlements.
 - [ ] Store user plans and provider tokens securely.
 - [ ] Add account deletion flow for store review.
 
-## P4 - Notebook Capture
+## P4 - Watch Companion Apps
+
+- [ ] Add entitlement gate for watch sync.
+- [ ] Add Apple Watch SwiftUI companion target.
+- [ ] Sync current timer snapshot from iPhone to Apple Watch through WatchConnectivity.
+- [ ] Add Apple Watch controls for pause, resume, skip, and mark done.
+- [ ] Add Apple Watch haptic completion feedback.
+- [ ] Add Android app foundation before Wear OS work.
+- [ ] Add Wear OS / Galaxy Watch companion module.
+- [ ] Sync current timer snapshot through the Wear OS Data Layer API.
+- [ ] Add Wear OS controls for pause, resume, skip, and mark done.
+- [ ] Keep phone app as the source of truth for all watch interactions.
+
+## P5 - Billing and Entitlements
+
+- [ ] Define Free, Pro, and Invite entitlement tiers.
+- [ ] Create App Store Connect subscription products.
+- [ ] Create Google Play Console subscription products.
+- [ ] Add in-app purchase product loading.
+- [ ] Add purchase, restore, and subscription status UI.
+- [ ] Add server-side purchase verification through Cloud Functions.
+- [ ] Store normalized entitlement state in Firestore.
+- [ ] Add invite code redemption Cloud Function.
+- [ ] Add invite code entry UI.
+- [ ] Ensure invite codes are promotional access, not an external paid bypass for digital features.
+- [ ] Document paid feature gates in App Store review notes.
+
+## P6 - Notebook Capture
 
 - [ ] Design paper notebook template with OCR-friendly sections.
 - [ ] Add camera capture flow.
@@ -59,7 +90,7 @@
 - [ ] Add OCR correction UI before saving.
 - [ ] Add confidence scores and manual fallback.
 
-## P5 - Notebook Commerce
+## P7 - Notebook Commerce
 
 - [ ] Launch only after app-only timeboxing and capture flows are validated.
 - [ ] Define notebook SKU and page templates.
@@ -74,3 +105,4 @@
 - Nylas and Cronofy are closest to the multi-calendar integration layer.
 - Calendly is more scheduling-product oriented, but useful for studying provider connection UX.
 - Cal.com is useful as an open scheduling platform reference, not necessarily the first integration layer.
+- Watch, Firebase, and billing plan: `docs/product/WATCH_FIREBASE_BILLING_PLAN.md`.

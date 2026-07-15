@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entities/pomodoro.dart';
 import '../providers/pomodoro_provider.dart';
+import 'calendar_sync_screen.dart';
 import 'settings_screen.dart';
 import 'timer_screen.dart';
 import 'today_screen.dart';
@@ -40,6 +41,7 @@ class _AppShellState extends ConsumerState<AppShell> {
         children: [
           TodayScreen(onOpenFocus: () => _setIndex(1)),
           const TimerScreen(),
+          const CalendarSyncScreen(),
           const SettingsScreen(),
         ],
       ),
@@ -68,7 +70,7 @@ class _AppShellState extends ConsumerState<AppShell> {
         ),
         child: NavigationBar(
           selectedIndex: _index,
-          height: 68,
+          height: 72,
           onDestinationSelected: _setIndex,
           destinations: const [
             NavigationDestination(
@@ -80,6 +82,11 @@ class _AppShellState extends ConsumerState<AppShell> {
               icon: Icon(Icons.timer_outlined),
               selectedIcon: Icon(Icons.timer_rounded),
               label: 'Focus',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.calendar_month_outlined),
+              selectedIcon: Icon(Icons.calendar_month_rounded),
+              label: 'Calendar',
             ),
             NavigationDestination(
               icon: Icon(Icons.tune_rounded),
