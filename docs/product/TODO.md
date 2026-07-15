@@ -10,15 +10,19 @@
 - [x] Add default time boxes and one-tap active box selection.
 - [x] Split Today, Focus, and Settings into separate tabs.
 - [x] Add daily one-by-one priority entry flow.
+- [x] Add momentum strip for daily completion feedback.
+- [x] Debounce Top Priority typing so state is not saved on every keystroke.
+- [x] Add quick time box create, edit, delete, and reorder controls.
 - [x] Document menu structure.
 - [x] Keep photo capture out of the current primary flow.
 
 ## P1 - Local Timeboxing Planner
 
-- [ ] Build Today screen.
+- [x] Build Today screen.
 - [ ] Add fast Brain Dump list with minimal typing friction.
 - [ ] Add Top 3 Priorities editor with one-tap promote from Brain Dump.
-- [ ] Add day time-box grid with quick add and drag-to-adjust.
+- [x] Add day time-box list with quick add and drag reorder.
+- [ ] Add time-box duration adjustment and calendar-style vertical grid.
 - [x] Let users select a box and start Focus mode from it.
 - [ ] Persist Today Plan locally.
 - [ ] Add Review screen for planned versus completed boxes.

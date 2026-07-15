@@ -316,12 +316,18 @@ class PomodoroNotifier extends Notifier<Pomodoro> with WidgetsBindingObserver {
     while (priorities.length < 3) {
       priorities.add('');
     }
+    final previousPriority = priorities[index].trim();
     priorities[index] = value;
 
     var nextTitle = state.currentTimeBoxTitle;
-    if (index == 0 &&
-        state.activeTimeBoxId == 'box-0900' &&
-        (nextTitle.trim().isEmpty || nextTitle == 'Top priority')) {
+    final activePriorityBox =
+        (index == 0 && state.activeTimeBoxId == 'box-0900') ||
+        (index == 1 && state.activeTimeBoxId == 'box-1330');
+    if (activePriorityBox &&
+        (nextTitle.trim().isEmpty ||
+            nextTitle == 'Top priority' ||
+            nextTitle == 'Second priority' ||
+            nextTitle == previousPriority)) {
       nextTitle = value.trim();
     }
 
@@ -339,6 +345,121 @@ class PomodoroNotifier extends Notifier<Pomodoro> with WidgetsBindingObserver {
 
   void setCurrentTimeBoxTimeRange(String value) {
     state = state.copyWith(currentTimeBoxTimeRange: value);
+    repository.updatePomodoro(state);
+  }
+
+  void addTimeBox() {
+    final boxes = List<TimeBox>.from(state.timeBoxes);
+    final nextBox = TimeBox(
+      id: 'box-${DateTime.now().microsecondsSinceEpoch}',
+      title: 'New time box',
+      timeRange: _nextTimeRange(boxes),
+      durationSeconds: 25 * 60,
+    );
+    boxes.add(nextBox);
+
+    state = state.copyWith(
+      timeBoxes: boxes,
+      activeTimeBoxId: state.activeTimeBoxId.isEmpty
+          ? nextBox.id
+          : state.activeTimeBoxId,
+    );
+    repository.updatePomodoro(state);
+  }
+
+  Future<void> removeTimeBox(String id) async {
+    final boxes = List<TimeBox>.from(state.timeBoxes);
+    if (boxes.length <= 1) {
+      return;
+    }
+
+    final removeIndex = boxes.indexWhere((box) => box.id == id);
+    if (removeIndex == -1) {
+      return;
+    }
+
+    final removingActiveBox = id == state.activeTimeBoxId;
+    if (removingActiveBox &&
+        (state.status == PomodoroStatus.running ||
+            state.status == PomodoroStatus.paused)) {
+      await reset();
+    }
+
+    boxes.removeAt(removeIndex);
+
+    if (!removingActiveBox) {
+      state = state.copyWith(timeBoxes: boxes);
+      repository.updatePomodoro(state);
+      return;
+    }
+
+    final nextIndex = removeIndex.clamp(0, boxes.length - 1);
+    final nextBox = boxes[nextIndex];
+    state = state.copyWith(
+      timeBoxes: boxes,
+      activeTimeBoxId: nextBox.id,
+      currentTimeBoxTitle: _titleForTimeBox(nextBox),
+      currentTimeBoxTimeRange: nextBox.timeRange,
+      workDuration: nextBox.durationSeconds,
+      remainingTime: nextBox.durationSeconds,
+      status: PomodoroStatus.idle,
+      phase: PomodoroPhase.focus,
+    );
+    repository.updatePomodoro(state);
+  }
+
+  void reorderTimeBox(int oldIndex, int newIndex) {
+    final boxes = List<TimeBox>.from(state.timeBoxes);
+    if (oldIndex < 0 || oldIndex >= boxes.length) {
+      return;
+    }
+
+    final targetIndex = newIndex.clamp(0, boxes.length - 1);
+    if (oldIndex == targetIndex) {
+      return;
+    }
+
+    final moved = boxes.removeAt(oldIndex);
+    boxes.insert(targetIndex, moved);
+    state = state.copyWith(timeBoxes: boxes);
+    repository.updatePomodoro(state);
+  }
+
+  void updateTimeBox(
+    String id, {
+    String? title,
+    String? timeRange,
+    int? durationSeconds,
+  }) {
+    final boxes = List<TimeBox>.from(state.timeBoxes);
+    final index = boxes.indexWhere((box) => box.id == id);
+    if (index == -1) {
+      return;
+    }
+
+    final nextBox = boxes[index].copyWith(
+      title: title?.trim().isEmpty ?? true ? null : title?.trim(),
+      timeRange: timeRange?.trim().isEmpty ?? true ? null : timeRange?.trim(),
+      durationSeconds: durationSeconds,
+    );
+    boxes[index] = nextBox;
+
+    final updatingActiveBox = id == state.activeTimeBoxId;
+    state = state.copyWith(
+      timeBoxes: boxes,
+      currentTimeBoxTitle: updatingActiveBox
+          ? _titleForTimeBox(nextBox)
+          : state.currentTimeBoxTitle,
+      currentTimeBoxTimeRange: updatingActiveBox
+          ? nextBox.timeRange
+          : state.currentTimeBoxTimeRange,
+      workDuration: updatingActiveBox && state.status == PomodoroStatus.idle
+          ? nextBox.durationSeconds
+          : state.workDuration,
+      remainingTime: updatingActiveBox && state.status == PomodoroStatus.idle
+          ? nextBox.durationSeconds
+          : state.remainingTime,
+    );
     repository.updatePomodoro(state);
   }
 
@@ -388,6 +509,35 @@ class PomodoroNotifier extends Notifier<Pomodoro> with WidgetsBindingObserver {
     }
 
     return box.title;
+  }
+
+  String _nextTimeRange(List<TimeBox> boxes) {
+    final lastEnd = boxes.isEmpty ? null : _rangeEndMinutes(boxes.last);
+    final start = lastEnd ?? (9 * 60);
+    final end = start + 25;
+    return '${_formatClock(start)}-${_formatClock(end)}';
+  }
+
+  int? _rangeEndMinutes(TimeBox box) {
+    final endText = box.timeRange.split('-').last.trim();
+    final match = RegExp(r'^(\d{1,2}):(\d{2})$').firstMatch(endText);
+    if (match == null) {
+      return null;
+    }
+
+    final hour = int.tryParse(match.group(1)!);
+    final minute = int.tryParse(match.group(2)!);
+    if (hour == null || minute == null || minute > 59) {
+      return null;
+    }
+    return (hour * 60) + minute;
+  }
+
+  String _formatClock(int minutes) {
+    final dayMinutes = minutes % (24 * 60);
+    final hour = dayMinutes ~/ 60;
+    final minute = dayMinutes % 60;
+    return '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
   }
 
   void _onTimerComplete() {
