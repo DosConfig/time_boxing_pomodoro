@@ -31,36 +31,74 @@ class TimeBox {
     );
   }
 
+  int? get startMinutes => _clockMinutes(timeRange.split('-').first);
+
+  int? get endMinutes {
+    final parts = timeRange.split('-');
+    if (parts.length < 2) {
+      return null;
+    }
+    final start = startMinutes;
+    final end = _clockMinutes(parts.last);
+    if (start == null || end == null) {
+      return null;
+    }
+    return end <= start ? end + (24 * 60) : end;
+  }
+
+  int? get rangeDurationSeconds {
+    final start = startMinutes;
+    final end = endMinutes;
+    if (start == null || end == null) {
+      return null;
+    }
+    return (end - start) * 60;
+  }
+
+  static int? _clockMinutes(String value) {
+    final match = RegExp(r'^\s*(\d{1,2}):(\d{2})\s*$').firstMatch(value);
+    if (match == null) {
+      return null;
+    }
+
+    final hour = int.tryParse(match.group(1)!);
+    final minute = int.tryParse(match.group(2)!);
+    if (hour == null || minute == null || hour > 23 || minute > 59) {
+      return null;
+    }
+    return (hour * 60) + minute;
+  }
+
   static const List<TimeBox> defaultDay = [
     TimeBox(
       id: 'box-0900',
       title: 'Top priority',
-      timeRange: '09:00-09:50',
-      durationSeconds: 50 * 60,
+      timeRange: '09:00-09:30',
+      durationSeconds: 30 * 60,
     ),
     TimeBox(
       id: 'box-1000',
       title: 'Deep work',
-      timeRange: '10:00-10:50',
-      durationSeconds: 50 * 60,
+      timeRange: '10:00-10:30',
+      durationSeconds: 30 * 60,
     ),
     TimeBox(
       id: 'box-1100',
       title: 'Admin',
-      timeRange: '11:00-11:25',
-      durationSeconds: 25 * 60,
+      timeRange: '11:00-11:30',
+      durationSeconds: 30 * 60,
     ),
     TimeBox(
       id: 'box-1330',
       title: 'Second priority',
-      timeRange: '13:30-14:20',
-      durationSeconds: 50 * 60,
+      timeRange: '13:30-14:00',
+      durationSeconds: 30 * 60,
     ),
     TimeBox(
       id: 'box-1500',
       title: 'Follow-up',
-      timeRange: '15:00-15:25',
-      durationSeconds: 25 * 60,
+      timeRange: '15:00-15:30',
+      durationSeconds: 30 * 60,
     ),
   ];
 }
@@ -79,6 +117,7 @@ class Pomodoro {
   final bool autoStartFocus;
   final bool notificationsEnabled;
   final bool soundEnabled;
+  final List<String> brainDump;
   final List<String> topPriorities;
   final String currentTimeBoxTitle;
   final String currentTimeBoxTimeRange;
@@ -99,6 +138,7 @@ class Pomodoro {
     required this.autoStartFocus,
     required this.notificationsEnabled,
     required this.soundEnabled,
+    required this.brainDump,
     required this.topPriorities,
     required this.currentTimeBoxTitle,
     required this.currentTimeBoxTimeRange,
@@ -121,6 +161,7 @@ class Pomodoro {
       autoStartFocus: false,
       notificationsEnabled: true,
       soundEnabled: true,
+      brainDump: [],
       topPriorities: ['', '', ''],
       currentTimeBoxTitle: '',
       currentTimeBoxTimeRange: '',
@@ -143,6 +184,7 @@ class Pomodoro {
     bool? autoStartFocus,
     bool? notificationsEnabled,
     bool? soundEnabled,
+    List<String>? brainDump,
     List<String>? topPriorities,
     String? currentTimeBoxTitle,
     String? currentTimeBoxTimeRange,
@@ -164,6 +206,7 @@ class Pomodoro {
       autoStartFocus: autoStartFocus ?? this.autoStartFocus,
       notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
       soundEnabled: soundEnabled ?? this.soundEnabled,
+      brainDump: brainDump ?? this.brainDump,
       topPriorities: topPriorities ?? this.topPriorities,
       currentTimeBoxTitle: currentTimeBoxTitle ?? this.currentTimeBoxTitle,
       currentTimeBoxTimeRange:

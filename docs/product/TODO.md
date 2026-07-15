@@ -10,19 +10,22 @@
 - [x] Add default time boxes and one-tap active box selection.
 - [x] Split Today, Focus, and Settings into separate tabs.
 - [x] Add daily one-by-one priority entry flow.
-- [x] Add momentum strip for daily completion feedback.
+- [x] Add Daily progress strip for plan/focus completion feedback.
 - [x] Debounce Top Priority typing so state is not saved on every keystroke.
 - [x] Add quick time box create, edit, delete, and reorder controls.
+- [x] Replace visible edit/delete buttons with swipe actions on time boxes.
+- [x] Add foreground in-app completion banner and iOS foreground notification presentation.
 - [x] Document menu structure.
 - [x] Keep photo capture out of the current primary flow.
 
 ## P1 - Local Timeboxing Planner
 
 - [x] Build Today screen.
-- [ ] Add fast Brain Dump list with minimal typing friction.
-- [ ] Add Top 3 Priorities editor with one-tap promote from Brain Dump.
-- [x] Add day time-box list with quick add and drag reorder.
-- [ ] Add time-box duration adjustment and calendar-style vertical grid.
+- [x] Add fast Brain Dump list with minimal typing friction.
+- [x] Add Top 3 Priorities editor with one-tap promote from Brain Dump.
+- [x] Add calendar-style 30-minute time-slot board.
+- [x] Add long-press drag placement for 30-minute time boxes.
+- [ ] Add time-box duration adjustment after fixed-slot MVP is validated.
 - [x] Let users select a box and start Focus mode from it.
 - [ ] Persist Today Plan locally.
 - [ ] Add Review screen for planned versus completed boxes.

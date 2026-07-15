@@ -12,8 +12,11 @@ void main() {
       expect(pomodoro.phase, PomodoroPhase.focus);
       expect(pomodoro.notificationsEnabled, isTrue);
       expect(pomodoro.soundEnabled, isTrue);
+      expect(pomodoro.brainDump, isEmpty);
       expect(pomodoro.timeBoxes, isNotEmpty);
       expect(pomodoro.activeTimeBox?.title, 'Top priority');
+      expect(pomodoro.activeTimeBox?.timeRange, '09:00-09:30');
+      expect(pomodoro.activeTimeBox?.durationSeconds, 30 * 60);
     });
 
     test('deep work preset resets the active segment', () {
@@ -76,7 +79,20 @@ void main() {
       final pomodoro = Pomodoro.initial();
 
       expect(pomodoro.liveActivityTimeBoxTitle, 'Top priority');
-      expect(pomodoro.liveActivityTimeBoxRange, '09:00-09:50');
+      expect(pomodoro.liveActivityTimeBoxRange, '09:00-09:30');
+    });
+
+    test('time boxes parse fixed 30 minute slot ranges', () {
+      const box = TimeBox(
+        id: 'box-test',
+        title: 'Slot',
+        timeRange: '13:30-14:00',
+        durationSeconds: 30 * 60,
+      );
+
+      expect(box.startMinutes, (13 * 60) + 30);
+      expect(box.endMinutes, 14 * 60);
+      expect(box.rangeDurationSeconds, 30 * 60);
     });
   });
 }
