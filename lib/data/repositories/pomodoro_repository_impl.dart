@@ -15,8 +15,15 @@ class PomodoroRepositoryImpl implements PomodoroRepository {
       localDataSource.updatePomodoro(pomodoro);
 
   @override
-  Stream<int> startTimer({required String phase}) =>
-      localDataSource.startTimer(phase: phase);
+  Stream<int> startTimer({
+    required String phase,
+    required bool notificationsEnabled,
+    required bool soundEnabled,
+  }) => localDataSource.startTimer(
+    phase: phase,
+    notificationsEnabled: notificationsEnabled,
+    soundEnabled: soundEnabled,
+  );
 
   @override
   Future<void> pauseTimer() => localDataSource.pauseTimer();
@@ -32,4 +39,13 @@ class PomodoroRepositoryImpl implements PomodoroRepository {
 
   @override
   Future<Map<String, dynamic>> restoreState() => localDataSource.restoreState();
+
+  @override
+  Future<void> updateNotificationSettings({
+    required bool notificationsEnabled,
+    required bool soundEnabled,
+  }) => localDataSource.updateNotificationSettings(
+    notificationsEnabled: notificationsEnabled,
+    soundEnabled: soundEnabled,
+  );
 }

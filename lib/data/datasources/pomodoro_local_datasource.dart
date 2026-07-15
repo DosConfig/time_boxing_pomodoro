@@ -38,13 +38,19 @@ class PomodoroLocalDataSource {
     _currentPomodoro = pomodoro;
   }
 
-  Stream<int> startTimer({required String phase}) async* {
+  Stream<int> startTimer({
+    required String phase,
+    required bool notificationsEnabled,
+    required bool soundEnabled,
+  }) async* {
     // 네이티브 타이머 시작 (Live Activity 포함)
     await PomodoroPlatformChannel.startTimer(
       _currentPomodoro.remainingTime,
       sessionCount: _currentPomodoro.completedSessions,
       sessionGoal: _currentPomodoro.sessionsUntilLongBreak,
       phase: phase,
+      notificationsEnabled: notificationsEnabled,
+      soundEnabled: soundEnabled,
     );
 
     // 이후의 모든 tick은 네이티브 onTick에서 공급됨
@@ -61,5 +67,15 @@ class PomodoroLocalDataSource {
 
   Future<void> stopTimer() async {
     await PomodoroPlatformChannel.stopTimer();
+  }
+
+  Future<void> updateNotificationSettings({
+    required bool notificationsEnabled,
+    required bool soundEnabled,
+  }) async {
+    await PomodoroPlatformChannel.updateNotificationSettings(
+      notificationsEnabled: notificationsEnabled,
+      soundEnabled: soundEnabled,
+    );
   }
 }

@@ -10,6 +10,8 @@ void main() {
       expect(pomodoro.breakDuration, 5 * 60);
       expect(pomodoro.sessionsUntilLongBreak, 5);
       expect(pomodoro.phase, PomodoroPhase.focus);
+      expect(pomodoro.notificationsEnabled, isTrue);
+      expect(pomodoro.soundEnabled, isTrue);
     });
 
     test('deep work preset resets the active segment', () {
@@ -18,6 +20,8 @@ void main() {
             status: PomodoroStatus.running,
             remainingTime: 900,
             completedSessions: 2,
+            notificationsEnabled: false,
+            soundEnabled: false,
           )
           .applyPreset(PomodoroPreset.deepWork);
 
@@ -26,6 +30,8 @@ void main() {
       expect(pomodoro.remainingTime, 50 * 60);
       expect(pomodoro.completedSessions, 0);
       expect(pomodoro.status, PomodoroStatus.idle);
+      expect(pomodoro.notificationsEnabled, isFalse);
+      expect(pomodoro.soundEnabled, isFalse);
     });
   });
 

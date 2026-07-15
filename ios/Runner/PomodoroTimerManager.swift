@@ -15,6 +15,8 @@ class PomodoroTimerManager: NSObject {
     private var sessionCount: Int = 0
     private var sessionGoal: Int = 5
     private var currentPhase: String = "focus"
+    private var notificationsEnabled: Bool = true
+    private var soundEnabled: Bool = true
 
     private var currentActivity: Any?
 
@@ -35,6 +37,8 @@ class PomodoroTimerManager: NSObject {
         static let sessionCount = "pomodoro.sessionCount"
         static let sessionGoal = "pomodoro.sessionGoal"
         static let phase = "pomodoro.phase"
+        static let notificationsEnabled = "pomodoro.notificationsEnabled"
+        static let soundEnabled = "pomodoro.soundEnabled"
     }
 
     private func persistState() {
@@ -47,6 +51,35 @@ class PomodoroTimerManager: NSObject {
         d.set(sessionCount, forKey: PersistKeys.sessionCount)
         d.set(sessionGoal, forKey: PersistKeys.sessionGoal)
         d.set(currentPhase, forKey: PersistKeys.phase)
+        persistNotificationSettings()
+    }
+
+    private func persistNotificationSettings() {
+        let d = UserDefaults.standard
+        d.set(notificationsEnabled, forKey: PersistKeys.notificationsEnabled)
+        d.set(soundEnabled, forKey: PersistKeys.soundEnabled)
+    }
+
+    private func restoreNotificationSettings() {
+        let d = UserDefaults.standard
+        if d.object(forKey: PersistKeys.notificationsEnabled) == nil {
+            notificationsEnabled = true
+        } else {
+            notificationsEnabled = d.bool(forKey: PersistKeys.notificationsEnabled)
+        }
+
+        if d.object(forKey: PersistKeys.soundEnabled) == nil {
+            soundEnabled = true
+        } else {
+            soundEnabled = d.bool(forKey: PersistKeys.soundEnabled)
+        }
+    }
+
+    private var notificationSettingsPayload: [String: Any] {
+        return [
+            "notificationsEnabled": notificationsEnabled,
+            "soundEnabled": soundEnabled
+        ]
     }
 
     private func clearPersistedState() {
@@ -79,10 +112,12 @@ class PomodoroTimerManager: NSObject {
     /// 반환: Flutter 초기 상태 구성용 딕셔너리 (status: idle/running/paused/completed)
     func restoreState() -> [String: Any] {
         let d = UserDefaults.standard
+        restoreNotificationSettings()
+
         guard d.bool(forKey: PersistKeys.isActive) else {
             // 저장된 타이머가 없는데 화면에 Activity가 남아 있으면 고아 — 정리
             if #available(iOS 16.1, *) { endAllActivities() }
-            return ["status": "idle"]
+            return notificationSettingsPayload.merging(["status": "idle"]) { _, new in new }
         }
 
         sessionCount = d.integer(forKey: PersistKeys.sessionCount)
@@ -99,7 +134,7 @@ class PomodoroTimerManager: NSObject {
             guard pausedRemainingTime > 0 else {
                 clearPersistedState()
                 if #available(iOS 16.1, *) { endAllActivities() }
-                return ["status": "completed", "sessionCount": sessionCount, "sessionGoal": sessionGoal, "phase": currentPhase]
+                return notificationSettingsPayload.merging(["status": "completed", "sessionCount": sessionCount, "sessionGoal": sessionGoal, "phase": currentPhase]) { _, new in new }
             }
             endTime = nil
             targetDuration = pausedRemainingTime
@@ -108,14 +143,14 @@ class PomodoroTimerManager: NSObject {
                 updateLiveActivity(status: "paused")
             }
             NSLog("[Pomodoro] restored: paused, remaining=%d", Int(pausedRemainingTime))
-            return ["status": "paused", "remainingTime": remainingSecondsRoundedUp(), "sessionCount": sessionCount, "sessionGoal": sessionGoal, "phase": currentPhase]
+            return notificationSettingsPayload.merging(["status": "paused", "remainingTime": remainingSecondsRoundedUp(), "sessionCount": sessionCount, "sessionGoal": sessionGoal, "phase": currentPhase]) { _, new in new }
         }
 
         targetDuration = d.double(forKey: PersistKeys.targetDuration)
         guard let restoredEndTime = restoredEndTime(from: d) else {
             clearPersistedState()
             if #available(iOS 16.1, *) { endAllActivities() }
-            return ["status": "idle"]
+            return notificationSettingsPayload.merging(["status": "idle"]) { _, new in new }
         }
         endTime = restoredEndTime
         let remaining = getRemainingTime()
@@ -126,15 +161,17 @@ class PomodoroTimerManager: NSObject {
             clearPersistedState()
             if #available(iOS 16.1, *) { endAllActivities() }
             NSLog("[Pomodoro] restored: completed while away")
-            return ["status": "completed", "sessionCount": sessionCount, "sessionGoal": sessionGoal, "phase": currentPhase]
+            return notificationSettingsPayload.merging(["status": "completed", "sessionCount": sessionCount, "sessionGoal": sessionGoal, "phase": currentPhase]) { _, new in new }
         }
 
         // 진행 중이던 타이머 재가동
-        scheduleLocalNotification(after: remainingSecondsRoundedUp())
+        if notificationsEnabled {
+            scheduleLocalNotification(after: remainingSecondsRoundedUp())
+        }
         startRepeatingTimer()
         if #available(iOS 16.1, *) { reattachOrRecreateActivity() }
         NSLog("[Pomodoro] restored: running, remaining=%d", remainingSecondsRoundedUp())
-        return ["status": "running", "remainingTime": remainingSecondsRoundedUp(), "sessionCount": sessionCount, "sessionGoal": sessionGoal, "phase": currentPhase]
+        return notificationSettingsPayload.merging(["status": "running", "remainingTime": remainingSecondsRoundedUp(), "sessionCount": sessionCount, "sessionGoal": sessionGoal, "phase": currentPhase]) { _, new in new }
     }
 
     init(channel: FlutterMethodChannel) {
@@ -163,7 +200,7 @@ class PomodoroTimerManager: NSObject {
 
     // MARK: - Timer Control
 
-    func startTimer(duration: Int, sessionCount: Int = 0, sessionGoal: Int = 5, phase: String = "focus") {
+    func startTimer(duration: Int, sessionCount: Int = 0, sessionGoal: Int = 5, phase: String = "focus", notificationsEnabled: Bool = true, soundEnabled: Bool = true) {
         NSLog("[Pomodoro] native startTimer called — duration=%d session=%d", duration, sessionCount)
         stopTimer()
 
@@ -174,9 +211,13 @@ class PomodoroTimerManager: NSObject {
         self.sessionCount = sessionCount
         self.sessionGoal = max(1, sessionGoal)
         currentPhase = phase
+        self.notificationsEnabled = notificationsEnabled
+        self.soundEnabled = soundEnabled
 
-        requestNotificationAuthorizationIfNeeded()
-        scheduleLocalNotification(after: duration)
+        if notificationsEnabled {
+            requestNotificationAuthorizationIfNeeded()
+            scheduleLocalNotification(after: duration)
+        }
         startRepeatingTimer()
         persistState()
 
@@ -211,7 +252,9 @@ class PomodoroTimerManager: NSObject {
         isPaused = false
         endTime = Date().addingTimeInterval(pausedRemainingTime)
 
-        scheduleLocalNotification(after: remainingSecondsRoundedUp())
+        if notificationsEnabled {
+            scheduleLocalNotification(after: remainingSecondsRoundedUp())
+        }
         startRepeatingTimer()
         persistState()
 
@@ -245,6 +288,18 @@ class PomodoroTimerManager: NSObject {
 
         guard let endTime = endTime else { return 0 }
         return max(0, endTime.timeIntervalSinceNow)
+    }
+
+    func updateNotificationSettings(notificationsEnabled: Bool, soundEnabled: Bool) {
+        self.notificationsEnabled = notificationsEnabled
+        self.soundEnabled = soundEnabled
+        persistNotificationSettings()
+
+        if !notificationsEnabled {
+            cancelLocalNotification()
+        } else if !isPaused, endTime != nil {
+            scheduleLocalNotification(after: remainingSecondsRoundedUp())
+        }
     }
 
     // MARK: - Private Methods
@@ -291,13 +346,14 @@ class PomodoroTimerManager: NSObject {
     }
 
     private func scheduleLocalNotification(after seconds: Int) {
+        guard notificationsEnabled else { return }
         cancelLocalNotification()
         let safeSeconds = max(1, seconds)
 
         let content = UNMutableNotificationContent()
         content.title = notificationTitle
         content.body = notificationBody
-        content.sound = .default
+        content.sound = soundEnabled ? .default : nil
         content.badge = 1
 
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: TimeInterval(safeSeconds), repeats: false)

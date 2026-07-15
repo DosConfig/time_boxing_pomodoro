@@ -5,7 +5,15 @@ class StartPomodoroUseCase {
 
   StartPomodoroUseCase(this.repository);
 
-  Stream<int> call({required String phase}) {
-    return repository.startTimer(phase: phase);
+  Stream<int> call({
+    required String phase,
+    required bool notificationsEnabled,
+    required bool soundEnabled,
+  }) {
+    return repository.startTimer(
+      phase: phase,
+      notificationsEnabled: notificationsEnabled,
+      soundEnabled: soundEnabled,
+    );
   }
 }

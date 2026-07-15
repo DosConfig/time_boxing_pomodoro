@@ -32,6 +32,8 @@ class PomodoroPlatformChannel {
     int sessionCount = 0,
     int sessionGoal = 5,
     required String phase,
+    required bool notificationsEnabled,
+    required bool soundEnabled,
   }) async {
     try {
       final result = await _channel.invokeMethod('startTimer', {
@@ -39,6 +41,8 @@ class PomodoroPlatformChannel {
         'sessionCount': sessionCount,
         'sessionGoal': sessionGoal,
         'phase': phase,
+        'notificationsEnabled': notificationsEnabled,
+        'soundEnabled': soundEnabled,
       });
       return result == true;
     } catch (e) {
@@ -88,6 +92,22 @@ class PomodoroPlatformChannel {
     } catch (e) {
       debugPrint('Error restoring state: $e');
       return {'status': 'idle'};
+    }
+  }
+
+  static Future<bool> updateNotificationSettings({
+    required bool notificationsEnabled,
+    required bool soundEnabled,
+  }) async {
+    try {
+      final result = await _channel.invokeMethod('updateNotificationSettings', {
+        'notificationsEnabled': notificationsEnabled,
+        'soundEnabled': soundEnabled,
+      });
+      return result == true;
+    } catch (e) {
+      debugPrint('Error updating notification settings: $e');
+      return false;
     }
   }
 

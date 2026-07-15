@@ -88,6 +88,13 @@ class PomodoroNotifier extends Notifier<Pomodoro> with WidgetsBindingObserver {
       restored['remainingTime'],
       state.remainingTime,
     );
+    state = state.copyWith(
+      notificationsEnabled: _asBool(
+        restored['notificationsEnabled'],
+        state.notificationsEnabled,
+      ),
+      soundEnabled: _asBool(restored['soundEnabled'], state.soundEnabled),
+    );
 
     switch (status) {
       case 'running':
@@ -133,6 +140,13 @@ class PomodoroNotifier extends Notifier<Pomodoro> with WidgetsBindingObserver {
     return fallback;
   }
 
+  bool _asBool(Object? value, bool fallback) {
+    if (value is bool) {
+      return value;
+    }
+    return fallback;
+  }
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
@@ -151,7 +165,11 @@ class PomodoroNotifier extends Notifier<Pomodoro> with WidgetsBindingObserver {
   }
 
   StreamSubscription<int> _startNativeTimer() {
-    return startUseCase(phase: state.phaseValue).listen((remainingTime) {
+    return startUseCase(
+      phase: state.phaseValue,
+      notificationsEnabled: state.notificationsEnabled,
+      soundEnabled: state.soundEnabled,
+    ).listen((remainingTime) {
       state = state.copyWith(remainingTime: remainingTime);
 
       if (remainingTime == 0) {
@@ -204,6 +222,8 @@ class PomodoroNotifier extends Notifier<Pomodoro> with WidgetsBindingObserver {
       preset: previous.preset,
       autoStartBreaks: previous.autoStartBreaks,
       autoStartFocus: previous.autoStartFocus,
+      notificationsEnabled: previous.notificationsEnabled,
+      soundEnabled: previous.soundEnabled,
     );
     repository.updatePomodoro(state);
   }
@@ -225,6 +245,28 @@ class PomodoroNotifier extends Notifier<Pomodoro> with WidgetsBindingObserver {
   void setAutoStartFocus(bool enabled) {
     state = state.copyWith(autoStartFocus: enabled);
     repository.updatePomodoro(state);
+  }
+
+  void setNotificationsEnabled(bool enabled) {
+    state = state.copyWith(notificationsEnabled: enabled);
+    repository.updatePomodoro(state);
+    unawaited(
+      repository.updateNotificationSettings(
+        notificationsEnabled: state.notificationsEnabled,
+        soundEnabled: state.soundEnabled,
+      ),
+    );
+  }
+
+  void setSoundEnabled(bool enabled) {
+    state = state.copyWith(soundEnabled: enabled);
+    repository.updatePomodoro(state);
+    unawaited(
+      repository.updateNotificationSettings(
+        notificationsEnabled: state.notificationsEnabled,
+        soundEnabled: state.soundEnabled,
+      ),
+    );
   }
 
   void _onTimerComplete() {

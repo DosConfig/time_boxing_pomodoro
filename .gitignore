@@ -73,6 +73,7 @@ app.*.map.json
 # Exclude MD and packages as requested
 *.md
 !/README.md
+!/docs/**/*.md
 packages/
 blog_posts/
 blog_sql/

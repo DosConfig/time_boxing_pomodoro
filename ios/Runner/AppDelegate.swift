@@ -33,10 +33,32 @@ import UserNotifications
           let sessionCount = args["sessionCount"] as? Int ?? 0
           let sessionGoal = args["sessionGoal"] as? Int ?? 5
           let phase = args["phase"] as? String ?? "focus"
-          self.pomodoroTimer?.startTimer(duration: seconds, sessionCount: sessionCount, sessionGoal: sessionGoal, phase: phase)
+          let notificationsEnabled = args["notificationsEnabled"] as? Bool ?? true
+          let soundEnabled = args["soundEnabled"] as? Bool ?? true
+          self.pomodoroTimer?.startTimer(
+            duration: seconds,
+            sessionCount: sessionCount,
+            sessionGoal: sessionGoal,
+            phase: phase,
+            notificationsEnabled: notificationsEnabled,
+            soundEnabled: soundEnabled
+          )
           result(true)
         } else {
           result(FlutterError(code: "INVALID_ARGUMENTS", message: "seconds required", details: nil))
+        }
+
+      case "updateNotificationSettings":
+        if let args = call.arguments as? [String: Any] {
+          let notificationsEnabled = args["notificationsEnabled"] as? Bool ?? true
+          let soundEnabled = args["soundEnabled"] as? Bool ?? true
+          self.pomodoroTimer?.updateNotificationSettings(
+            notificationsEnabled: notificationsEnabled,
+            soundEnabled: soundEnabled
+          )
+          result(true)
+        } else {
+          result(FlutterError(code: "INVALID_ARGUMENTS", message: "settings required", details: nil))
         }
 
       case "pauseTimer":

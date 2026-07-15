@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -18,37 +20,63 @@ class TimerScreen extends ConsumerWidget {
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final dialSize = constraints.maxWidth.clamp(280.0, 430.0);
+            const horizontalPadding = 24.0;
+            final contentWidth = math.max(
+              0.0,
+              constraints.maxWidth - (horizontalPadding * 2),
+            );
+            final preferredDialSize = math.max(
+              220.0,
+              math.min(360.0, constraints.maxHeight * 0.39),
+            );
+            final dialSize = math.min(contentWidth, preferredDialSize);
+            final isCompactHeight = constraints.maxHeight < 720;
 
-            return SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(24, 22, 24, 28),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _Header(pomodoro: pomodoro),
-                    const SizedBox(height: 34),
-                    Align(
-                      child: SizedBox(
-                        width: dialSize,
-                        child: FocusTimerDial(
-                          minutes: pomodoro.minutes,
-                          seconds: pomodoro.seconds,
-                          progress: pomodoro.progress,
-                          label: _phaseLabel(pomodoro.phase),
-                          isPaused: pomodoro.status == PomodoroStatus.paused,
-                        ),
+            return ScrollConfiguration(
+              behavior: const _TimerScrollBehavior(),
+              child: CustomScrollView(
+                physics: const ClampingScrollPhysics(),
+                slivers: [
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(
+                      horizontalPadding,
+                      22,
+                      horizontalPadding,
+                      32,
+                    ),
+                    sliver: SliverToBoxAdapter(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _Header(pomodoro: pomodoro),
+                          SizedBox(height: isCompactHeight ? 24 : 34),
+                          Align(
+                            child: SizedBox(
+                              width: dialSize,
+                              child: FocusTimerDial(
+                                minutes: pomodoro.minutes,
+                                seconds: pomodoro.seconds,
+                                progress: pomodoro.progress,
+                                label: _phaseLabel(pomodoro.phase),
+                                isPaused:
+                                    pomodoro.status == PomodoroStatus.paused,
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: isCompactHeight ? 22 : 28),
+                          _SessionDots(pomodoro: pomodoro),
+                          SizedBox(height: isCompactHeight ? 22 : 26),
+                          _Controls(pomodoro: pomodoro, notifier: notifier),
+                          SizedBox(height: isCompactHeight ? 24 : 28),
+                          _SettingsPanel(
+                            pomodoro: pomodoro,
+                            notifier: notifier,
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 28),
-                    _SessionDots(pomodoro: pomodoro),
-                    const SizedBox(height: 26),
-                    _Controls(pomodoro: pomodoro, notifier: notifier),
-                    const SizedBox(height: 28),
-                    _SettingsPanel(pomodoro: pomodoro, notifier: notifier),
-                  ],
-                ),
+                  ),
+                ],
               ),
             );
           },
@@ -66,6 +94,24 @@ class TimerScreen extends ConsumerWidget {
       case PomodoroPhase.longBreak:
         return 'Long break';
     }
+  }
+}
+
+class _TimerScrollBehavior extends MaterialScrollBehavior {
+  const _TimerScrollBehavior();
+
+  @override
+  ScrollPhysics getScrollPhysics(BuildContext context) {
+    return const ClampingScrollPhysics();
+  }
+
+  @override
+  Widget buildOverscrollIndicator(
+    BuildContext context,
+    Widget child,
+    ScrollableDetails details,
+  ) {
+    return child;
   }
 }
 
@@ -322,6 +368,28 @@ class _SettingsPanel extends StatelessWidget {
             value: pomodoro.autoStartFocus,
             onChanged: notifier.setAutoStartFocus,
           ),
+          Divider(height: 24, color: Colors.white.withValues(alpha: 0.1)),
+          const Text(
+            'Alerts',
+            style: TextStyle(
+              color: Color(0xFFF6F3EC),
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 6),
+          _SettingsSwitch(
+            label: 'Local alerts',
+            value: pomodoro.notificationsEnabled,
+            onChanged: notifier.setNotificationsEnabled,
+          ),
+          _SettingsSwitch(
+            label: 'Sound',
+            value: pomodoro.soundEnabled,
+            onChanged: pomodoro.notificationsEnabled
+                ? notifier.setSoundEnabled
+                : null,
+          ),
         ],
       ),
     );
@@ -342,7 +410,7 @@ class _SettingsPanel extends StatelessWidget {
 class _SettingsSwitch extends StatelessWidget {
   final String label;
   final bool value;
-  final ValueChanged<bool> onChanged;
+  final ValueChanged<bool>? onChanged;
 
   const _SettingsSwitch({
     required this.label,
@@ -357,8 +425,10 @@ class _SettingsSwitch extends StatelessWidget {
       dense: true,
       title: Text(
         label,
-        style: const TextStyle(
-          color: Color(0xFFF6F3EC),
+        style: TextStyle(
+          color: onChanged == null
+              ? Colors.white.withValues(alpha: 0.34)
+              : const Color(0xFFF6F3EC),
           fontSize: 14,
           fontWeight: FontWeight.w600,
         ),

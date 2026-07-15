@@ -4,6 +4,8 @@
 
 Focus Mark is a minimal Pomodoro timer built with Flutter and a native iOS Live Activity integration. The project focuses on one hard product problem: keeping a Flutter timer, local notifications, and an ActivityKit Live Activity synchronized across foreground, background, and cold-launch states.
 
+The product direction is evolving toward a daily timeboxing planner: brain dump, top three priorities, time box grid, focus execution, and review.
+
 ## Highlights
 
 - Flutter UI with Riverpod state management
@@ -12,6 +14,7 @@ Focus Mark is a minimal Pomodoro timer built with Flutter and a native iOS Live 
 - Local notifications for focus and break completion
 - Session presets: `25/5`, `50/10`, and `15/3`
 - Auto-start options for breaks and next focus sessions
+- Local alert and sound preferences
 - Cold-launch restoration using persisted native `endTime`
 - Monotone visual system and custom SVG-based app icon
 
@@ -41,8 +44,19 @@ The feature set is intentionally small and portfolio-friendly:
 - `15/3` supports quick starts when motivation is low.
 - Auto-start breaks are enabled by default to protect recovery time.
 - Auto-start next focus is off by default so the next work block remains intentional.
+- Local alerts can be disabled independently from Live Activity.
+- Alert sound can be disabled while keeping visual notifications.
 - Notification permission is requested contextually when the user starts a timer, not on first launch.
 - Live Activity stays glanceable: status, remaining time, and session progress only.
+
+## Product Roadmap
+
+- [Naming direction](docs/product/NAMING.md)
+- [Timeboxing strategy](docs/product/TIMEBOXING_STRATEGY.md)
+- [Notifications and calendar plan](docs/product/NOTIFICATIONS_AND_CALENDAR.md)
+- [App Store review preparation](docs/release/APP_STORE_REVIEW_PREP.md)
+- [Privacy policy draft](docs/legal/PRIVACY_POLICY_DRAFT.md)
+- [Terms draft](docs/legal/TERMS_DRAFT.md)
 
 References used while shaping the product:
 

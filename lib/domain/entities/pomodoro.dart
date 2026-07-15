@@ -16,6 +16,8 @@ class Pomodoro {
   final PomodoroPreset preset;
   final bool autoStartBreaks;
   final bool autoStartFocus;
+  final bool notificationsEnabled;
+  final bool soundEnabled;
 
   const Pomodoro({
     required this.workDuration,
@@ -29,6 +31,8 @@ class Pomodoro {
     required this.preset,
     required this.autoStartBreaks,
     required this.autoStartFocus,
+    required this.notificationsEnabled,
+    required this.soundEnabled,
   });
 
   factory Pomodoro.initial() {
@@ -44,6 +48,8 @@ class Pomodoro {
       preset: PomodoroPreset.classic,
       autoStartBreaks: true,
       autoStartFocus: false,
+      notificationsEnabled: true,
+      soundEnabled: true,
     );
   }
 
@@ -59,6 +65,8 @@ class Pomodoro {
     PomodoroPreset? preset,
     bool? autoStartBreaks,
     bool? autoStartFocus,
+    bool? notificationsEnabled,
+    bool? soundEnabled,
   }) {
     return Pomodoro(
       workDuration: workDuration ?? this.workDuration,
@@ -73,6 +81,8 @@ class Pomodoro {
       preset: preset ?? this.preset,
       autoStartBreaks: autoStartBreaks ?? this.autoStartBreaks,
       autoStartFocus: autoStartFocus ?? this.autoStartFocus,
+      notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
+      soundEnabled: soundEnabled ?? this.soundEnabled,
     );
   }
 
