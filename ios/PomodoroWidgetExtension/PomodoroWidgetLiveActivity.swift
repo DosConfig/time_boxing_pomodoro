@@ -13,6 +13,8 @@ struct PomodoroWidgetLiveActivity: Widget {
                     Label(currentTimeBoxTitle(context), systemImage: phaseIcon(context))
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.white)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
                 }
 
                 DynamicIslandExpandedRegion(.trailing) {
@@ -22,16 +24,17 @@ struct PomodoroWidgetLiveActivity: Widget {
                 }
 
                 DynamicIslandExpandedRegion(.center) {
-                    timerText(context, size: 38)
+                    timerText(context, size: 34)
                 }
 
                 DynamicIslandExpandedRegion(.bottom) {
-                    VStack(alignment: .leading, spacing: 6) {
+                    VStack(alignment: .leading, spacing: 7) {
                         if let firstPriority = context.state.topPriorities.first {
                             Text(firstPriority)
                                 .font(.caption2.weight(.semibold))
                                 .foregroundStyle(.white.opacity(0.72))
                                 .lineLimit(1)
+                                .minimumScaleFactor(0.8)
                         }
 
                         ProgressView(value: progressValue(context), total: Double(context.attributes.totalDuration))
@@ -117,65 +120,28 @@ struct LockScreenLiveActivityView: View {
     let context: ActivityViewContext<PomodoroActivityAttributes>
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            if !context.state.topPriorities.isEmpty {
-                VStack(alignment: .leading, spacing: 7) {
-                    Text("Top priorities")
-                        .font(.caption2.weight(.bold))
-                        .foregroundStyle(.white.opacity(0.48))
-                        .textCase(.uppercase)
+        ViewThatFits(in: .vertical) {
+            detailedContent
+            compactContent
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .activityBackgroundTint(Color.black)
+        .activitySystemActionForegroundColor(.white)
+    }
 
-                    ForEach(Array(context.state.topPriorities.prefix(3).enumerated()), id: \.offset) { _, priority in
-                        HStack(spacing: 6) {
-                            Image(systemName: "square")
-                                .font(.system(size: 9, weight: .semibold))
-                                .foregroundStyle(.white.opacity(0.55))
-                            Text(priority)
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(.white.opacity(0.86))
-                                .lineLimit(1)
-                        }
-                    }
-                }
-            }
-
-            HStack {
-                Label(phaseTitle, systemImage: phaseIcon)
-                    .font(.headline.weight(.semibold))
-                    .foregroundStyle(.white)
-
-                Spacer()
-
-                Text("\(context.state.sessionCount)/\(context.state.sessionGoal)")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.white.opacity(0.65))
-            }
-
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Now")
-                    .font(.caption2.weight(.bold))
-                    .foregroundStyle(.white.opacity(0.48))
-                    .textCase(.uppercase)
-
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Text(currentTimeBoxTitle)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.white)
-                        .lineLimit(1)
-
-                    if !context.state.currentTimeBoxTimeRange.isEmpty {
-                        Text(context.state.currentTimeBoxTimeRange)
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.white.opacity(0.58))
-                            .lineLimit(1)
-                    }
-                }
-            }
+    private var detailedContent: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            priorityStrip
+            statusRow
+            currentBlockRow
 
             HStack(alignment: .lastTextBaseline) {
-                timerText
+                timerText(size: 36)
+                    .layoutPriority(1)
 
-                Spacer()
+                Spacer(minLength: 12)
 
                 Text(context.state.status == "paused" ? "HOLD" : "LIVE")
                     .font(.caption.weight(.bold))
@@ -185,24 +151,106 @@ struct LockScreenLiveActivityView: View {
             ProgressView(value: progressValue, total: Double(context.attributes.totalDuration))
                 .tint(.white)
         }
-        .padding(.horizontal, 22)
-        .padding(.vertical, 20)
-        .activityBackgroundTint(Color.black)
-        .activitySystemActionForegroundColor(.white)
+    }
+
+    private var compactContent: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            priorityStrip
+
+            HStack(alignment: .center, spacing: 14) {
+                VStack(alignment: .leading, spacing: 5) {
+                    statusRow
+                    currentBlockRow
+                }
+                .layoutPriority(1)
+
+                timerText(size: 30)
+                    .layoutPriority(2)
+            }
+
+            ProgressView(value: progressValue, total: Double(context.attributes.totalDuration))
+                .tint(.white)
+        }
     }
 
     @ViewBuilder
-    private var timerText: some View {
+    private var priorityStrip: some View {
+        if let firstPriority = context.state.topPriorities.first {
+            HStack(spacing: 8) {
+                Text("Top priority")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(.white.opacity(0.48))
+                    .textCase(.uppercase)
+
+                Text(firstPriority)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.white.opacity(0.86))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+                    .layoutPriority(1)
+
+                if context.state.topPriorities.count > 1 {
+                    Text("+\(context.state.topPriorities.count - 1)")
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(.white.opacity(0.52))
+                }
+            }
+        }
+    }
+
+    private var statusRow: some View {
+        HStack(spacing: 8) {
+            Label(phaseTitle, systemImage: phaseIcon)
+                .font(.headline.weight(.semibold))
+                .foregroundStyle(.white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.82)
+                .layoutPriority(1)
+
+            Spacer(minLength: 8)
+
+            Text("\(context.state.sessionCount)/\(context.state.sessionGoal)")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.white.opacity(0.65))
+                .monospacedDigit()
+        }
+    }
+
+    private var currentBlockRow: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Text(currentTimeBoxTitle)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.78)
+                .layoutPriority(1)
+
+            if !context.state.currentTimeBoxTimeRange.isEmpty {
+                Text(context.state.currentTimeBoxTimeRange)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.white.opacity(0.58))
+                    .lineLimit(1)
+                    .monospacedDigit()
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func timerText(size: CGFloat) -> some View {
         if context.state.status == "paused", let pausedSeconds = context.state.pausedRemainingSeconds {
             Text(formatTime(seconds: pausedSeconds))
-                .font(.system(size: 42, weight: .semibold, design: .rounded))
+                .font(.system(size: size, weight: .semibold, design: .rounded))
                 .foregroundStyle(.white)
                 .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.76)
         } else {
             Text(timerInterval: Date()...context.state.endTime, countsDown: true)
-                .font(.system(size: 42, weight: .semibold, design: .rounded))
+                .font(.system(size: size, weight: .semibold, design: .rounded))
                 .foregroundStyle(.white)
                 .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.76)
         }
     }
 
