@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pomodoro_method_channel/presentation/screens/timer_screen.dart';
+import 'package:pomodoro_method_channel/presentation/screens/app_shell.dart';
 
 void main() {
   runApp(const ProviderScope(child: MyApp()));
@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
           brightness: Brightness.dark,
         ),
       ),
-      home: const TimerScreen(),
+      home: const AppShell(),
     );
   }
 }

@@ -318,7 +318,17 @@ class PomodoroNotifier extends Notifier<Pomodoro> with WidgetsBindingObserver {
     }
     priorities[index] = value;
 
-    state = state.copyWith(topPriorities: priorities.take(3).toList());
+    var nextTitle = state.currentTimeBoxTitle;
+    if (index == 0 &&
+        state.activeTimeBoxId == 'box-0900' &&
+        (nextTitle.trim().isEmpty || nextTitle == 'Top priority')) {
+      nextTitle = value.trim();
+    }
+
+    state = state.copyWith(
+      topPriorities: priorities.take(3).toList(),
+      currentTimeBoxTitle: nextTitle,
+    );
     repository.updatePomodoro(state);
   }
 
@@ -352,7 +362,7 @@ class PomodoroNotifier extends Notifier<Pomodoro> with WidgetsBindingObserver {
 
     state = state.copyWith(
       activeTimeBoxId: selected.id,
-      currentTimeBoxTitle: selected.title,
+      currentTimeBoxTitle: _titleForTimeBox(selected),
       currentTimeBoxTimeRange: selected.timeRange,
       workDuration: selected.durationSeconds,
       remainingTime: selected.durationSeconds,
@@ -360,6 +370,24 @@ class PomodoroNotifier extends Notifier<Pomodoro> with WidgetsBindingObserver {
       phase: PomodoroPhase.focus,
     );
     repository.updatePomodoro(state);
+  }
+
+  String _titleForTimeBox(TimeBox box) {
+    if (box.id == 'box-0900' && state.topPriorities.isNotEmpty) {
+      final priority = state.topPriorities[0].trim();
+      if (priority.isNotEmpty) {
+        return priority;
+      }
+    }
+
+    if (box.id == 'box-1330' && state.topPriorities.length > 1) {
+      final priority = state.topPriorities[1].trim();
+      if (priority.isNotEmpty) {
+        return priority;
+      }
+    }
+
+    return box.title;
   }
 
   void _onTimerComplete() {

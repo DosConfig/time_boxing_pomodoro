@@ -8,6 +8,8 @@
 - [x] Lower timer text inside the dial for better optical centering.
 - [x] Add Top 3 and current time box metadata path into Live Activity.
 - [x] Add default time boxes and one-tap active box selection.
+- [x] Split Today, Focus, and Settings into separate tabs.
+- [x] Add daily one-by-one priority entry flow.
 - [x] Document menu structure.
 - [x] Keep photo capture out of the current primary flow.
 
