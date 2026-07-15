@@ -16,7 +16,8 @@ import UserNotifications
 
     // Setup Method Channel
     guard let controller = window?.rootViewController as? FlutterViewController else {
-      fatalError("rootViewController is not type FlutterViewController")
+      NSLog("[Pomodoro] ⚠️ rootViewController is not FlutterViewController; timer channel skipped")
+      return super.application(application, didFinishLaunchingWithOptions: launchOptions)
     }
 
     let timerChannel = FlutterMethodChannel(name: CHANNEL, binaryMessenger: controller.binaryMessenger)

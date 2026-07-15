@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../domain/entities/pomodoro.dart';
 import '../providers/pomodoro_provider.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -39,46 +38,16 @@ class SettingsScreen extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           const Text(
-                            'Session design',
+                            'Execution',
                             style: TextStyle(
                               color: Color(0xFFF6F3EC),
                               fontSize: 15,
                               fontWeight: FontWeight.w800,
                             ),
                           ),
-                          const SizedBox(height: 14),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: PomodoroPreset.values.map((preset) {
-                              final selected = preset == pomodoro.preset;
-                              return ChoiceChip(
-                                label: Text(_presetLabel(preset)),
-                                selected: selected,
-                                onSelected: (_) => notifier.applyPreset(preset),
-                                backgroundColor: Colors.transparent,
-                                selectedColor: const Color(0xFFF6F3EC),
-                                side: BorderSide(
-                                  color: Colors.white.withValues(alpha: 0.16),
-                                ),
-                                labelStyle: TextStyle(
-                                  color: selected
-                                      ? const Color(0xFF0A0A0A)
-                                      : const Color(0xFFF6F3EC),
-                                  fontWeight: FontWeight.w800,
-                                ),
-                                showCheckmark: false,
-                              );
-                            }).toList(),
-                          ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 6),
                           _SettingsSwitch(
-                            label: 'Auto-start breaks',
-                            value: pomodoro.autoStartBreaks,
-                            onChanged: notifier.setAutoStartBreaks,
-                          ),
-                          _SettingsSwitch(
-                            label: 'Auto-start next focus',
+                            label: 'Auto-start next time box',
                             value: pomodoro.autoStartFocus,
                             onChanged: notifier.setAutoStartFocus,
                           ),
@@ -122,17 +91,6 @@ class SettingsScreen extends ConsumerWidget {
         ),
       ),
     );
-  }
-
-  static String _presetLabel(PomodoroPreset preset) {
-    switch (preset) {
-      case PomodoroPreset.classic:
-        return '25 / 5';
-      case PomodoroPreset.deepWork:
-        return '50 / 10';
-      case PomodoroPreset.sprint:
-        return '15 / 3';
-    }
   }
 }
 

@@ -208,9 +208,9 @@ class _StatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final label = switch (pomodoro.status) {
       PomodoroStatus.idle => 'Ready',
-      PomodoroStatus.running => pomodoro.isBreakPhase ? 'Break' : 'Running',
+      PomodoroStatus.running => 'Running',
       PomodoroStatus.paused => 'Paused',
-      PomodoroStatus.break_ => 'Break',
+      PomodoroStatus.break_ => 'Ready',
     };
 
     return Container(
@@ -238,10 +238,13 @@ class _SessionDots extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final totalBoxes = math.max(1, pomodoro.timeBoxes.length);
+    final completedBoxes = math.min(pomodoro.completedSessions, totalBoxes);
+
     return Column(
       children: [
         Text(
-          '${pomodoro.completedSessions} of ${pomodoro.sessionsUntilLongBreak} focus blocks',
+          '$completedBoxes of ${pomodoro.timeBoxes.length} today boxes',
           style: TextStyle(
             color: Colors.white.withValues(alpha: 0.58),
             fontSize: 14,
@@ -252,14 +255,14 @@ class _SessionDots extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(
-            pomodoro.sessionsUntilLongBreak,
+            totalBoxes,
             (index) => AnimatedContainer(
               duration: const Duration(milliseconds: 220),
               margin: const EdgeInsets.symmetric(horizontal: 4),
-              width: index < pomodoro.completedSessions ? 28 : 9,
+              width: index < completedBoxes ? 28 : 9,
               height: 9,
               decoration: BoxDecoration(
-                color: index < pomodoro.completedSessions
+                color: index < completedBoxes
                     ? const Color(0xFFF6F3EC)
                     : Colors.white.withValues(alpha: 0.18),
                 borderRadius: BorderRadius.circular(999),

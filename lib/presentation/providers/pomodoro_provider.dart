@@ -244,10 +244,13 @@ class PomodoroNotifier extends Notifier<Pomodoro> with WidgetsBindingObserver {
 
     if (state.status == PomodoroStatus.idle ||
         state.status == PomodoroStatus.break_) {
-      if (state.status == PomodoroStatus.idle &&
-          state.phase == PomodoroPhase.focus) {
-        syncFocusWithClock();
+      if (state.phase != PomodoroPhase.focus) {
+        state = state.copyWith(
+          status: PomodoroStatus.idle,
+          phase: PomodoroPhase.focus,
+        );
       }
+      syncFocusWithClock();
       state = state.copyWith(status: PomodoroStatus.running);
       repository.updatePomodoro(state);
 
@@ -698,6 +701,20 @@ class PomodoroNotifier extends Notifier<Pomodoro> with WidgetsBindingObserver {
     return upcomingBoxes.isEmpty ? null : upcomingBoxes.first;
   }
 
+  TimeBox? _nextTimeBoxAfter(TimeBox box) {
+    final start = box.startMinutes;
+    if (start == null) {
+      return _nextUpcomingTimeBox();
+    }
+
+    final nextBoxes = state.timeBoxes.where((candidate) {
+      final candidateStart = candidate.startMinutes;
+      return candidateStart != null && candidateStart > start;
+    }).toList()..sort((a, b) => a.startMinutes!.compareTo(b.startMinutes!));
+
+    return nextBoxes.isEmpty ? null : nextBoxes.first;
+  }
+
   String _titleForTimeBox(TimeBox box) {
     if (box.id == 'box-0900' && state.topPriorities.isNotEmpty) {
       final priority = state.topPriorities[0].trim();
@@ -797,57 +814,24 @@ class PomodoroNotifier extends Notifier<Pomodoro> with WidgetsBindingObserver {
 
     if (state.phase == PomodoroPhase.focus) {
       final completedSessions = state.completedSessions + 1;
-      final nextPhase = completedSessions % state.sessionsUntilLongBreak == 0
-          ? PomodoroPhase.longBreak
-          : PomodoroPhase.shortBreak;
-      final nextDuration = nextPhase == PomodoroPhase.longBreak
-          ? state.longBreakDuration
-          : state.breakDuration;
-
-      state = state.copyWith(
-        status: state.autoStartBreaks
-            ? PomodoroStatus.running
-            : PomodoroStatus.break_,
-        phase: nextPhase,
-        remainingTime: nextDuration,
-        completedSessions: completedSessions,
-      );
+      state = _stateAfterCompletedTodayBox(completedSessions);
       repository.updatePomodoro(state);
 
-      if (state.autoStartBreaks) {
+      if (state.autoStartFocus && state.remainingTime > 0) {
+        state = state.copyWith(status: PomodoroStatus.running);
+        repository.updatePomodoro(state);
         _timerSubscription = _startNativeTimer();
       }
       return;
     }
 
-    state = state.copyWith(
-      status: state.autoStartFocus
-          ? PomodoroStatus.running
-          : PomodoroStatus.idle,
-      phase: PomodoroPhase.focus,
-      remainingTime: state.workDuration,
-    );
+    state = _stateAfterCompletedTodayBox(state.completedSessions);
     repository.updatePomodoro(state);
-
-    if (state.autoStartFocus) {
-      _timerSubscription = _startNativeTimer();
-    }
   }
 
   Pomodoro _stateAfterCompletedPhase(PomodoroPhase phase, int sessions) {
     if (phase == PomodoroPhase.focus) {
-      final completedSessions = sessions + 1;
-      final nextPhase = completedSessions % state.sessionsUntilLongBreak == 0
-          ? PomodoroPhase.longBreak
-          : PomodoroPhase.shortBreak;
-      return state.copyWith(
-        status: PomodoroStatus.break_,
-        phase: nextPhase,
-        remainingTime: nextPhase == PomodoroPhase.longBreak
-            ? state.longBreakDuration
-            : state.breakDuration,
-        completedSessions: completedSessions,
-      );
+      return _stateAfterCompletedTodayBox(sessions + 1);
     }
 
     return state.copyWith(
@@ -855,6 +839,37 @@ class PomodoroNotifier extends Notifier<Pomodoro> with WidgetsBindingObserver {
       phase: PomodoroPhase.focus,
       remainingTime: state.workDuration,
       completedSessions: sessions,
+    );
+  }
+
+  Pomodoro _stateAfterCompletedTodayBox(int completedSessions) {
+    final activeBox = state.activeTimeBox;
+    final nextAfterActive = activeBox == null
+        ? null
+        : _nextTimeBoxAfter(activeBox);
+    final nextBox =
+        nextAfterActive != null && !_timeBoxHasEnded(nextAfterActive)
+        ? nextAfterActive
+        : _nextUpcomingTimeBox();
+
+    if (nextBox == null) {
+      return state.copyWith(
+        status: PomodoroStatus.idle,
+        phase: PomodoroPhase.focus,
+        remainingTime: 0,
+        completedSessions: completedSessions,
+      );
+    }
+
+    return state.copyWith(
+      activeTimeBoxId: nextBox.id,
+      currentTimeBoxTitle: _titleForTimeBox(nextBox),
+      currentTimeBoxTimeRange: nextBox.timeRange,
+      workDuration: nextBox.durationSeconds,
+      remainingTime: _remainingForTimeBox(nextBox),
+      status: PomodoroStatus.idle,
+      phase: PomodoroPhase.focus,
+      completedSessions: completedSessions,
     );
   }
 }
