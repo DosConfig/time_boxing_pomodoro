@@ -18,16 +18,12 @@ class TodayScreen extends ConsumerStatefulWidget {
 }
 
 class _TodayScreenState extends ConsumerState<TodayScreen> {
-  int _priorityIndex = 0;
-  List<String>? _draftPriorities;
-  Timer? _prioritySaveTimer;
   Timer? _clockTimer;
   Timer? _dragAutoScrollTimer;
   double _dragAutoScrollDelta = 0;
   bool _isTimeBoxDragging = false;
   DateTime _now = DateTime.now();
   final _scrollController = ScrollController();
-  final _priorityFocusNode = FocusNode();
 
   @override
   void initState() {
@@ -44,15 +40,6 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     _clockTimer?.cancel();
     _stopDragAutoScroll();
     _scrollController.dispose();
-    _priorityFocusNode.dispose();
-    _prioritySaveTimer?.cancel();
-    final priorities = _draftPriorities;
-    if (priorities != null) {
-      final notifier = ref.read(pomodoroProvider.notifier);
-      for (var index = 0; index < priorities.length; index += 1) {
-        notifier.setTopPriority(index, priorities[index]);
-      }
-    }
     super.dispose();
   }
 
@@ -61,8 +48,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     final pomodoro = ref.watch(pomodoroProvider);
     final preferences = ref.watch(appPreferencesProvider);
     final notifier = ref.read(pomodoroProvider.notifier);
-    final priorities = _draftPriorities ?? _normalizedPriorities(pomodoro);
-    _draftPriorities ??= priorities;
+    final priorities = _normalizedPriorities(pomodoro);
 
     return SafeArea(
       child: Stack(
@@ -81,17 +67,14 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                       children: [
                         _TodayHeader(),
                         const SizedBox(height: 18),
+                        _TopPrioritiesPanel(
+                          priorities: priorities,
+                          notifier: notifier,
+                        ),
+                        const SizedBox(height: 16),
                         _BrainDumpPanel(pomodoro: pomodoro, notifier: notifier),
                         const SizedBox(height: 16),
                         _ReminderPanel(pomodoro: pomodoro, notifier: notifier),
-                        const SizedBox(height: 16),
-                        _PriorityBuilder(
-                          priorities: priorities,
-                          priorityIndex: _priorityIndex,
-                          focusNode: _priorityFocusNode,
-                          onPriorityChanged: _setDraftPriority,
-                          onPriorityIndexChanged: _setPriorityIndex,
-                        ),
                         const SizedBox(height: 16),
                         _TimeBoxBoard(
                           pomodoro: pomodoro,
@@ -106,7 +89,6 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                         const SizedBox(height: 18),
                         FilledButton.icon(
                           onPressed: () async {
-                            _commitPriority(_priorityIndex);
                             FocusScope.of(context).unfocus();
                             HapticFeedback.mediumImpact();
                             await notifier.selectCurrentTimeBoxForNow();
@@ -164,44 +146,6 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
       priorities.add('');
     }
     return priorities;
-  }
-
-  void _setDraftPriority(String value) {
-    final index = _priorityIndex;
-    final priorities = List<String>.from(_draftPriorities ?? ['', '', '']);
-    while (priorities.length < 3) {
-      priorities.add('');
-    }
-    priorities[index] = value;
-
-    setState(() => _draftPriorities = priorities.take(3).toList());
-
-    _prioritySaveTimer?.cancel();
-    _prioritySaveTimer = Timer(const Duration(milliseconds: 450), () {
-      ref.read(pomodoroProvider.notifier).setTopPriority(index, value);
-    });
-  }
-
-  void _setPriorityIndex(int index) {
-    _commitPriority(_priorityIndex);
-    HapticFeedback.selectionClick();
-    setState(() => _priorityIndex = index);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _priorityFocusNode.requestFocus();
-      }
-    });
-  }
-
-  void _commitPriority(int index) {
-    _prioritySaveTimer?.cancel();
-    final priorities = _draftPriorities;
-    if (priorities == null || index < 0 || index >= priorities.length) {
-      return;
-    }
-    ref
-        .read(pomodoroProvider.notifier)
-        .setTopPriority(index, priorities[index]);
   }
 
   void _handleTimeBoxDragUpdate(DragUpdateDetails details) {
@@ -323,69 +267,59 @@ class _TimeBoxTrashTarget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Positioned(
-      left: 24,
-      right: 24,
       bottom: 18,
+      left: 0,
+      right: 0,
       child: IgnorePointer(
         ignoring: !visible,
-        child: AnimatedSlide(
-          duration: const Duration(milliseconds: 180),
-          curve: Curves.easeOutCubic,
-          offset: visible ? Offset.zero : const Offset(0, 0.35),
-          child: AnimatedOpacity(
+        child: Center(
+          child: AnimatedSlide(
             duration: const Duration(milliseconds: 180),
-            opacity: visible ? 1 : 0,
-            child: DragTarget<String>(
-              onWillAcceptWithDetails: (_) => enabled,
-              onAcceptWithDetails: (details) => onAccept(details.data),
-              builder: (context, candidates, rejected) {
-                final targeted = candidates.isNotEmpty;
-                return AnimatedContainer(
-                  duration: const Duration(milliseconds: 140),
-                  curve: Curves.easeOutCubic,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: targeted
-                        ? const Color(0xFFF6F3EC)
-                        : const Color(0xFF151515),
-                    border: Border.all(
+            curve: Curves.easeOutCubic,
+            offset: visible ? Offset.zero : const Offset(0, 0.35),
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 180),
+              opacity: visible ? 1 : 0,
+              child: DragTarget<String>(
+                onWillAcceptWithDetails: (_) => enabled,
+                onAcceptWithDetails: (details) => onAccept(details.data),
+                builder: (context, candidates, rejected) {
+                  final targeted = candidates.isNotEmpty;
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 140),
+                    curve: Curves.easeOutCubic,
+                    width: targeted ? 62 : 54,
+                    height: targeted ? 62 : 54,
+                    decoration: BoxDecoration(
                       color: targeted
                           ? const Color(0xFFF6F3EC)
-                          : Colors.white.withValues(alpha: 0.18),
-                    ),
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.34),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.delete_outline_rounded,
+                          : const Color(0xFF151515),
+                      border: Border.all(
                         color: targeted
-                            ? const Color(0xFF080808)
-                            : const Color(0xFFF6F3EC),
+                            ? const Color(0xFFF6F3EC)
+                            : Colors.white.withValues(alpha: 0.18),
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        enabled ? 'Drop to delete' : 'Keep one time box',
-                        style: TextStyle(
-                          color: targeted
-                              ? const Color(0xFF080808)
-                              : const Color(0xFFF6F3EC),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w900,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.34),
+                          blurRadius: 20,
+                          offset: const Offset(0, 10),
                         ),
-                      ),
-                    ],
-                  ),
-                );
-              },
+                      ],
+                    ),
+                    child: Icon(
+                      enabled
+                          ? Icons.delete_outline_rounded
+                          : Icons.lock_outline_rounded,
+                      color: targeted
+                          ? const Color(0xFF080808)
+                          : const Color(0xFFF6F3EC),
+                      size: 24,
+                    ),
+                  );
+                },
+              ),
             ),
           ),
         ),
@@ -405,77 +339,32 @@ class _BrainDumpPanel extends StatefulWidget {
 }
 
 class _BrainDumpPanelState extends State<_BrainDumpPanel> {
-  final _controller = TextEditingController();
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     return _SectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
-            'Brain dump',
-            style: TextStyle(
-              color: Color(0xFFF6F3EC),
-              fontSize: 15,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 12),
           Row(
             children: [
-              Expanded(
-                child: TextField(
-                  controller: _controller,
-                  cursorColor: const Color(0xFFF6F3EC),
-                  textInputAction: TextInputAction.done,
-                  onSubmitted: (_) => _addItem(),
-                  style: const TextStyle(
+              const Expanded(
+                child: Text(
+                  'Brain dump',
+                  style: TextStyle(
                     color: Color(0xFFF6F3EC),
                     fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                  ),
-                  decoration: InputDecoration(
-                    isDense: true,
-                    labelText: 'Capture',
-                    labelStyle: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.46),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 14,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(
-                        color: Colors.white.withValues(alpha: 0.14),
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: Color(0xFFF6F3EC)),
-                    ),
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
               Tooltip(
                 message: 'Add brain dump',
-                child: IconButton.filled(
-                  onPressed: _addItem,
+                child: IconButton(
+                  onPressed: _openAddSheet,
                   icon: const Icon(Icons.add_rounded),
                   style: IconButton.styleFrom(
-                    backgroundColor: const Color(0xFFF6F3EC),
-                    foregroundColor: const Color(0xFF080808),
-                    minimumSize: const Size.square(46),
+                    foregroundColor: const Color(0xFFF6F3EC),
+                    visualDensity: VisualDensity.compact,
                   ),
                 ),
               ),
@@ -501,13 +390,16 @@ class _BrainDumpPanelState extends State<_BrainDumpPanel> {
     );
   }
 
-  void _addItem() {
-    final value = _controller.text;
-    widget.notifier.addBrainDumpItem(value);
-    if (value.trim().isNotEmpty) {
-      HapticFeedback.lightImpact();
-      _controller.clear();
-    }
+  void _openAddSheet() {
+    _showTextEntrySheet(
+      context,
+      title: 'Add brain dump',
+      label: 'Capture',
+      onSave: (value) {
+        widget.notifier.addBrainDumpItem(value);
+        HapticFeedback.lightImpact();
+      },
+    );
   }
 
   void _showBrainDumpActions(int index) {
@@ -628,77 +520,32 @@ class _ReminderPanel extends StatefulWidget {
 }
 
 class _ReminderPanelState extends State<_ReminderPanel> {
-  final _controller = TextEditingController();
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     return _SectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
-            'Keep in mind',
-            style: TextStyle(
-              color: Color(0xFFF6F3EC),
-              fontSize: 15,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 12),
           Row(
             children: [
-              Expanded(
-                child: TextField(
-                  controller: _controller,
-                  cursorColor: const Color(0xFFF6F3EC),
-                  textInputAction: TextInputAction.done,
-                  onSubmitted: (_) => _addItem(),
-                  style: const TextStyle(
+              const Expanded(
+                child: Text(
+                  'Keep in mind',
+                  style: TextStyle(
                     color: Color(0xFFF6F3EC),
                     fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                  ),
-                  decoration: InputDecoration(
-                    isDense: true,
-                    labelText: 'Reminder',
-                    labelStyle: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.46),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 14,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(
-                        color: Colors.white.withValues(alpha: 0.14),
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: Color(0xFFF6F3EC)),
-                    ),
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
               Tooltip(
                 message: 'Add reminder',
-                child: IconButton.filled(
-                  onPressed: _addItem,
+                child: IconButton(
+                  onPressed: _openAddSheet,
                   icon: const Icon(Icons.add_rounded),
                   style: IconButton.styleFrom(
-                    backgroundColor: const Color(0xFFF6F3EC),
-                    foregroundColor: const Color(0xFF080808),
-                    minimumSize: const Size.square(46),
+                    foregroundColor: const Color(0xFFF6F3EC),
+                    visualDensity: VisualDensity.compact,
                   ),
                 ),
               ),
@@ -724,13 +571,16 @@ class _ReminderPanelState extends State<_ReminderPanel> {
     );
   }
 
-  void _addItem() {
-    final value = _controller.text;
-    widget.notifier.addReminder(value);
-    if (value.trim().isNotEmpty) {
-      HapticFeedback.lightImpact();
-      _controller.clear();
-    }
+  void _openAddSheet() {
+    _showTextEntrySheet(
+      context,
+      title: 'Add reminder',
+      label: 'Reminder',
+      onSave: (value) {
+        widget.notifier.addReminder(value);
+        HapticFeedback.lightImpact();
+      },
+    );
   }
 
   void _showReminderActions(int index) {
@@ -864,6 +714,196 @@ class _ActionSheetButton extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+void _showTextEntrySheet(
+  BuildContext context, {
+  required String title,
+  required String label,
+  required ValueChanged<String> onSave,
+  String initialValue = '',
+  String? clearLabel,
+  VoidCallback? onClear,
+}) {
+  showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: const Color(0xFF101010),
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+    ),
+    builder: (context) {
+      return _TextEntrySheet(
+        title: title,
+        label: label,
+        initialValue: initialValue,
+        clearLabel: clearLabel,
+        onClear: onClear,
+        onSave: onSave,
+      );
+    },
+  );
+}
+
+void _showSnack(BuildContext context, String message) {
+  final messenger = ScaffoldMessenger.of(context);
+  messenger.hideCurrentSnackBar();
+  messenger.showSnackBar(
+    SnackBar(
+      content: Text(message),
+      behavior: SnackBarBehavior.floating,
+      duration: const Duration(milliseconds: 1600),
+    ),
+  );
+}
+
+class _TextEntrySheet extends StatefulWidget {
+  final String title;
+  final String label;
+  final String initialValue;
+  final String? clearLabel;
+  final VoidCallback? onClear;
+  final ValueChanged<String> onSave;
+
+  const _TextEntrySheet({
+    required this.title,
+    required this.label,
+    required this.initialValue,
+    required this.onSave,
+    this.clearLabel,
+    this.onClear,
+  });
+
+  @override
+  State<_TextEntrySheet> createState() => _TextEntrySheetState();
+}
+
+class _TextEntrySheetState extends State<_TextEntrySheet> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialValue);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(20, 18, 20, bottomInset + 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    widget.title,
+                    style: const TextStyle(
+                      color: Color(0xFFF6F3EC),
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close_rounded),
+                  color: const Color(0xFFF6F3EC),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _controller,
+              autofocus: true,
+              cursorColor: const Color(0xFFF6F3EC),
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) => _save(),
+              maxLines: 1,
+              style: const TextStyle(
+                color: Color(0xFFF6F3EC),
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
+              decoration: InputDecoration(
+                isDense: true,
+                labelText: widget.label,
+                labelStyle: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.46),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 14,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: Colors.white.withValues(alpha: 0.14),
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Color(0xFFF6F3EC)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: _save,
+              icon: const Icon(Icons.check_rounded),
+              label: const Text('Save'),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFF6F3EC),
+                foregroundColor: const Color(0xFF080808),
+                minimumSize: const Size.fromHeight(50),
+                textStyle: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+            if (widget.onClear != null && widget.clearLabel != null) ...[
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () {
+                  widget.onClear?.call();
+                  Navigator.of(context).pop();
+                },
+                child: Text(widget.clearLabel!),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _save() {
+    final value = _controller.text.trim();
+    if (value.isEmpty) {
+      _showSnack(context, 'Enter something first.');
+      return;
+    }
+
+    widget.onSave(value);
+    Navigator.of(context).pop();
   }
 }
 
@@ -1177,199 +1217,176 @@ class _DailyProgressMetric extends StatelessWidget {
   }
 }
 
-class _PriorityBuilder extends StatelessWidget {
+class _TopPrioritiesPanel extends StatelessWidget {
   final List<String> priorities;
-  final int priorityIndex;
-  final FocusNode focusNode;
-  final ValueChanged<String> onPriorityChanged;
-  final ValueChanged<int> onPriorityIndexChanged;
+  final PomodoroNotifier notifier;
 
-  const _PriorityBuilder({
-    required this.priorities,
-    required this.priorityIndex,
-    required this.focusNode,
-    required this.onPriorityChanged,
-    required this.onPriorityIndexChanged,
-  });
+  const _TopPrioritiesPanel({required this.priorities, required this.notifier});
 
   @override
   Widget build(BuildContext context) {
-    final priority = _priorityAt(priorityIndex);
+    final filledPriorities = <({int index, String value})>[
+      for (var index = 0; index < priorities.length && index < 3; index += 1)
+        if (priorities[index].trim().isNotEmpty)
+          (index: index, value: priorities[index].trim()),
+    ];
 
     return _SectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
-            'Top priorities',
-            style: TextStyle(
-              color: Color(0xFFF6F3EC),
-              fontSize: 15,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: List.generate(
-              3,
-              (index) => Expanded(
-                child: Padding(
-                  padding: EdgeInsets.only(right: index == 2 ? 0 : 8),
-                  child: _PriorityStepButton(
-                    index: index,
-                    selected: index == priorityIndex,
-                    filled: _priorityAt(index).trim().isNotEmpty,
-                    onTap: () => onPriorityIndexChanged(index),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 14),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 180),
-            switchInCurve: Curves.easeOutCubic,
-            switchOutCurve: Curves.easeInCubic,
-            child: TextFormField(
-              key: ValueKey('priority-$priorityIndex'),
-              focusNode: focusNode,
-              initialValue: priority,
-              onChanged: onPriorityChanged,
-              textInputAction: priorityIndex < 2
-                  ? TextInputAction.next
-                  : TextInputAction.done,
-              onFieldSubmitted: (_) {
-                if (priorityIndex < 2) {
-                  onPriorityIndexChanged(priorityIndex + 1);
-                }
-              },
-              cursorColor: const Color(0xFFF6F3EC),
-              style: const TextStyle(
-                color: Color(0xFFF6F3EC),
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-              ),
-              decoration: InputDecoration(
-                isDense: true,
-                labelText: 'Priority ${priorityIndex + 1}',
-                labelStyle: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.46),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 14,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(
-                    color: Colors.white.withValues(alpha: 0.14),
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Color(0xFFF6F3EC)),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
           Row(
             children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: priorityIndex == 0
-                      ? null
-                      : () => onPriorityIndexChanged(priorityIndex - 1),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFFF6F3EC),
-                    side: BorderSide(
-                      color: Colors.white.withValues(alpha: 0.16),
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+              const Expanded(
+                child: Text(
+                  'Top priorities',
+                  style: TextStyle(
+                    color: Color(0xFFF6F3EC),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
                   ),
-                  child: const Text('Back'),
                 ),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: FilledButton(
-                  onPressed: priorityIndex == 2
-                      ? null
-                      : () => onPriorityIndexChanged(priorityIndex + 1),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFFF6F3EC),
-                    foregroundColor: const Color(0xFF080808),
-                    disabledBackgroundColor: Colors.white.withValues(
-                      alpha: 0.12,
-                    ),
-                    disabledForegroundColor: Colors.white.withValues(
-                      alpha: 0.32,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+              Tooltip(
+                message: 'Add priority',
+                child: IconButton(
+                  onPressed: () => _openAddPriority(context),
+                  icon: const Icon(Icons.add_rounded),
+                  style: IconButton.styleFrom(
+                    foregroundColor: const Color(0xFFF6F3EC),
+                    visualDensity: VisualDensity.compact,
                   ),
-                  child: const Text('Next'),
                 ),
               ),
             ],
           ),
+          if (filledPriorities.isEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              'No priorities yet',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.42),
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ] else ...[
+            const SizedBox(height: 12),
+            ...filledPriorities.map((priority) {
+              return Padding(
+                padding: EdgeInsets.only(
+                  bottom: priority == filledPriorities.last ? 0 : 8,
+                ),
+                child: _PriorityRow(
+                  index: priority.index,
+                  value: priority.value,
+                  onTap: () => _openEditPriority(
+                    context,
+                    priority.index,
+                    priority.value,
+                  ),
+                ),
+              );
+            }),
+          ],
         ],
       ),
     );
   }
 
-  String _priorityAt(int index) {
-    if (index >= priorities.length) {
-      return '';
+  void _openAddPriority(BuildContext context) {
+    final nextIndex = priorities.indexWhere(
+      (priority) => priority.trim().isEmpty,
+    );
+    if (nextIndex == -1 || nextIndex >= 3) {
+      _showSnack(context, 'Three priorities are already set.');
+      return;
     }
-    return priorities[index];
+
+    _showTextEntrySheet(
+      context,
+      title: 'Add priority',
+      label: 'Priority ${nextIndex + 1}',
+      onSave: (value) {
+        notifier.setTopPriority(nextIndex, value);
+        HapticFeedback.lightImpact();
+      },
+    );
+  }
+
+  void _openEditPriority(BuildContext context, int index, String value) {
+    _showTextEntrySheet(
+      context,
+      title: 'Edit priority',
+      label: 'Priority ${index + 1}',
+      initialValue: value,
+      clearLabel: 'Clear priority',
+      onClear: () {
+        notifier.setTopPriority(index, '');
+        HapticFeedback.lightImpact();
+      },
+      onSave: (nextValue) {
+        notifier.setTopPriority(index, nextValue);
+        HapticFeedback.lightImpact();
+      },
+    );
   }
 }
 
-class _PriorityStepButton extends StatelessWidget {
+class _PriorityRow extends StatelessWidget {
   final int index;
-  final bool selected;
-  final bool filled;
+  final String value;
   final VoidCallback onTap;
 
-  const _PriorityStepButton({
+  const _PriorityRow({
     required this.index,
-    required this.selected,
-    required this.filled,
+    required this.value,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        height: 44,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: selected
-              ? const Color(0xFFF6F3EC)
-              : Colors.white.withValues(alpha: 0.045),
-          border: Border.all(
-            color: selected
-                ? const Color(0xFFF6F3EC)
-                : Colors.white.withValues(alpha: 0.12),
-          ),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Text(
-          filled ? '✓' : '${index + 1}',
-          style: TextStyle(
-            color: selected ? const Color(0xFF080808) : const Color(0xFFF6F3EC),
-            fontSize: 16,
-            fontWeight: FontWeight.w900,
+    return Material(
+      color: Colors.white.withValues(alpha: 0.045),
+      shape: RoundedRectangleBorder(
+        side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 11, 12, 11),
+          child: Row(
+            children: [
+              Text(
+                '${index + 1}',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.46),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  value,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFFF6F3EC),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    height: 1.15,
+                  ),
+                ),
+              ),
+              Icon(
+                Icons.edit_rounded,
+                size: 17,
+                color: Colors.white.withValues(alpha: 0.42),
+              ),
+            ],
           ),
         ),
       ),
