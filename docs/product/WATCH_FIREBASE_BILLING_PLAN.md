@@ -24,6 +24,22 @@ This creates a clean value boundary: local-only stays free; anything that needs 
 
 ## Watch Apps
 
+### Android Phone Foundation
+
+Wear OS should come after the Android phone app, because the phone must remain the source of truth.
+
+Recommended Android phone timer implementation:
+
+- Add a native foreground service for active focus and break sessions.
+- Store one absolute `endTime`, plus phase, active time box, status, pause state, and updated timestamp.
+- Use the service notification as a control surface, not as a per-second render loop.
+- Use `setWhen`, `setUsesChronometer`, and `setChronometerCountdown` so Android renders the countdown from the end time.
+- Update the notification only on meaningful state changes: start, pause, resume, skip, complete, active box change, or settings change.
+- Evaluate Android 16 Live Updates with `Notification.ProgressStyle` for progress-centric promoted notifications.
+- Avoid claiming second-perfect external display. Android notification rendering can be rate-limited or delayed by OS and OEM behavior, so correctness must come from restoring `remaining = endTime - now`.
+
+This matches the iOS design: iOS Live Activity uses `Text(timerInterval:)`, Android should use Chronometer or ProgressStyle, and both platforms share the same absolute-time model.
+
 ### Apple Watch
 
 Recommended implementation:
@@ -210,9 +226,10 @@ Invite codes:
 5. Add StoreKit / Play Billing product IDs and entitlement restore.
 6. Add invite code redemption through Cloud Functions.
 7. Add Apple Watch companion app.
-8. Add Android app foundation.
-9. Add Wear OS companion.
-10. Add server calendar integrations.
+8. Add Android phone foreground-service timer foundation.
+9. Add Android notification Chronometer/Live Update surface.
+10. Add Wear OS companion.
+11. Add server calendar integrations.
 
 ## Human-Required Setup
 
@@ -233,6 +250,8 @@ Invite codes:
 
 - Apple WatchConnectivity: https://developer.apple.com/documentation/watchconnectivity
 - Apple WCSession: https://developer.apple.com/documentation/watchconnectivity/wcsession
+- Android Live Update notifications: https://developer.android.com/develop/ui/compose/notifications/live-update
+- Android 16 progress-centric notifications: https://developer.android.com/about/versions/16/features/progress-centric-notifications
 - Wear OS Data Layer: https://developer.android.com/training/wearables/data/overview
 - Wear OS data sync: https://developer.android.com/training/wearables/data/sync
 - Firebase Flutter setup: https://firebase.google.com/docs/flutter/setup

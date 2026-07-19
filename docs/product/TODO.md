@@ -13,10 +13,22 @@
 - [x] Add Daily progress strip for plan/focus completion feedback.
 - [x] Debounce Top Priority typing so state is not saved on every keystroke.
 - [x] Add quick time box create, edit, delete, and reorder controls.
-- [x] Replace visible edit/delete buttons with swipe actions on time boxes.
+- [ ] Replace visible edit/delete buttons with swipe actions on time boxes.
 - [x] Add foreground in-app completion banner and iOS foreground notification presentation.
 - [x] Document menu structure.
 - [x] Keep photo capture out of the current primary flow.
+
+## P0 - Codebase Quality
+
+- [x] Move app code toward feature-first structure.
+- [x] Replace manual Riverpod providers with Riverpod code generation.
+- [x] Add Freezed entities for core app state.
+- [x] Separate native restore payload DTO from domain timer snapshot.
+- [x] Remove widget-returning helper methods from Today time-box board.
+- [x] Extract Today section card and time-box board into widget classes.
+- [ ] Continue splitting Today screen into smaller widget files.
+- [ ] Keep StatefulWidget usage limited to controller lifecycle boundaries.
+- [ ] Add lint rule/process note to prevent widget-building helper methods.
 
 ## P1 - Local Timeboxing Planner
 
@@ -27,34 +39,47 @@
 - [x] Add long-press drag placement for 30-minute time boxes.
 - [ ] Add time-box duration adjustment after fixed-slot MVP is validated.
 - [x] Let users select a box and start Focus mode from it.
-- [ ] Persist Today Plan locally.
+- [x] Persist Today Plan locally.
+- [x] Restore Today Plan on app launch without restoring stale timer runtime state.
+- [x] Add seven-day local Daily history strip.
 - [ ] Add Review screen for planned versus completed boxes.
 - [ ] Add default templates so users do not start from an empty screen.
 
 ## P2 - Calendar Sync
 
-- [x] Add Calendar tab and provider connection hub.
-- [ ] Add Apple Calendar write-only export with EventKit.
-- [ ] Add calendar event mapping for TimeBox.
+- [x] Add Calendar tab without fake provider fallback UI.
+- [x] Add Apple Calendar write-only export with EventKit.
+- [x] Add calendar event mapping for TimeBox.
+- [x] Add Google Calendar primary-calendar export MVP.
+- [x] Track external calendar event IDs for exported Apple and Google events.
 - [ ] Add conflict detection against existing calendars.
-- [ ] Add Google Calendar integration.
 - [ ] Evaluate Nylas and Cronofy as multi-provider calendar layers.
 - [ ] Add Outlook / Microsoft 365 provider path.
-- [ ] Track external calendar event IDs for update/delete.
+- [ ] Add update/delete for previously exported external events.
 
 ## P3 - Cloud and Auth
 
 - [ ] Add Firebase project.
-- [ ] Add Firebase Auth.
-- [ ] Use Sign in with Apple as the primary iOS login.
-- [ ] Use Google sign-in where Google Calendar is connected.
+- [x] Add Firebase Auth app integration.
+- [x] Use Sign in with Apple as the primary iOS login.
+- [x] Use Google sign-in authorization where Google Calendar is connected.
 - [ ] Add anonymous/local user migration path into Firebase account.
 - [ ] Add local-first repository boundary for free local mode versus paid sync mode.
 - [ ] Add Firestore data model for days, time boxes, settings, devices, and entitlements.
 - [ ] Store user plans and provider tokens securely.
 - [ ] Add account deletion flow for store review.
 
-## P4 - Watch Companion Apps
+## Manual Setup Required
+
+- [ ] Create a Firebase project and register iOS app `com.seongwoo.focusmark`.
+- [ ] Add `GoogleService-Info.plist` to `ios/Runner/` and the Runner target in Xcode.
+- [ ] Enable Firebase Authentication providers: Apple now, Google before broader Google login.
+- [ ] Enable Sign in with Apple capability for the App ID and Runner target.
+- [ ] Add the Google reversed client ID URL scheme from `GoogleService-Info.plist` to `ios/Runner/Info.plist`.
+- [ ] Enable Google Calendar API in the Google Cloud project linked to Firebase.
+- [ ] Configure OAuth consent screen with the Calendar events scope.
+
+## P4 - Android Phone and Watch Companion Apps
 
 - [ ] Add entitlement gate for watch sync.
 - [ ] Add Apple Watch SwiftUI companion target.
@@ -62,6 +87,11 @@
 - [ ] Add Apple Watch controls for pause, resume, skip, and mark done.
 - [ ] Add Apple Watch haptic completion feedback.
 - [ ] Add Android app foundation before Wear OS work.
+- [ ] Add Android native foreground service backed by absolute `endTime`.
+- [ ] Render Android timer notifications with Chronometer instead of per-second notification reposts.
+- [ ] Evaluate Android 16 Live Updates with `Notification.ProgressStyle`.
+- [ ] Add Android notification permission strategy for `POST_NOTIFICATIONS` and promoted Live Updates.
+- [ ] Add throttling policy for any Android notification updates that are not OS-rendered timers.
 - [ ] Add Wear OS / Galaxy Watch companion module.
 - [ ] Sync current timer snapshot through the Wear OS Data Layer API.
 - [ ] Add Wear OS controls for pause, resume, skip, and mark done.
@@ -105,4 +135,5 @@
 - Nylas and Cronofy are closest to the multi-calendar integration layer.
 - Calendly is more scheduling-product oriented, but useful for studying provider connection UX.
 - Cal.com is useful as an open scheduling platform reference, not necessarily the first integration layer.
+- Android timer display should follow the same absolute `endTime` model as iOS Live Activity, with countdown rendering delegated to the OS.
 - Watch, Firebase, and billing plan: `docs/product/WATCH_FIREBASE_BILLING_PLAN.md`.

@@ -19,6 +19,39 @@ Remote push is only needed later for:
 - shared calendars or team workflows,
 - reminders that must be created after the app has been inactive for a long time.
 
+## Cross-Platform Timer Display Rule
+
+The timer should be stored as an absolute end time, not as a stream of per-second UI updates.
+
+Platform surfaces should render time themselves:
+
+- iOS Live Activity: SwiftUI `Text(timerInterval:countsDown:)`.
+- Android notification: `setWhen`, `setUsesChronometer`, and `setChronometerCountdown`.
+- Android 16+ Live Updates: `Notification.ProgressStyle` when the app qualifies for promoted ongoing updates.
+
+This keeps the app resilient when the OS throttles notification or widget rendering. Flutter can tick every second while the app is open, but external system surfaces should not depend on Flutter sending a per-second update.
+
+## Android Notification Strategy
+
+Android should not receive a fresh notification every second for a running timer.
+
+Recommended Android phone implementation:
+
+- Add a native foreground service as the source of timer execution.
+- Persist `endTime`, `phase`, `status`, `activeTimeBoxId`, and pause state.
+- Build an ongoing notification from that snapshot.
+- Use Android chronometer fields for countdown display instead of reposting the notification every second.
+- Keep manual notification updates for meaningful state changes only: start, pause, resume, skip, complete, active box change, and permission changes.
+- Throttle any non-timer progress updates because Android has package-level notification update rate limiting.
+- For Android 16+, evaluate Live Updates with `Notification.ProgressStyle`, promoted notification permission, ongoing behavior, and status-chip constraints.
+- Treat OEM battery optimizations as a display-freshness risk, not as a reason to abandon the absolute `endTime` model.
+
+Interview framing:
+
+```text
+The timer does not depend on notification update frequency. We store one absolute endTime, then delegate countdown rendering to the OS. iOS uses Text(timerInterval:), and Android should use Chronometer or ProgressStyle. If notification updates are delayed or rate-limited, the source of truth is still correct.
+```
+
 ## Sound Strategy
 
 The app should support three levels:
@@ -104,5 +137,8 @@ If third-party login is offered on iOS, Sign in with Apple should be included fo
 - Apple User Notifications: https://developer.apple.com/documentation/usernotifications
 - Apple custom notification sound: https://developer.apple.com/documentation/usernotifications/unnotificationsound
 - Apple EventKit calendar access: https://developer.apple.com/documentation/eventkit/accessing-calendar-using-eventkit-and-eventkitui
+- Android Live Update notifications: https://developer.android.com/develop/ui/compose/notifications/live-update
+- Android 16 progress-centric notifications: https://developer.android.com/about/versions/16/features/progress-centric-notifications
+- Android Nougat notification update rate limiting: https://saket.me/android-7-nougat-rate-limiting-notifications/
 - Firebase Auth federated sign-in: https://firebase.google.com/docs/auth/flutter/federated-auth
 - Google Calendar create events: https://developers.google.com/workspace/calendar/api/guides/create-events
