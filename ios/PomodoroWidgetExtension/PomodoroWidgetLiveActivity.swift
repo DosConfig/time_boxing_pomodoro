@@ -87,16 +87,16 @@ struct PomodoroWidgetLiveActivity: Widget {
 
     private func phaseTitle(_ context: ActivityViewContext<PomodoroActivityAttributes>) -> String {
         if context.state.status == "paused" {
-            return "Paused"
+            return context.state.localizedPausedTitle
         }
 
         switch context.state.phase {
         case "shortBreak":
-            return "Short break"
+            return context.state.localizedShortBreakTitle
         case "longBreak":
-            return "Long break"
+            return context.state.localizedLongBreakTitle
         default:
-            return "Focus"
+            return context.state.localizedFocusTitle
         }
     }
 
@@ -156,7 +156,7 @@ struct LockScreenLiveActivityView: View {
     private var priorityStrip: some View {
         if let firstPriority = context.state.topPriorities.first {
             HStack(spacing: 8) {
-                Text("Top")
+                Text(context.state.localizedTopPriorityLabel)
                     .font(.caption2.weight(.bold))
                     .foregroundStyle(.white.opacity(0.48))
                     .textCase(.uppercase)
@@ -224,16 +224,16 @@ struct LockScreenLiveActivityView: View {
 
     private var phaseTitle: String {
         if context.state.status == "paused" {
-            return "Paused"
+            return context.state.localizedPausedTitle
         }
 
         switch context.state.phase {
         case "shortBreak":
-            return "Short break"
+            return context.state.localizedShortBreakTitle
         case "longBreak":
-            return "Long break"
+            return context.state.localizedLongBreakTitle
         default:
-            return "Focus"
+            return context.state.localizedFocusTitle
         }
     }
 

@@ -14,6 +14,16 @@
 	<string>6.0</string>
 	<key>CFBundleName</key>
 	<string>Timebox Mark</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en</string>
+		<string>ko</string>
+		<string>ja</string>
+		<string>zh</string>
+		<string>es</string>
+		<string>fr</string>
+		<string>de</string>
+	</array>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -49,6 +59,10 @@
 	<true/>
 	<key>NSSupportsLiveActivitiesFrequentUpdates</key>
 	<true/>
+	<key>NSCalendarsWriteOnlyAccessUsageDescription</key>
+	<string>Timebox Mark adds the time boxes you choose to your calendar.</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>Timebox Mark adds the time boxes you choose to your calendar.</string>
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_dartVmService._tcp</string>

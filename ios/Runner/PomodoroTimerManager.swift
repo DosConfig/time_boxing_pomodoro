@@ -3,6 +3,82 @@ import Flutter
 import UserNotifications
 import ActivityKit
 
+struct NativeTimerCopy {
+    let focusTitle: String
+    let shortBreakTitle: String
+    let longBreakTitle: String
+    let pausedTitle: String
+    let focusBlockTitle: String
+    let breakBlockTitle: String
+    let topPriorityLabel: String
+    let focusInProgressTitle: String
+    let shortBreakInProgressTitle: String
+    let longBreakInProgressTitle: String
+    let remainingTimeFormat: String
+    let focusCompleteTitle: String
+    let breakCompleteTitle: String
+    let focusCompleteBody: String
+    let breakCompleteBody: String
+
+    init(dictionary: [String: String] = [:]) {
+        func value(_ key: String, fallback: String) -> String {
+            let raw = dictionary[key]?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            return raw.isEmpty ? fallback : raw
+        }
+
+        focusTitle = value("focusTitle", fallback: "Focus")
+        shortBreakTitle = value("shortBreakTitle", fallback: "Short break")
+        longBreakTitle = value("longBreakTitle", fallback: "Long break")
+        pausedTitle = value("pausedTitle", fallback: "Paused")
+        focusBlockTitle = value("focusBlockTitle", fallback: "Focus block")
+        breakBlockTitle = value("breakBlockTitle", fallback: "Break block")
+        topPriorityLabel = value("topPriorityLabel", fallback: "Top")
+        focusInProgressTitle = value("focusInProgressTitle", fallback: "Focus in progress")
+        shortBreakInProgressTitle = value("shortBreakInProgressTitle", fallback: "Short break in progress")
+        longBreakInProgressTitle = value("longBreakInProgressTitle", fallback: "Long break in progress")
+        remainingTimeFormat = value("remainingTimeFormat", fallback: "%@ remaining")
+        focusCompleteTitle = value("focusCompleteTitle", fallback: "Focus complete")
+        breakCompleteTitle = value("breakCompleteTitle", fallback: "Break complete")
+        focusCompleteBody = value("focusCompleteBody", fallback: "Step away before the next block.")
+        breakCompleteBody = value("breakCompleteBody", fallback: "Your next focus block is ready.")
+    }
+
+    var dictionary: [String: String] {
+        return [
+            "focusTitle": focusTitle,
+            "shortBreakTitle": shortBreakTitle,
+            "longBreakTitle": longBreakTitle,
+            "pausedTitle": pausedTitle,
+            "focusBlockTitle": focusBlockTitle,
+            "breakBlockTitle": breakBlockTitle,
+            "topPriorityLabel": topPriorityLabel,
+            "focusInProgressTitle": focusInProgressTitle,
+            "shortBreakInProgressTitle": shortBreakInProgressTitle,
+            "longBreakInProgressTitle": longBreakInProgressTitle,
+            "remainingTimeFormat": remainingTimeFormat,
+            "focusCompleteTitle": focusCompleteTitle,
+            "breakCompleteTitle": breakCompleteTitle,
+            "focusCompleteBody": focusCompleteBody,
+            "breakCompleteBody": breakCompleteBody
+        ]
+    }
+
+    func inProgressTitle(for phase: String) -> String {
+        switch phase {
+        case "shortBreak":
+            return shortBreakInProgressTitle
+        case "longBreak":
+            return longBreakInProgressTitle
+        default:
+            return focusInProgressTitle
+        }
+    }
+
+    func remainingBody(time: String) -> String {
+        return String(format: remainingTimeFormat, time)
+    }
+}
+
 class PomodoroTimerManager: NSObject {
     private var channel: FlutterMethodChannel
     private var timer: Timer?
@@ -20,6 +96,7 @@ class PomodoroTimerManager: NSObject {
     private var topPriorities: [String] = []
     private var currentTimeBoxTitle: String = ""
     private var currentTimeBoxTimeRange: String = ""
+    private var localizedCopy = NativeTimerCopy()
 
     private var currentActivity: Any?
 
@@ -45,6 +122,7 @@ class PomodoroTimerManager: NSObject {
         static let topPriorities = "pomodoro.topPriorities"
         static let currentTimeBoxTitle = "pomodoro.currentTimeBoxTitle"
         static let currentTimeBoxTimeRange = "pomodoro.currentTimeBoxTimeRange"
+        static let localizedCopy = "pomodoro.localizedCopy"
     }
 
     private func persistState() {
@@ -60,6 +138,7 @@ class PomodoroTimerManager: NSObject {
         d.set(topPriorities, forKey: PersistKeys.topPriorities)
         d.set(currentTimeBoxTitle, forKey: PersistKeys.currentTimeBoxTitle)
         d.set(currentTimeBoxTimeRange, forKey: PersistKeys.currentTimeBoxTimeRange)
+        d.set(localizedCopy.dictionary, forKey: PersistKeys.localizedCopy)
         persistNotificationSettings()
     }
 
@@ -108,6 +187,7 @@ class PomodoroTimerManager: NSObject {
         d.removeObject(forKey: PersistKeys.topPriorities)
         d.removeObject(forKey: PersistKeys.currentTimeBoxTitle)
         d.removeObject(forKey: PersistKeys.currentTimeBoxTimeRange)
+        d.removeObject(forKey: PersistKeys.localizedCopy)
     }
 
     private func restoredEndTime(from defaults: UserDefaults) -> Date? {
@@ -146,6 +226,7 @@ class PomodoroTimerManager: NSObject {
         topPriorities = d.stringArray(forKey: PersistKeys.topPriorities) ?? []
         currentTimeBoxTitle = d.string(forKey: PersistKeys.currentTimeBoxTitle) ?? ""
         currentTimeBoxTimeRange = d.string(forKey: PersistKeys.currentTimeBoxTimeRange) ?? ""
+        localizedCopy = NativeTimerCopy(dictionary: d.dictionary(forKey: PersistKeys.localizedCopy) as? [String: String] ?? [:])
 
         if isPaused {
             pausedRemainingTime = d.double(forKey: PersistKeys.pausedRemaining)
@@ -227,7 +308,8 @@ class PomodoroTimerManager: NSObject {
         soundEnabled: Bool = true,
         topPriorities: [String] = [],
         currentTimeBoxTitle: String = "",
-        currentTimeBoxTimeRange: String = ""
+        currentTimeBoxTimeRange: String = "",
+        localizedCopy: NativeTimerCopy = NativeTimerCopy()
     ) {
         NSLog("[Pomodoro] native startTimer called — duration=%d session=%d", duration, sessionCount)
         stopTimer()
@@ -241,12 +323,13 @@ class PomodoroTimerManager: NSObject {
         currentPhase = phase
         self.notificationsEnabled = notificationsEnabled
         self.soundEnabled = soundEnabled
+        self.localizedCopy = localizedCopy
         self.topPriorities = topPriorities
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty }
             .prefix(3)
             .map { String($0) }
-        self.currentTimeBoxTitle = currentTimeBoxTitle.isEmpty ? "Focus block" : currentTimeBoxTitle
+        self.currentTimeBoxTitle = currentTimeBoxTitle.isEmpty ? defaultTimeBoxTitle(for: phase) : currentTimeBoxTitle
         self.currentTimeBoxTimeRange = currentTimeBoxTimeRange
 
         if notificationsEnabled {
@@ -409,8 +492,8 @@ class PomodoroTimerManager: NSObject {
 
     private func scheduleOngoingNotification(duration: Int) {
         let content = UNMutableNotificationContent()
-        content.title = "\(phaseTitle) in progress"
-        content.body = "\(formatTime(seconds: duration)) remaining"
+        content.title = localizedCopy.inProgressTitle(for: currentPhase)
+        content.body = localizedCopy.remainingBody(time: formatTime(seconds: duration))
         content.sound = nil
         content.categoryIdentifier = "POMODORO_RUNNING"
 
@@ -474,7 +557,12 @@ class PomodoroTimerManager: NSObject {
             pausedRemainingSeconds: nil,
             topPriorities: topPriorities,
             currentTimeBoxTitle: currentTimeBoxTitle,
-            currentTimeBoxTimeRange: currentTimeBoxTimeRange
+            currentTimeBoxTimeRange: currentTimeBoxTimeRange,
+            localizedFocusTitle: localizedCopy.focusTitle,
+            localizedShortBreakTitle: localizedCopy.shortBreakTitle,
+            localizedLongBreakTitle: localizedCopy.longBreakTitle,
+            localizedPausedTitle: localizedCopy.pausedTitle,
+            localizedTopPriorityLabel: localizedCopy.topPriorityLabel
         )
 
         // Check if Live Activities are enabled
@@ -517,7 +605,12 @@ class PomodoroTimerManager: NSObject {
                 pausedRemainingSeconds: remaining,
                 topPriorities: topPriorities,
                 currentTimeBoxTitle: currentTimeBoxTitle,
-                currentTimeBoxTimeRange: currentTimeBoxTimeRange
+                currentTimeBoxTimeRange: currentTimeBoxTimeRange,
+                localizedFocusTitle: localizedCopy.focusTitle,
+                localizedShortBreakTitle: localizedCopy.shortBreakTitle,
+                localizedLongBreakTitle: localizedCopy.longBreakTitle,
+                localizedPausedTitle: localizedCopy.pausedTitle,
+                localizedTopPriorityLabel: localizedCopy.topPriorityLabel
             )
         } else if status == "running" {
             // 재개: 새로운 종료 시각 계산
@@ -530,7 +623,12 @@ class PomodoroTimerManager: NSObject {
                 pausedRemainingSeconds: nil,
                 topPriorities: topPriorities,
                 currentTimeBoxTitle: currentTimeBoxTitle,
-                currentTimeBoxTimeRange: currentTimeBoxTimeRange
+                currentTimeBoxTimeRange: currentTimeBoxTimeRange,
+                localizedFocusTitle: localizedCopy.focusTitle,
+                localizedShortBreakTitle: localizedCopy.shortBreakTitle,
+                localizedLongBreakTitle: localizedCopy.longBreakTitle,
+                localizedPausedTitle: localizedCopy.pausedTitle,
+                localizedTopPriorityLabel: localizedCopy.topPriorityLabel
             )
         } else {
             // break 등
@@ -543,7 +641,12 @@ class PomodoroTimerManager: NSObject {
                 pausedRemainingSeconds: nil,
                 topPriorities: topPriorities,
                 currentTimeBoxTitle: currentTimeBoxTitle,
-                currentTimeBoxTimeRange: currentTimeBoxTimeRange
+                currentTimeBoxTimeRange: currentTimeBoxTimeRange,
+                localizedFocusTitle: localizedCopy.focusTitle,
+                localizedShortBreakTitle: localizedCopy.shortBreakTitle,
+                localizedLongBreakTitle: localizedCopy.longBreakTitle,
+                localizedPausedTitle: localizedCopy.pausedTitle,
+                localizedTopPriorityLabel: localizedCopy.topPriorityLabel
             )
         }
 
@@ -601,29 +704,38 @@ class PomodoroTimerManager: NSObject {
     private var phaseTitle: String {
         switch currentPhase {
         case "shortBreak":
-            return "Short break"
+            return localizedCopy.shortBreakTitle
         case "longBreak":
-            return "Long break"
+            return localizedCopy.longBreakTitle
         default:
-            return "Focus"
+            return localizedCopy.focusTitle
+        }
+    }
+
+    private func defaultTimeBoxTitle(for phase: String) -> String {
+        switch phase {
+        case "shortBreak", "longBreak":
+            return localizedCopy.breakBlockTitle
+        default:
+            return localizedCopy.focusBlockTitle
         }
     }
 
     private var notificationTitle: String {
         switch currentPhase {
         case "shortBreak", "longBreak":
-            return "Break complete"
+            return localizedCopy.breakCompleteTitle
         default:
-            return "Focus complete"
+            return localizedCopy.focusCompleteTitle
         }
     }
 
     private var notificationBody: String {
         switch currentPhase {
         case "shortBreak", "longBreak":
-            return "Your next focus block is ready."
+            return localizedCopy.breakCompleteBody
         default:
-            return "Step away before the next block."
+            return localizedCopy.focusCompleteBody
         }
     }
 }

@@ -1,11 +1,14 @@
 import Flutter
+import EventKit
 import UIKit
 import UserNotifications
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
   private let CHANNEL = "com.pomodoro/timer"
+  private let CALENDAR_CHANNEL = "com.pomodoro/calendar"
   private var pomodoroTimer: PomodoroTimerManager?
+  private let calendarExporter = AppleCalendarExportManager()
 
   override func application(
     _ application: UIApplication,
@@ -22,6 +25,7 @@ import UserNotifications
 
     let timerChannel = FlutterMethodChannel(name: CHANNEL, binaryMessenger: controller.binaryMessenger)
     pomodoroTimer = PomodoroTimerManager(channel: timerChannel)
+    let calendarChannel = FlutterMethodChannel(name: CALENDAR_CHANNEL, binaryMessenger: controller.binaryMessenger)
 
     timerChannel.setMethodCallHandler { [weak self] (call: FlutterMethodCall, result: @escaping FlutterResult) in
       guard let self = self else { return }
@@ -40,6 +44,7 @@ import UserNotifications
           let topPriorities = args["topPriorities"] as? [String] ?? []
           let currentTimeBoxTitle = args["currentTimeBoxTitle"] as? String ?? ""
           let currentTimeBoxTimeRange = args["currentTimeBoxTimeRange"] as? String ?? ""
+          let localizedCopy = NativeTimerCopy(dictionary: args["localizedCopy"] as? [String: String] ?? [:])
           self.pomodoroTimer?.startTimer(
             duration: seconds,
             sessionCount: sessionCount,
@@ -49,7 +54,8 @@ import UserNotifications
             soundEnabled: soundEnabled,
             topPriorities: topPriorities,
             currentTimeBoxTitle: currentTimeBoxTitle,
-            currentTimeBoxTimeRange: currentTimeBoxTimeRange
+            currentTimeBoxTimeRange: currentTimeBoxTimeRange,
+            localizedCopy: localizedCopy
           )
           result(true)
         } else {
@@ -96,6 +102,17 @@ import UserNotifications
       }
     }
 
+    calendarChannel.setMethodCallHandler { [weak self] (call: FlutterMethodCall, result: @escaping FlutterResult) in
+      guard let self = self else { return }
+
+      switch call.method {
+      case "exportEvents":
+        self.calendarExporter.exportEvents(arguments: call.arguments, result: result)
+      default:
+        result(FlutterMethodNotImplemented)
+      }
+    }
+
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 
@@ -109,5 +126,114 @@ import UserNotifications
     } else {
       completionHandler([.alert, .sound, .badge])
     }
+  }
+}
+
+class AppleCalendarExportManager {
+  private let eventStore = EKEventStore()
+
+  func exportEvents(arguments: Any?, result: @escaping FlutterResult) {
+    guard let args = arguments as? [String: Any],
+          let events = args["events"] as? [[String: Any]] else {
+      result(FlutterError(code: "INVALID_ARGUMENTS", message: "events required", details: nil))
+      return
+    }
+
+    guard !events.isEmpty else {
+      result(["status": "success", "events": []])
+      return
+    }
+
+    requestWriteAccess { [weak self] granted, error in
+      guard let self = self else { return }
+
+      if let error = error {
+        DispatchQueue.main.async {
+          result(["status": "failed", "message": error.localizedDescription])
+        }
+        return
+      }
+
+      guard granted else {
+        DispatchQueue.main.async {
+          result(["status": "denied", "events": []])
+        }
+        return
+      }
+
+      self.saveEvents(events, result: result)
+    }
+  }
+
+  private func requestWriteAccess(completion: @escaping (Bool, Error?) -> Void) {
+    if #available(iOS 17.0, *) {
+      eventStore.requestWriteOnlyAccessToEvents(completion: completion)
+    } else {
+      eventStore.requestAccess(to: .event, completion: completion)
+    }
+  }
+
+  private func saveEvents(_ eventPayloads: [[String: Any]], result: @escaping FlutterResult) {
+    guard let calendar = eventStore.defaultCalendarForNewEvents else {
+      DispatchQueue.main.async {
+        result(["status": "failed", "message": "No default calendar is available."])
+      }
+      return
+    }
+
+    var exportedEvents: [[String: String]] = []
+
+    do {
+      for payload in eventPayloads {
+        guard let timeBoxId = payload["timeBoxId"] as? String,
+              let startMillis = millisValue(payload["startAtMillis"]),
+              let endMillis = millisValue(payload["endAtMillis"]) else {
+          continue
+        }
+
+        let startDate = Date(timeIntervalSince1970: TimeInterval(startMillis) / 1000)
+        let endDate = Date(timeIntervalSince1970: TimeInterval(endMillis) / 1000)
+        guard endDate > startDate else { continue }
+
+        let event = EKEvent(eventStore: eventStore)
+        event.title = nonEmptyString(payload["title"]) ?? "Timebox"
+        event.notes = nonEmptyString(payload["notes"])
+        event.startDate = startDate
+        event.endDate = endDate
+        event.calendar = calendar
+
+        try eventStore.save(event, span: .thisEvent)
+        if let eventId = event.eventIdentifier {
+          exportedEvents.append(["timeBoxId": timeBoxId, "eventId": eventId])
+        }
+      }
+
+      DispatchQueue.main.async {
+        result(["status": "success", "events": exportedEvents])
+      }
+    } catch {
+      DispatchQueue.main.async {
+        result(["status": "failed", "message": error.localizedDescription])
+      }
+    }
+  }
+
+  private func millisValue(_ value: Any?) -> Int64? {
+    if let number = value as? NSNumber {
+      return number.int64Value
+    }
+    if let int = value as? Int {
+      return Int64(int)
+    }
+    if let double = value as? Double {
+      return Int64(double)
+    }
+    return nil
+  }
+
+  private func nonEmptyString(_ value: Any?) -> String? {
+    guard let string = value as? String else { return nil }
+    let trimmed = string.trimmingCharacters(in: .whitespacesAndNewlines)
+    return trimmed.isEmpty ? nil : trimmed
   }
 }

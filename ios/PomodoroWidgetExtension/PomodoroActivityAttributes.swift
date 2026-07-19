@@ -15,6 +15,11 @@ struct PomodoroActivityAttributes: ActivityAttributes {
         var topPriorities: [String]
         var currentTimeBoxTitle: String
         var currentTimeBoxTimeRange: String
+        var localizedFocusTitle: String
+        var localizedShortBreakTitle: String
+        var localizedLongBreakTitle: String
+        var localizedPausedTitle: String
+        var localizedTopPriorityLabel: String
     }
 
     var totalDuration: Int  // in seconds
