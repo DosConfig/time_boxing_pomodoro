@@ -1,0 +1,192 @@
+{
+  "@@locale": "ja",
+  "appName": "Timebox Mark",
+  "navToday": "今日",
+  "navFocus": "集中",
+  "navCalendar": "カレンダー",
+  "navSettings": "設定",
+  "ok": "OK",
+  "breakCompleteMessage": "休憩が終わりました。次のブロックを準備できます。",
+  "focusCompleteMessage": "集中が終わりました。次の前に少し離れましょう。",
+  "focusTitle": "集中",
+  "shortBreakLabel": "短い休憩",
+  "longBreakLabel": "長い休憩",
+  "nowLabel": "現在",
+  "readyLabel": "準備完了",
+  "runningLabel": "実行中",
+  "pausedLabel": "一時停止",
+  "sessionProgress": "今日のボックス {total} 個中 {completed} 個",
+  "resetAction": "リセット",
+  "pauseAction": "一時停止",
+  "startAction": "開始",
+  "settingsTitle": "設定",
+  "awakeWindowTitle": "活動時間",
+  "editAction": "編集",
+  "executionTitle": "実行",
+  "autoStartNextTimeBox": "次のタイムボックスを自動開始",
+  "alertsTitle": "通知",
+  "localAlerts": "ローカル通知",
+  "soundLabel": "サウンド",
+  "saveAction": "保存",
+  "onboardingSubtitle": "実際に計画する時間を設定します。",
+  "startPlanning": "計画を始める",
+  "calendarTitle": "カレンダー",
+  "todayPlanSync": "今日の計画同期",
+  "syncModeTitle": "同期モード",
+  "manualMode": "手動",
+  "autoMode": "自動",
+  "calendarExport": "カレンダー書き出し",
+  "providerSetupQueued": "{provider} の設定は準備中です。",
+  "providerAppleCalendar": "Apple カレンダー",
+  "appleCalendarExportDescription": "今日の時間枠を既定のAppleカレンダーに追加します。",
+  "providerGoogleCalendar": "Google カレンダー",
+  "googleCalendarExportDescription": "Googleの許可後、今日の時間枠をメインのGoogleカレンダーに追加します。",
+  "providerOutlook": "Outlook",
+  "badgeFree": "無料",
+  "badgePro": "Pro",
+  "statusLocal": "ローカル",
+  "statusFirebase": "Firebase",
+  "statusOAuth": "OAuth",
+  "setupAction": "設定",
+  "connectAction": "接続",
+  "providersTitle": "プロバイダー",
+  "exportRulesTitle": "書き出しルール",
+  "topPrioritiesOnly": "最優先のみ",
+  "conflictCheck": "競合を確認",
+  "dedicatedCalendar": "専用カレンダー",
+  "includeBreaks": "休憩を含める",
+  "todayQueueTitle": "今日のキュー",
+  "boxesCount": "{count, plural, =0{0 ボックス} other{{count} ボックス}}",
+  "noBoxes": "ボックスなし",
+  "exportSelected": "選択を書き出す",
+  "exportTodayAction": "今日を書き出す",
+  "exportAppleTodayAction": "Appleカレンダーへ書き出す",
+  "exportGoogleTodayAction": "Googleカレンダーへ書き出す",
+  "calendarExporting": "書き出し中",
+  "calendarExportEmpty": "書き出す時間枠がありません。",
+  "calendarExportSuccess": "{count, plural, =0{書き出した予定はありません} other{{count}件の予定を書き出しました}}",
+  "calendarExportDenied": "カレンダーへのアクセスが拒否されました。",
+  "calendarExportUnavailable": "このデバイスではカレンダー書き出しを利用できません。",
+  "calendarExportFailed": "カレンダー書き出しに失敗しました。もう一度お試しください。",
+  "todayTitle": "今日",
+  "startFocus": "集中を開始",
+  "brainDumpTitle": "ブレインダンプ",
+  "addBrainDumpTooltip": "ブレインダンプを追加",
+  "addBrainDumpTitle": "ブレインダンプを追加",
+  "captureLabel": "記録",
+  "makePriority": "優先事項にする",
+  "moveToReminder": "リマインダーへ移動",
+  "deleteAction": "削除",
+  "keepInMindTitle": "覚えておくこと",
+  "addReminderTooltip": "リマインダーを追加",
+  "addReminderTitle": "リマインダーを追加",
+  "reminderLabel": "リマインダー",
+  "enterSomethingFirst": "内容を入力してください。",
+  "dailyProgressTitle": "今日の概要",
+  "planMetric": "優先事項",
+  "timeBoxesMetric": "時間枠",
+  "focusMetric": "完了",
+  "dailyProgressDescription": "優先事項、予定した時間枠、次の集中ブロックを確認します。",
+  "todayReviewTitle": "今日のレビュー",
+  "nextTimeBoxLabel": "次",
+  "noActiveTimeBox": "時間枠なし",
+  "openFocusAction": "Focusを開く",
+  "topPrioritiesTitle": "最優先事項",
+  "addPriorityTooltip": "優先事項を追加",
+  "noPrioritiesYet": "優先事項はまだありません",
+  "threePrioritiesAlreadySet": "優先事項はすでに3つ設定されています。",
+  "addPriorityTitle": "優先事項を追加",
+  "editPriorityTitle": "優先事項を編集",
+  "priorityLabel": "優先事項 {number}",
+  "clearPriority": "優先事項を消去",
+  "weekdayMonNarrow": "月",
+  "weekdayTueNarrow": "火",
+  "weekdayWedNarrow": "水",
+  "weekdayThuNarrow": "木",
+  "weekdayFriNarrow": "金",
+  "weekdaySatNarrow": "土",
+  "weekdaySunNarrow": "日",
+  "timeBoxesTitle": "タイムボックス",
+  "timeBoxesHint": "空きスロットをタップして追加。ボックスをタップして編集。",
+  "nowBadge": "現在",
+  "newTimeBoxTitle": "新しいタイムボックス",
+  "editTimeBoxTitle": "タイムボックスを編集",
+  "titleLabel": "タイトル",
+  "timeBoxRange": "タイムボックス {range}",
+  "newTimeBoxDefaultTitle": "新しいタイムボックス",
+  "nativeFocusBlockTitle": "集中ブロック",
+  "nativeBreakBlockTitle": "休憩ブロック",
+  "liveActivityTopPriorityLabel": "優先",
+  "notificationFocusInProgressTitle": "集中しています",
+  "notificationShortBreakInProgressTitle": "短い休憩中",
+  "notificationLongBreakInProgressTitle": "長い休憩中",
+  "notificationRemainingTimeFormat": "残り %@",
+  "notificationFocusCompleteTitle": "集中完了",
+  "notificationBreakCompleteTitle": "休憩完了",
+  "notificationFocusCompleteBody": "次のブロックの前に少し休みましょう。",
+  "notificationBreakCompleteBody": "次の集中ブロックの準備ができました。",
+  "defaultTimeBoxTopPriority": "最優先",
+  "defaultTimeBoxDeepWork": "ディープワーク",
+  "defaultTimeBoxAdmin": "管理",
+  "defaultTimeBoxSecondPriority": "2番目の優先事項",
+  "defaultTimeBoxFollowUp": "フォローアップ",
+  "accountTitle": "アカウント",
+  "firebaseSetupRequired": "Firebase設定が必要です",
+  "firebaseSetupDescription": "クラウドログインを使うにはGoogleService-Info.plistを追加し、FirebaseでAppleログインを有効にしてください。",
+  "signInWithAppleAction": "Appleでサインイン",
+  "signedInAs": "{label}でサインイン中",
+  "signOutAction": "サインアウト",
+  "authSignInFailed": "サインインに失敗しました。もう一度お試しください。",
+  "@providerSetupQueued": {
+    "placeholders": {
+      "provider": {
+        "type": "String"
+      }
+    }
+  },
+  "@sessionProgress": {
+    "placeholders": {
+      "completed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "@boxesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@calendarExportSuccess": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@priorityLabel": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "@timeBoxRange": {
+    "placeholders": {
+      "range": {
+        "type": "String"
+      }
+    }
+  },
+  "@signedInAs": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  }
+}

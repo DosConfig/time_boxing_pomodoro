@@ -1,0 +1,192 @@
+{
+  "@@locale": "en",
+  "appName": "Timebox Mark",
+  "navToday": "Today",
+  "navFocus": "Focus",
+  "navCalendar": "Calendar",
+  "navSettings": "Settings",
+  "ok": "OK",
+  "breakCompleteMessage": "Break complete. Next block is ready.",
+  "focusCompleteMessage": "Focus complete. Step away before the next block.",
+  "focusTitle": "Focus",
+  "shortBreakLabel": "Short break",
+  "longBreakLabel": "Long break",
+  "nowLabel": "Now",
+  "readyLabel": "Ready",
+  "runningLabel": "Running",
+  "pausedLabel": "Paused",
+  "sessionProgress": "{completed} of {total} today boxes",
+  "resetAction": "Reset",
+  "pauseAction": "Pause",
+  "startAction": "Start",
+  "settingsTitle": "Settings",
+  "awakeWindowTitle": "Awake window",
+  "editAction": "Edit",
+  "executionTitle": "Execution",
+  "autoStartNextTimeBox": "Auto-start next time box",
+  "alertsTitle": "Alerts",
+  "localAlerts": "Local alerts",
+  "soundLabel": "Sound",
+  "saveAction": "Save",
+  "onboardingSubtitle": "Set the hours you actually plan.",
+  "startPlanning": "Start planning",
+  "calendarTitle": "Calendar",
+  "todayPlanSync": "Today plan sync",
+  "syncModeTitle": "Sync mode",
+  "manualMode": "Manual",
+  "autoMode": "Auto",
+  "calendarExport": "Calendar export",
+  "providerSetupQueued": "{provider} setup is queued.",
+  "providerAppleCalendar": "Apple Calendar",
+  "appleCalendarExportDescription": "Exports today's time boxes to your default Apple Calendar.",
+  "providerGoogleCalendar": "Google Calendar",
+  "googleCalendarExportDescription": "Adds today's time boxes to your primary Google Calendar after Google permission.",
+  "providerOutlook": "Outlook",
+  "badgeFree": "Free",
+  "badgePro": "Pro",
+  "statusLocal": "Local",
+  "statusFirebase": "Firebase",
+  "statusOAuth": "OAuth",
+  "setupAction": "Set up",
+  "connectAction": "Connect",
+  "providersTitle": "Providers",
+  "exportRulesTitle": "Export rules",
+  "topPrioritiesOnly": "Top priorities only",
+  "conflictCheck": "Conflict check",
+  "dedicatedCalendar": "Dedicated calendar",
+  "includeBreaks": "Include breaks",
+  "todayQueueTitle": "Today queue",
+  "boxesCount": "{count, plural, =0{0 boxes} =1{1 box} other{{count} boxes}}",
+  "noBoxes": "No boxes",
+  "exportSelected": "Export selected",
+  "exportTodayAction": "Export today",
+  "exportAppleTodayAction": "Export to Apple Calendar",
+  "exportGoogleTodayAction": "Export to Google Calendar",
+  "calendarExporting": "Exporting",
+  "calendarExportEmpty": "No time boxes to export.",
+  "calendarExportSuccess": "{count, plural, =0{No events exported} =1{1 event exported} other{{count} events exported}}",
+  "calendarExportDenied": "Calendar access was denied.",
+  "calendarExportUnavailable": "Calendar export is unavailable on this device.",
+  "calendarExportFailed": "Calendar export failed. Try again.",
+  "todayTitle": "Today",
+  "startFocus": "Start focus",
+  "brainDumpTitle": "Brain dump",
+  "addBrainDumpTooltip": "Add brain dump",
+  "addBrainDumpTitle": "Add brain dump",
+  "captureLabel": "Capture",
+  "makePriority": "Make priority",
+  "moveToReminder": "Move to reminder",
+  "deleteAction": "Delete",
+  "keepInMindTitle": "Keep in mind",
+  "addReminderTooltip": "Add reminder",
+  "addReminderTitle": "Add reminder",
+  "reminderLabel": "Reminder",
+  "enterSomethingFirst": "Enter something first.",
+  "dailyProgressTitle": "Today summary",
+  "planMetric": "Priorities",
+  "timeBoxesMetric": "Time boxes",
+  "focusMetric": "Done",
+  "dailyProgressDescription": "Review priorities, planned boxes, and the next focus block.",
+  "todayReviewTitle": "Today review",
+  "nextTimeBoxLabel": "Next",
+  "noActiveTimeBox": "No time box",
+  "openFocusAction": "Open Focus",
+  "topPrioritiesTitle": "Top priorities",
+  "addPriorityTooltip": "Add priority",
+  "noPrioritiesYet": "No priorities yet",
+  "threePrioritiesAlreadySet": "Three priorities are already set.",
+  "addPriorityTitle": "Add priority",
+  "editPriorityTitle": "Edit priority",
+  "priorityLabel": "Priority {number}",
+  "clearPriority": "Clear priority",
+  "weekdayMonNarrow": "M",
+  "weekdayTueNarrow": "T",
+  "weekdayWedNarrow": "W",
+  "weekdayThuNarrow": "T",
+  "weekdayFriNarrow": "F",
+  "weekdaySatNarrow": "S",
+  "weekdaySunNarrow": "S",
+  "timeBoxesTitle": "Time boxes",
+  "timeBoxesHint": "Tap an empty slot to add. Tap a box to edit.",
+  "nowBadge": "Now",
+  "newTimeBoxTitle": "New time box",
+  "editTimeBoxTitle": "Edit time box",
+  "titleLabel": "Title",
+  "timeBoxRange": "Time box {range}",
+  "newTimeBoxDefaultTitle": "New time box",
+  "nativeFocusBlockTitle": "Focus block",
+  "nativeBreakBlockTitle": "Break block",
+  "liveActivityTopPriorityLabel": "Top",
+  "notificationFocusInProgressTitle": "Focus in progress",
+  "notificationShortBreakInProgressTitle": "Short break in progress",
+  "notificationLongBreakInProgressTitle": "Long break in progress",
+  "notificationRemainingTimeFormat": "%@ remaining",
+  "notificationFocusCompleteTitle": "Focus complete",
+  "notificationBreakCompleteTitle": "Break complete",
+  "notificationFocusCompleteBody": "Step away before the next block.",
+  "notificationBreakCompleteBody": "Your next focus block is ready.",
+  "defaultTimeBoxTopPriority": "Top priority",
+  "defaultTimeBoxDeepWork": "Deep work",
+  "defaultTimeBoxAdmin": "Admin",
+  "defaultTimeBoxSecondPriority": "Second priority",
+  "defaultTimeBoxFollowUp": "Follow-up",
+  "accountTitle": "Account",
+  "firebaseSetupRequired": "Firebase setup required",
+  "firebaseSetupDescription": "Add GoogleService-Info.plist and enable Apple sign-in in Firebase before cloud login is available.",
+  "signInWithAppleAction": "Sign in with Apple",
+  "signedInAs": "Signed in as {label}",
+  "signOutAction": "Sign out",
+  "authSignInFailed": "Sign-in failed. Try again.",
+  "@providerSetupQueued": {
+    "placeholders": {
+      "provider": {
+        "type": "String"
+      }
+    }
+  },
+  "@sessionProgress": {
+    "placeholders": {
+      "completed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "@boxesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@calendarExportSuccess": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@priorityLabel": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "@timeBoxRange": {
+    "placeholders": {
+      "range": {
+        "type": "String"
+      }
+    }
+  },
+  "@signedInAs": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  }
+}

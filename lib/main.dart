@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pomodoro_method_channel/presentation/providers/app_preferences_provider.dart';
-import 'package:pomodoro_method_channel/presentation/screens/app_shell.dart';
-import 'package:pomodoro_method_channel/presentation/screens/onboarding_screen.dart';
+import 'package:pomodoro_method_channel/features/onboarding/presentation/onboarding_screen.dart';
+import 'package:pomodoro_method_channel/features/settings/application/app_preferences_controller.dart';
+import 'package:pomodoro_method_channel/features/shell/presentation/app_shell.dart';
+import 'package:pomodoro_method_channel/l10n/generated/app_localizations.dart';
+import 'package:pomodoro_method_channel/l10n/l10n.dart';
 
 void main() {
   runApp(const ProviderScope(child: MyApp()));
@@ -13,11 +15,13 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final preferences = ref.watch(appPreferencesProvider);
+    final preferences = ref.watch(appPreferencesControllerProvider);
 
     return MaterialApp(
-      title: 'Timebox Mark',
+      onGenerateTitle: (context) => context.l10n.appName,
       debugShowCheckedModeBanner: false,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       theme: ThemeData(
         useMaterial3: true,
         brightness: Brightness.dark,

@@ -1,0 +1,192 @@
+{
+  "@@locale": "ko",
+  "appName": "타임박스 마크",
+  "navToday": "오늘",
+  "navFocus": "집중",
+  "navCalendar": "캘린더",
+  "navSettings": "설정",
+  "ok": "확인",
+  "breakCompleteMessage": "휴식이 끝났어요. 다음 블록을 준비하세요.",
+  "focusCompleteMessage": "집중이 끝났어요. 다음 블록 전에 잠깐 쉬세요.",
+  "focusTitle": "집중",
+  "shortBreakLabel": "짧은 휴식",
+  "longBreakLabel": "긴 휴식",
+  "nowLabel": "지금",
+  "readyLabel": "대기",
+  "runningLabel": "진행 중",
+  "pausedLabel": "일시정지",
+  "sessionProgress": "오늘 박스 {total}개 중 {completed}개 완료",
+  "resetAction": "초기화",
+  "pauseAction": "일시정지",
+  "startAction": "시작",
+  "settingsTitle": "설정",
+  "awakeWindowTitle": "깨어있는 시간",
+  "editAction": "수정",
+  "executionTitle": "실행",
+  "autoStartNextTimeBox": "다음 타임박스 자동 시작",
+  "alertsTitle": "알림",
+  "localAlerts": "로컬 알림",
+  "soundLabel": "사운드",
+  "saveAction": "저장",
+  "onboardingSubtitle": "실제로 계획할 시간을 설정하세요.",
+  "startPlanning": "계획 시작",
+  "calendarTitle": "캘린더",
+  "todayPlanSync": "오늘 계획 동기화",
+  "syncModeTitle": "동기화 방식",
+  "manualMode": "수동",
+  "autoMode": "자동",
+  "calendarExport": "캘린더 내보내기",
+  "providerSetupQueued": "{provider} 설정은 준비 중입니다.",
+  "providerAppleCalendar": "Apple 캘린더",
+  "appleCalendarExportDescription": "오늘 타임박스를 기본 Apple 캘린더에 추가합니다.",
+  "providerGoogleCalendar": "Google 캘린더",
+  "googleCalendarExportDescription": "Google 권한을 받은 뒤 오늘 타임박스를 기본 Google 캘린더에 추가합니다.",
+  "providerOutlook": "Outlook",
+  "badgeFree": "무료",
+  "badgePro": "프로",
+  "statusLocal": "로컬",
+  "statusFirebase": "Firebase",
+  "statusOAuth": "OAuth",
+  "setupAction": "설정",
+  "connectAction": "연결",
+  "providersTitle": "제공자",
+  "exportRulesTitle": "내보내기 규칙",
+  "topPrioritiesOnly": "최우선 항목만",
+  "conflictCheck": "일정 충돌 확인",
+  "dedicatedCalendar": "전용 캘린더",
+  "includeBreaks": "휴식 포함",
+  "todayQueueTitle": "오늘 대기열",
+  "boxesCount": "{count, plural, =0{0개 박스} other{{count}개 박스}}",
+  "noBoxes": "박스 없음",
+  "exportSelected": "선택 항목 내보내기",
+  "exportTodayAction": "오늘 내보내기",
+  "exportAppleTodayAction": "Apple 캘린더로 내보내기",
+  "exportGoogleTodayAction": "Google 캘린더로 내보내기",
+  "calendarExporting": "내보내는 중",
+  "calendarExportEmpty": "내보낼 타임박스가 없습니다.",
+  "calendarExportSuccess": "{count, plural, =0{내보낸 일정이 없습니다} other{일정 {count}개를 내보냈습니다}}",
+  "calendarExportDenied": "캘린더 접근이 거부되었습니다.",
+  "calendarExportUnavailable": "이 기기에서는 캘린더 내보내기를 사용할 수 없습니다.",
+  "calendarExportFailed": "캘린더 내보내기에 실패했습니다. 다시 시도하세요.",
+  "todayTitle": "오늘",
+  "startFocus": "집중 시작",
+  "brainDumpTitle": "브레인 덤프",
+  "addBrainDumpTooltip": "브레인 덤프 추가",
+  "addBrainDumpTitle": "브레인 덤프 추가",
+  "captureLabel": "기록",
+  "makePriority": "우선순위로 만들기",
+  "moveToReminder": "리마인더로 이동",
+  "deleteAction": "삭제",
+  "keepInMindTitle": "기억할 것",
+  "addReminderTooltip": "리마인더 추가",
+  "addReminderTitle": "리마인더 추가",
+  "reminderLabel": "리마인더",
+  "enterSomethingFirst": "내용을 입력하세요.",
+  "dailyProgressTitle": "오늘 요약",
+  "planMetric": "우선순위",
+  "timeBoxesMetric": "타임박스",
+  "focusMetric": "완료",
+  "dailyProgressDescription": "우선순위, 계획된 타임박스, 다음 집중 블록을 확인하세요.",
+  "todayReviewTitle": "오늘 리뷰",
+  "nextTimeBoxLabel": "다음",
+  "noActiveTimeBox": "타임박스 없음",
+  "openFocusAction": "Focus 열기",
+  "topPrioritiesTitle": "최우선 항목",
+  "addPriorityTooltip": "우선순위 추가",
+  "noPrioritiesYet": "아직 우선순위가 없습니다",
+  "threePrioritiesAlreadySet": "우선순위 3개가 이미 설정됐습니다.",
+  "addPriorityTitle": "우선순위 추가",
+  "editPriorityTitle": "우선순위 수정",
+  "priorityLabel": "우선순위 {number}",
+  "clearPriority": "우선순위 지우기",
+  "weekdayMonNarrow": "월",
+  "weekdayTueNarrow": "화",
+  "weekdayWedNarrow": "수",
+  "weekdayThuNarrow": "목",
+  "weekdayFriNarrow": "금",
+  "weekdaySatNarrow": "토",
+  "weekdaySunNarrow": "일",
+  "timeBoxesTitle": "타임박스",
+  "timeBoxesHint": "빈 슬롯을 탭해 추가하고, 박스를 탭해 수정하세요.",
+  "nowBadge": "지금",
+  "newTimeBoxTitle": "새 타임박스",
+  "editTimeBoxTitle": "타임박스 수정",
+  "titleLabel": "제목",
+  "timeBoxRange": "타임박스 {range}",
+  "newTimeBoxDefaultTitle": "새 타임박스",
+  "nativeFocusBlockTitle": "집중 블록",
+  "nativeBreakBlockTitle": "휴식 블록",
+  "liveActivityTopPriorityLabel": "우선",
+  "notificationFocusInProgressTitle": "집중 진행 중",
+  "notificationShortBreakInProgressTitle": "짧은 휴식 진행 중",
+  "notificationLongBreakInProgressTitle": "긴 휴식 진행 중",
+  "notificationRemainingTimeFormat": "남은 시간 %@",
+  "notificationFocusCompleteTitle": "집중 완료",
+  "notificationBreakCompleteTitle": "휴식 완료",
+  "notificationFocusCompleteBody": "다음 블록 전에 잠깐 쉬세요.",
+  "notificationBreakCompleteBody": "다음 집중 블록을 준비하세요.",
+  "defaultTimeBoxTopPriority": "최우선 항목",
+  "defaultTimeBoxDeepWork": "딥워크",
+  "defaultTimeBoxAdmin": "관리 업무",
+  "defaultTimeBoxSecondPriority": "두 번째 우선순위",
+  "defaultTimeBoxFollowUp": "후속 작업",
+  "accountTitle": "계정",
+  "firebaseSetupRequired": "Firebase 설정 필요",
+  "firebaseSetupDescription": "클라우드 로그인을 사용하려면 GoogleService-Info.plist를 추가하고 Firebase에서 Apple 로그인을 활성화하세요.",
+  "signInWithAppleAction": "Apple로 로그인",
+  "signedInAs": "{label}로 로그인됨",
+  "signOutAction": "로그아웃",
+  "authSignInFailed": "로그인에 실패했습니다. 다시 시도하세요.",
+  "@providerSetupQueued": {
+    "placeholders": {
+      "provider": {
+        "type": "String"
+      }
+    }
+  },
+  "@sessionProgress": {
+    "placeholders": {
+      "completed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "@boxesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@calendarExportSuccess": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@priorityLabel": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "@timeBoxRange": {
+    "placeholders": {
+      "range": {
+        "type": "String"
+      }
+    }
+  },
+  "@signedInAs": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  }
+}

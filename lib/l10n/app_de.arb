@@ -1,0 +1,192 @@
+{
+  "@@locale": "de",
+  "appName": "Timebox Mark",
+  "navToday": "Heute",
+  "navFocus": "Fokus",
+  "navCalendar": "Kalender",
+  "navSettings": "Einstellungen",
+  "ok": "OK",
+  "breakCompleteMessage": "Pause beendet. Der nächste Block ist bereit.",
+  "focusCompleteMessage": "Fokus beendet. Mach vor dem nächsten Block kurz Pause.",
+  "focusTitle": "Fokus",
+  "shortBreakLabel": "Kurze Pause",
+  "longBreakLabel": "Lange Pause",
+  "nowLabel": "Jetzt",
+  "readyLabel": "Bereit",
+  "runningLabel": "Läuft",
+  "pausedLabel": "Pausiert",
+  "sessionProgress": "{completed} von {total} heutigen Blöcken",
+  "resetAction": "Zurücksetzen",
+  "pauseAction": "Pausieren",
+  "startAction": "Starten",
+  "settingsTitle": "Einstellungen",
+  "awakeWindowTitle": "Aktive Zeit",
+  "editAction": "Bearbeiten",
+  "executionTitle": "Ausführung",
+  "autoStartNextTimeBox": "Nächste Timebox automatisch starten",
+  "alertsTitle": "Hinweise",
+  "localAlerts": "Lokale Hinweise",
+  "soundLabel": "Ton",
+  "saveAction": "Speichern",
+  "onboardingSubtitle": "Lege die Stunden fest, die du wirklich planst.",
+  "startPlanning": "Planung starten",
+  "calendarTitle": "Kalender",
+  "todayPlanSync": "Tagesplan-Sync",
+  "syncModeTitle": "Sync-Modus",
+  "manualMode": "Manuell",
+  "autoMode": "Auto",
+  "calendarExport": "Kalenderexport",
+  "providerSetupQueued": "{provider} Einrichtung ist vorgemerkt.",
+  "providerAppleCalendar": "Apple Kalender",
+  "appleCalendarExportDescription": "Exportiert heutige Zeitblöcke in deinen Standard-Apple-Kalender.",
+  "providerGoogleCalendar": "Google Kalender",
+  "googleCalendarExportDescription": "Fügt heutige Zeitblöcke nach Google-Berechtigung deinem primären Google Kalender hinzu.",
+  "providerOutlook": "Outlook",
+  "badgeFree": "Kostenlos",
+  "badgePro": "Pro",
+  "statusLocal": "Lokal",
+  "statusFirebase": "Firebase",
+  "statusOAuth": "OAuth",
+  "setupAction": "Einrichten",
+  "connectAction": "Verbinden",
+  "providersTitle": "Anbieter",
+  "exportRulesTitle": "Exportregeln",
+  "topPrioritiesOnly": "Nur Top-Prioritäten",
+  "conflictCheck": "Konflikte prüfen",
+  "dedicatedCalendar": "Eigener Kalender",
+  "includeBreaks": "Pausen einschließen",
+  "todayQueueTitle": "Heutige Warteschlange",
+  "boxesCount": "{count, plural, =0{0 Blöcke} =1{1 Block} other{{count} Blöcke}}",
+  "noBoxes": "Keine Blöcke",
+  "exportSelected": "Auswahl exportieren",
+  "exportTodayAction": "Heute exportieren",
+  "exportAppleTodayAction": "In Apple Kalender exportieren",
+  "exportGoogleTodayAction": "In Google Kalender exportieren",
+  "calendarExporting": "Export läuft",
+  "calendarExportEmpty": "Keine Zeitblöcke zum Exportieren.",
+  "calendarExportSuccess": "{count, plural, =0{Keine Termine exportiert} =1{1 Termin exportiert} other{{count} Termine exportiert}}",
+  "calendarExportDenied": "Kalenderzugriff wurde abgelehnt.",
+  "calendarExportUnavailable": "Kalenderexport ist auf diesem Gerät nicht verfügbar.",
+  "calendarExportFailed": "Kalenderexport fehlgeschlagen. Bitte erneut versuchen.",
+  "todayTitle": "Heute",
+  "startFocus": "Fokus starten",
+  "brainDumpTitle": "Gedankenspeicher",
+  "addBrainDumpTooltip": "Gedanken hinzufügen",
+  "addBrainDumpTitle": "Gedanken hinzufügen",
+  "captureLabel": "Erfassen",
+  "makePriority": "Zur Priorität machen",
+  "moveToReminder": "Zu Erinnerung verschieben",
+  "deleteAction": "Löschen",
+  "keepInMindTitle": "Merken",
+  "addReminderTooltip": "Erinnerung hinzufügen",
+  "addReminderTitle": "Erinnerung hinzufügen",
+  "reminderLabel": "Erinnerung",
+  "enterSomethingFirst": "Bitte erst etwas eingeben.",
+  "dailyProgressTitle": "Heute",
+  "planMetric": "Prioritäten",
+  "timeBoxesMetric": "Zeitblöcke",
+  "focusMetric": "Fertig",
+  "dailyProgressDescription": "Prüfe Prioritäten, geplante Blöcke und den nächsten Fokusblock.",
+  "todayReviewTitle": "Tagesrückblick",
+  "nextTimeBoxLabel": "Nächster",
+  "noActiveTimeBox": "Kein Zeitblock",
+  "openFocusAction": "Focus öffnen",
+  "topPrioritiesTitle": "Top-Prioritäten",
+  "addPriorityTooltip": "Priorität hinzufügen",
+  "noPrioritiesYet": "Noch keine Prioritäten",
+  "threePrioritiesAlreadySet": "Drei Prioritäten sind bereits gesetzt.",
+  "addPriorityTitle": "Priorität hinzufügen",
+  "editPriorityTitle": "Priorität bearbeiten",
+  "priorityLabel": "Priorität {number}",
+  "clearPriority": "Priorität löschen",
+  "weekdayMonNarrow": "M",
+  "weekdayTueNarrow": "D",
+  "weekdayWedNarrow": "M",
+  "weekdayThuNarrow": "D",
+  "weekdayFriNarrow": "F",
+  "weekdaySatNarrow": "S",
+  "weekdaySunNarrow": "S",
+  "timeBoxesTitle": "Timeboxes",
+  "timeBoxesHint": "Leeren Slot antippen zum Hinzufügen. Box antippen zum Bearbeiten.",
+  "nowBadge": "Jetzt",
+  "newTimeBoxTitle": "Neue Timebox",
+  "editTimeBoxTitle": "Timebox bearbeiten",
+  "titleLabel": "Titel",
+  "timeBoxRange": "Timebox {range}",
+  "newTimeBoxDefaultTitle": "Neue Timebox",
+  "nativeFocusBlockTitle": "Fokusblock",
+  "nativeBreakBlockTitle": "Pausenblock",
+  "liveActivityTopPriorityLabel": "Top",
+  "notificationFocusInProgressTitle": "Fokus läuft",
+  "notificationShortBreakInProgressTitle": "Kurze Pause läuft",
+  "notificationLongBreakInProgressTitle": "Lange Pause läuft",
+  "notificationRemainingTimeFormat": "%@ verbleibend",
+  "notificationFocusCompleteTitle": "Fokus abgeschlossen",
+  "notificationBreakCompleteTitle": "Pause abgeschlossen",
+  "notificationFocusCompleteBody": "Mach vor dem nächsten Block eine kurze Pause.",
+  "notificationBreakCompleteBody": "Dein nächster Fokusblock ist bereit.",
+  "defaultTimeBoxTopPriority": "Top-Priorität",
+  "defaultTimeBoxDeepWork": "Deep Work",
+  "defaultTimeBoxAdmin": "Admin",
+  "defaultTimeBoxSecondPriority": "Zweite Priorität",
+  "defaultTimeBoxFollowUp": "Follow-up",
+  "accountTitle": "Konto",
+  "firebaseSetupRequired": "Firebase-Einrichtung erforderlich",
+  "firebaseSetupDescription": "Füge GoogleService-Info.plist hinzu und aktiviere Apple-Anmeldung in Firebase, um Cloud-Login zu nutzen.",
+  "signInWithAppleAction": "Mit Apple anmelden",
+  "signedInAs": "Angemeldet als {label}",
+  "signOutAction": "Abmelden",
+  "authSignInFailed": "Anmeldung fehlgeschlagen. Bitte erneut versuchen.",
+  "@providerSetupQueued": {
+    "placeholders": {
+      "provider": {
+        "type": "String"
+      }
+    }
+  },
+  "@sessionProgress": {
+    "placeholders": {
+      "completed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "@boxesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@calendarExportSuccess": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@priorityLabel": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "@timeBoxRange": {
+    "placeholders": {
+      "range": {
+        "type": "String"
+      }
+    }
+  },
+  "@signedInAs": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  }
+}

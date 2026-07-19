@@ -1,0 +1,192 @@
+{
+  "@@locale": "es",
+  "appName": "Timebox Mark",
+  "navToday": "Hoy",
+  "navFocus": "Enfoque",
+  "navCalendar": "Calendario",
+  "navSettings": "Ajustes",
+  "ok": "OK",
+  "breakCompleteMessage": "Descanso terminado. El siguiente bloque está listo.",
+  "focusCompleteMessage": "Enfoque terminado. Aléjate un momento antes del siguiente bloque.",
+  "focusTitle": "Enfoque",
+  "shortBreakLabel": "Descanso corto",
+  "longBreakLabel": "Descanso largo",
+  "nowLabel": "Ahora",
+  "readyLabel": "Listo",
+  "runningLabel": "En curso",
+  "pausedLabel": "Pausado",
+  "sessionProgress": "{completed} de {total} bloques de hoy",
+  "resetAction": "Reiniciar",
+  "pauseAction": "Pausar",
+  "startAction": "Iniciar",
+  "settingsTitle": "Ajustes",
+  "awakeWindowTitle": "Horas activas",
+  "editAction": "Editar",
+  "executionTitle": "Ejecución",
+  "autoStartNextTimeBox": "Iniciar automáticamente el siguiente bloque",
+  "alertsTitle": "Alertas",
+  "localAlerts": "Alertas locales",
+  "soundLabel": "Sonido",
+  "saveAction": "Guardar",
+  "onboardingSubtitle": "Define las horas que realmente vas a planificar.",
+  "startPlanning": "Empezar a planificar",
+  "calendarTitle": "Calendario",
+  "todayPlanSync": "Sincronizar plan de hoy",
+  "syncModeTitle": "Modo de sincronización",
+  "manualMode": "Manual",
+  "autoMode": "Auto",
+  "calendarExport": "Exportar calendario",
+  "providerSetupQueued": "La configuración de {provider} está en cola.",
+  "providerAppleCalendar": "Calendario de Apple",
+  "appleCalendarExportDescription": "Exporta los bloques de hoy a tu calendario predeterminado de Apple.",
+  "providerGoogleCalendar": "Calendario de Google",
+  "googleCalendarExportDescription": "Agrega los bloques de hoy a tu calendario principal de Google tras conceder permiso.",
+  "providerOutlook": "Outlook",
+  "badgeFree": "Gratis",
+  "badgePro": "Pro",
+  "statusLocal": "Local",
+  "statusFirebase": "Firebase",
+  "statusOAuth": "OAuth",
+  "setupAction": "Configurar",
+  "connectAction": "Conectar",
+  "providersTitle": "Proveedores",
+  "exportRulesTitle": "Reglas de exportación",
+  "topPrioritiesOnly": "Solo prioridades principales",
+  "conflictCheck": "Revisar conflictos",
+  "dedicatedCalendar": "Calendario dedicado",
+  "includeBreaks": "Incluir descansos",
+  "todayQueueTitle": "Cola de hoy",
+  "boxesCount": "{count, plural, =0{0 bloques} =1{1 bloque} other{{count} bloques}}",
+  "noBoxes": "Sin bloques",
+  "exportSelected": "Exportar selección",
+  "exportTodayAction": "Exportar hoy",
+  "exportAppleTodayAction": "Exportar a Apple Calendar",
+  "exportGoogleTodayAction": "Exportar a Google Calendar",
+  "calendarExporting": "Exportando",
+  "calendarExportEmpty": "No hay bloques para exportar.",
+  "calendarExportSuccess": "{count, plural, =0{No se exportaron eventos} =1{1 evento exportado} other{{count} eventos exportados}}",
+  "calendarExportDenied": "Se denegó el acceso al calendario.",
+  "calendarExportUnavailable": "La exportación de calendario no está disponible en este dispositivo.",
+  "calendarExportFailed": "La exportación falló. Inténtalo de nuevo.",
+  "todayTitle": "Hoy",
+  "startFocus": "Iniciar enfoque",
+  "brainDumpTitle": "Descarga mental",
+  "addBrainDumpTooltip": "Agregar idea",
+  "addBrainDumpTitle": "Agregar idea",
+  "captureLabel": "Capturar",
+  "makePriority": "Convertir en prioridad",
+  "moveToReminder": "Mover a recordatorio",
+  "deleteAction": "Eliminar",
+  "keepInMindTitle": "Para recordar",
+  "addReminderTooltip": "Agregar recordatorio",
+  "addReminderTitle": "Agregar recordatorio",
+  "reminderLabel": "Recordatorio",
+  "enterSomethingFirst": "Ingresa algo primero.",
+  "dailyProgressTitle": "Resumen de hoy",
+  "planMetric": "Prioridades",
+  "timeBoxesMetric": "Bloques",
+  "focusMetric": "Hechos",
+  "dailyProgressDescription": "Revisa prioridades, bloques planificados y el siguiente bloque de concentración.",
+  "todayReviewTitle": "Revisión de hoy",
+  "nextTimeBoxLabel": "Siguiente",
+  "noActiveTimeBox": "Sin bloque",
+  "openFocusAction": "Abrir Focus",
+  "topPrioritiesTitle": "Prioridades principales",
+  "addPriorityTooltip": "Agregar prioridad",
+  "noPrioritiesYet": "Aún no hay prioridades",
+  "threePrioritiesAlreadySet": "Ya hay tres prioridades.",
+  "addPriorityTitle": "Agregar prioridad",
+  "editPriorityTitle": "Editar prioridad",
+  "priorityLabel": "Prioridad {number}",
+  "clearPriority": "Borrar prioridad",
+  "weekdayMonNarrow": "L",
+  "weekdayTueNarrow": "M",
+  "weekdayWedNarrow": "X",
+  "weekdayThuNarrow": "J",
+  "weekdayFriNarrow": "V",
+  "weekdaySatNarrow": "S",
+  "weekdaySunNarrow": "D",
+  "timeBoxesTitle": "Bloques de tiempo",
+  "timeBoxesHint": "Toca un espacio vacío para agregar. Toca un bloque para editar.",
+  "nowBadge": "Ahora",
+  "newTimeBoxTitle": "Nuevo bloque",
+  "editTimeBoxTitle": "Editar bloque",
+  "titleLabel": "Título",
+  "timeBoxRange": "Bloque {range}",
+  "newTimeBoxDefaultTitle": "Nuevo bloque",
+  "nativeFocusBlockTitle": "Bloque de concentración",
+  "nativeBreakBlockTitle": "Bloque de descanso",
+  "liveActivityTopPriorityLabel": "Prior.",
+  "notificationFocusInProgressTitle": "Concentración en curso",
+  "notificationShortBreakInProgressTitle": "Descanso corto en curso",
+  "notificationLongBreakInProgressTitle": "Descanso largo en curso",
+  "notificationRemainingTimeFormat": "Queda %@",
+  "notificationFocusCompleteTitle": "Concentración completada",
+  "notificationBreakCompleteTitle": "Descanso completado",
+  "notificationFocusCompleteBody": "Tómate una pausa antes del siguiente bloque.",
+  "notificationBreakCompleteBody": "Tu siguiente bloque de concentración está listo.",
+  "defaultTimeBoxTopPriority": "Prioridad principal",
+  "defaultTimeBoxDeepWork": "Trabajo profundo",
+  "defaultTimeBoxAdmin": "Administración",
+  "defaultTimeBoxSecondPriority": "Segunda prioridad",
+  "defaultTimeBoxFollowUp": "Seguimiento",
+  "accountTitle": "Cuenta",
+  "firebaseSetupRequired": "Configura Firebase",
+  "firebaseSetupDescription": "Agrega GoogleService-Info.plist y habilita el inicio con Apple en Firebase para usar login en la nube.",
+  "signInWithAppleAction": "Iniciar con Apple",
+  "signedInAs": "Sesión como {label}",
+  "signOutAction": "Cerrar sesión",
+  "authSignInFailed": "No se pudo iniciar sesión. Inténtalo de nuevo.",
+  "@providerSetupQueued": {
+    "placeholders": {
+      "provider": {
+        "type": "String"
+      }
+    }
+  },
+  "@sessionProgress": {
+    "placeholders": {
+      "completed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "@boxesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@calendarExportSuccess": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@priorityLabel": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "@timeBoxRange": {
+    "placeholders": {
+      "range": {
+        "type": "String"
+      }
+    }
+  },
+  "@signedInAs": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  }
+}

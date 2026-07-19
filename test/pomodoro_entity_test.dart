@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pomodoro_method_channel/domain/entities/pomodoro.dart';
+import 'package:pomodoro_method_channel/features/focus/data/dtos/today_plan_dto.dart';
+import 'package:pomodoro_method_channel/features/focus/domain/entities/pomodoro.dart';
 
 void main() {
   group('Pomodoro presets', () {
@@ -93,6 +94,57 @@ void main() {
       expect(box.startMinutes, (13 * 60) + 30);
       expect(box.endMinutes, 14 * 60);
       expect(box.rangeDurationSeconds, 30 * 60);
+    });
+  });
+
+  group('Today plan persistence', () {
+    test('round-trips planned local fields without timer runtime state', () {
+      final pomodoro = Pomodoro.initial().copyWith(
+        brainDump: ['Client meeting', 'Draft launch plan'],
+        reminders: ['Send recap'],
+        topPriorities: ['Ship MVP', 'Calendar export', ''],
+        completedSessions: 2,
+        activeTimeBoxId: 'box-1000',
+        status: PomodoroStatus.running,
+        phase: PomodoroPhase.shortBreak,
+        remainingTime: 42,
+      );
+
+      final dto = TodayPlanDto.fromEntity(pomodoro, dateKey: '2026-07-16');
+      final restored = TodayPlanDto.fromJson(
+        dto.toStorageJson(),
+      ).toEntity(Pomodoro.initial());
+
+      expect(restored.brainDump, ['Client meeting', 'Draft launch plan']);
+      expect(restored.reminders, ['Send recap']);
+      expect(restored.topPriorities, ['Ship MVP', 'Calendar export', '']);
+      expect(restored.completedSessions, 2);
+      expect(restored.activeTimeBoxId, 'box-1000');
+      expect(restored.currentTimeBoxTimeRange, '10:00-10:30');
+      expect(restored.status, PomodoroStatus.idle);
+      expect(restored.phase, PomodoroPhase.focus);
+      expect(restored.remainingTime, 30 * 60);
+    });
+
+    test('falls back to first box when active id is stale', () {
+      const boxes = [
+        TimeBox(
+          id: 'box-custom',
+          title: 'Custom',
+          timeRange: '08:00-08:30',
+          durationSeconds: 30 * 60,
+        ),
+      ];
+      final dto = TodayPlanDto(
+        dateKey: '2026-07-16',
+        activeTimeBoxId: 'missing',
+        timeBoxes: boxes.map(TimeBoxDto.fromEntity).toList(),
+      );
+
+      final restored = dto.toEntity(Pomodoro.initial());
+
+      expect(restored.activeTimeBoxId, 'box-custom');
+      expect(restored.activeTimeBox?.title, 'Custom');
     });
   });
 }
