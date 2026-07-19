@@ -68,6 +68,6 @@
 		<string>_dartVmService._tcp</string>
 	</array>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>This app uses the local network to enable Flutter debugging features such as hot reload.</string>
+	<string>Timebox Mark does not use the local network during normal use. This permission is only requested in development builds.</string>
 </dict>
 </plist>
