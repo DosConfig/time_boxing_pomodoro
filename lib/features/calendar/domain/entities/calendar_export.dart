@@ -6,6 +6,8 @@ enum CalendarProvider { apple, google }
 
 enum CalendarExportStatus { idle, success, denied, unavailable, failed }
 
+enum CalendarAppOpenStatus { opened, storeOpened, unavailable, failed }
+
 @freezed
 abstract class CalendarExportItem with _$CalendarExportItem {
   const factory CalendarExportItem({
@@ -43,10 +45,18 @@ abstract class CalendarExportResult with _$CalendarExportResult {
 
   const factory CalendarExportResult({
     @Default(CalendarExportStatus.idle) CalendarExportStatus status,
+    @Default(0) int exportedCount,
     @Default(<TimeBoxCalendarEventMapping>[])
     List<TimeBoxCalendarEventMapping> mappings,
     @Default('') String message,
   }) = _CalendarExportResult;
 
   bool get isSuccess => status == CalendarExportStatus.success;
+}
+
+@freezed
+abstract class CalendarAppOpenResult with _$CalendarAppOpenResult {
+  const factory CalendarAppOpenResult({
+    @Default(CalendarAppOpenStatus.failed) CalendarAppOpenStatus status,
+  }) = _CalendarAppOpenResult;
 }

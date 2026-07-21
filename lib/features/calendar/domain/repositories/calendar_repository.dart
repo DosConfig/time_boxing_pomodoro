@@ -8,4 +8,6 @@ abstract class CalendarRepository {
   Future<CalendarExportResult> exportToGoogleCalendar(
     CalendarExportRequest request,
   );
+
+  Future<CalendarAppOpenResult> openCalendarApp(CalendarProvider provider);
 }

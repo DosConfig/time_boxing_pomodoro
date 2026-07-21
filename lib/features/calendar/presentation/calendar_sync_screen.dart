@@ -1,11 +1,12 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pomodoro_method_channel/l10n/l10n.dart';
+import 'package:time_boxing_pomodoro/l10n/l10n.dart';
 
 import '../../focus/application/pomodoro_controller.dart';
 import '../../focus/domain/entities/pomodoro.dart';
-import '../../focus/presentation/time_box_title_l10n.dart';
+import '../../focus/presentation/time_box_title_display.dart';
 import '../application/calendar_export_controller.dart';
 import '../domain/entities/calendar_export.dart';
 
@@ -15,8 +16,6 @@ class CalendarSyncScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final pomodoro = ref.watch(pomodoroControllerProvider);
-    final exportState = ref.watch(calendarExportControllerProvider);
-    final exporting = exportState.isLoading;
 
     return SafeArea(
       child: ScrollConfiguration(
@@ -31,27 +30,13 @@ class CalendarSyncScreen extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const _ScreenHeader(),
-                    const SizedBox(height: 20),
-                    const _AppleCalendarPanel(),
-                    const SizedBox(height: 14),
-                    const _GoogleCalendarPanel(),
-                    const SizedBox(height: 14),
-                    _TodayQueuePanel(
-                      pomodoro: pomodoro,
-                      exporting: exporting,
-                      onExportApple: () => _exportToday(
-                        context: context,
-                        ref: ref,
-                        pomodoro: pomodoro,
-                        provider: CalendarProvider.apple,
-                      ),
-                      onExportGoogle: () => _exportToday(
-                        context: context,
-                        ref: ref,
-                        pomodoro: pomodoro,
-                        provider: CalendarProvider.google,
-                      ),
+                    const SizedBox(height: 22),
+                    _ProviderSection(
+                      onOpen: (provider) =>
+                          _CalendarNavigation.openProvider(context, provider),
                     ),
+                    const SizedBox(height: 16),
+                    _TodayQueuePanel(pomodoro: pomodoro),
                   ],
                 ),
               ),
@@ -61,8 +46,75 @@ class CalendarSyncScreen extends ConsumerWidget {
       ),
     );
   }
+}
 
-  Future<void> _exportToday({
+class _CalendarNavigation {
+  static Future<void> openProvider(
+    BuildContext context,
+    CalendarProvider provider,
+  ) {
+    return Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => _CalendarProviderExportScreen(provider: provider),
+      ),
+    );
+  }
+}
+
+class _CalendarProviderExportScreen extends ConsumerWidget {
+  final CalendarProvider provider;
+
+  const _CalendarProviderExportScreen({required this.provider});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final pomodoro = ref.watch(pomodoroControllerProvider);
+    final exportState = ref.watch(calendarExportControllerProvider(provider));
+
+    return Scaffold(
+      backgroundColor: const Color(0xFF080808),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF080808),
+        foregroundColor: const Color(0xFFF6F3EC),
+        elevation: 0,
+        title: Text(
+          _CalendarProviderCopy.title(context, provider),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+        ),
+      ),
+      body: SafeArea(
+        top: false,
+        child: ScrollConfiguration(
+          behavior: const _CalendarScrollBehavior(),
+          child: ListView(
+            physics: const ClampingScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
+            children: [
+              _ProviderGuidePanel(provider: provider),
+              const SizedBox(height: 16),
+              _TodayQueuePanel(
+                pomodoro: pomodoro,
+                exportProvider: provider,
+                exporting: exportState.isLoading,
+                onExport: () => _CalendarExportCoordinator.exportToday(
+                  context: context,
+                  ref: ref,
+                  pomodoro: pomodoro,
+                  provider: provider,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CalendarExportCoordinator {
+  static Future<void> exportToday({
     required BuildContext context,
     required WidgetRef ref,
     required Pomodoro pomodoro,
@@ -75,22 +127,94 @@ class CalendarSyncScreen extends ConsumerWidget {
       provider,
     );
     if (request.items.isEmpty) {
-      _showExportSnack(context, context.l10n.calendarExportEmpty);
+      _CalendarSnackBar.show(context, context.l10n.calendarExportEmpty);
       return;
     }
 
     HapticFeedback.mediumImpact();
-    final controller = ref.read(calendarExportControllerProvider.notifier);
-    final result = switch (provider) {
-      CalendarProvider.apple => await controller.exportAppleToday(request),
-      CalendarProvider.google => await controller.exportGoogleToday(request),
-    };
+    try {
+      final controller = ref.read(
+        calendarExportControllerProvider(provider).notifier,
+      );
+      final result = await controller.exportToday(request);
+      if (!context.mounted) {
+        return;
+      }
+      _CalendarSnackBar.showExportResult(
+        context: context,
+        result: result,
+        onOpenCalendar: result.isSuccess
+            ? () => openCalendar(context: context, ref: ref, provider: provider)
+            : null,
+      );
+    } catch (_) {
+      if (context.mounted) {
+        _CalendarSnackBar.show(context, context.l10n.calendarExportFailed);
+      }
+    }
+  }
+
+  static Future<void> openCalendar({
+    required BuildContext context,
+    required WidgetRef ref,
+    required CalendarProvider provider,
+  }) async {
+    final result = await ref
+        .read(calendarExportControllerProvider(provider).notifier)
+        .openCalendar();
     if (!context.mounted) {
       return;
     }
-    _showExportSnack(
-      context,
-      _CalendarExportMessage.fromResult(context, result),
+    if (result.status == CalendarAppOpenStatus.unavailable ||
+        result.status == CalendarAppOpenStatus.failed) {
+      _CalendarSnackBar.show(context, context.l10n.calendarOpenFailed);
+    }
+  }
+}
+
+class _CalendarSnackBar {
+  static void show(BuildContext context, String message) {
+    _show(context: context, message: message);
+  }
+
+  static void showExportResult({
+    required BuildContext context,
+    required CalendarExportResult result,
+    required VoidCallback? onOpenCalendar,
+  }) {
+    _show(
+      context: context,
+      message: _CalendarExportMessage.fromResult(context, result),
+      action: onOpenCalendar == null
+          ? null
+          : SnackBarAction(
+              label: context.l10n.openCalendarAction,
+              textColor: const Color(0xFF080808),
+              onPressed: onOpenCalendar,
+            ),
+    );
+  }
+
+  static void _show({
+    required BuildContext context,
+    required String message,
+    SnackBarAction? action,
+  }) {
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: const Color(0xFFF6F3EC),
+        action: action,
+        content: Text(
+          message,
+          style: const TextStyle(
+            color: Color(0xFF080808),
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ),
     );
   }
 }
@@ -139,7 +263,7 @@ class _CalendarExportItemFactory {
     final dayStart = DateTime(date.year, date.month, date.day);
     return CalendarExportItem(
       timeBoxId: box.id,
-      title: _CalendarTimeBoxTitle.resolve(context, pomodoro, box),
+      title: _CalendarTimeBoxTitle.resolve(pomodoro, box),
       startAt: dayStart.add(Duration(minutes: startMinutes)),
       endAt: dayStart.add(Duration(minutes: endMinutes)),
       notes: context.l10n.appName,
@@ -148,7 +272,7 @@ class _CalendarExportItemFactory {
 }
 
 class _CalendarTimeBoxTitle {
-  static String resolve(BuildContext context, Pomodoro pomodoro, TimeBox box) {
+  static String resolve(Pomodoro pomodoro, TimeBox box) {
     if (box.id == 'box-0900' && pomodoro.topPriorities.isNotEmpty) {
       final priority = pomodoro.topPriorities[0].trim();
       if (priority.isNotEmpty) {
@@ -163,7 +287,7 @@ class _CalendarTimeBoxTitle {
       }
     }
 
-    return localizedTimeBoxTitle(context, box);
+    return displayTimeBoxTitle(box);
   }
 }
 
@@ -180,8 +304,10 @@ class _CalendarExportMessage {
   static String fromResult(BuildContext context, CalendarExportResult result) {
     final l10n = context.l10n;
     return switch (result.status) {
+      CalendarExportStatus.success when result.exportedCount == 0 =>
+        l10n.calendarExportAlreadySynced,
       CalendarExportStatus.success => l10n.calendarExportSuccess(
-        result.mappings.length,
+        result.exportedCount,
       ),
       CalendarExportStatus.denied => l10n.calendarExportDenied,
       CalendarExportStatus.unavailable => l10n.calendarExportUnavailable,
@@ -191,22 +317,41 @@ class _CalendarExportMessage {
   }
 }
 
-void _showExportSnack(BuildContext context, String message) {
-  final messenger = ScaffoldMessenger.of(context);
-  messenger.hideCurrentSnackBar();
-  messenger.showSnackBar(
-    SnackBar(
-      behavior: SnackBarBehavior.floating,
-      backgroundColor: const Color(0xFFF6F3EC),
-      content: Text(
-        message,
-        style: const TextStyle(
-          color: Color(0xFF080808),
-          fontWeight: FontWeight.w800,
-        ),
-      ),
-    ),
-  );
+class _CalendarProviderCopy {
+  static String title(BuildContext context, CalendarProvider provider) {
+    return switch (provider) {
+      CalendarProvider.apple => context.l10n.providerAppleCalendar,
+      CalendarProvider.google => context.l10n.providerGoogleCalendar,
+    };
+  }
+
+  static String description(BuildContext context, CalendarProvider provider) {
+    return switch (provider) {
+      CalendarProvider.apple => context.l10n.appleCalendarExportDescription,
+      CalendarProvider.google => context.l10n.googleCalendarExportDescription,
+    };
+  }
+
+  static String status(BuildContext context, CalendarProvider provider) {
+    return switch (provider) {
+      CalendarProvider.apple => context.l10n.statusLocal,
+      CalendarProvider.google => context.l10n.statusOAuth,
+    };
+  }
+
+  static IconData icon(CalendarProvider provider) {
+    return switch (provider) {
+      CalendarProvider.apple => Icons.calendar_month_rounded,
+      CalendarProvider.google => Icons.cloud_sync_rounded,
+    };
+  }
+
+  static String exportAction(BuildContext context, CalendarProvider provider) {
+    return switch (provider) {
+      CalendarProvider.apple => context.l10n.exportAppleTodayAction,
+      CalendarProvider.google => context.l10n.exportGoogleTodayAction,
+    };
+  }
 }
 
 class _ScreenHeader extends StatelessWidget {
@@ -214,28 +359,25 @@ class _ScreenHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          l10n.calendarTitle,
-          style: TextStyle(
+          context.l10n.calendarTitle,
+          style: const TextStyle(
             color: Color(0xFFF6F3EC),
             fontSize: 38,
             fontWeight: FontWeight.w800,
             height: 1,
           ),
         ),
-        SizedBox(height: 10),
+        const SizedBox(height: 10),
         Text(
-          l10n.todayPlanSync,
-          style: TextStyle(
+          context.l10n.todayPlanSync,
+          style: const TextStyle(
             color: Color(0xFF8A8A8A),
             fontSize: 13,
             fontWeight: FontWeight.w800,
-            letterSpacing: 0,
           ),
         ),
       ],
@@ -243,107 +385,220 @@ class _ScreenHeader extends StatelessWidget {
   }
 }
 
-class _AppleCalendarPanel extends StatelessWidget {
-  const _AppleCalendarPanel();
+class _ProviderSection extends StatelessWidget {
+  final ValueChanged<CalendarProvider> onOpen;
+
+  const _ProviderSection({required this.onOpen});
+
+  @override
+  Widget build(BuildContext context) {
+    final showApple = !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _SectionTitle(title: context.l10n.providersTitle),
+        const SizedBox(height: 6),
+        Text(
+          context.l10n.calendarProviderSelectDescription,
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.48),
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            height: 1.35,
+          ),
+        ),
+        const SizedBox(height: 12),
+        if (showApple) ...[
+          _CalendarProviderPanel(
+            provider: CalendarProvider.apple,
+            onTap: () => onOpen(CalendarProvider.apple),
+          ),
+          const SizedBox(height: 12),
+        ],
+        _CalendarProviderPanel(
+          provider: CalendarProvider.google,
+          onTap: () => onOpen(CalendarProvider.google),
+        ),
+      ],
+    );
+  }
+}
+
+class _CalendarProviderPanel extends StatelessWidget {
+  final CalendarProvider provider;
+  final VoidCallback onTap;
+
+  const _CalendarProviderPanel({required this.provider, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Ink(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.055),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            children: [
+              _IconTile(icon: _CalendarProviderCopy.icon(provider)),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _CalendarProviderCopy.title(context, provider),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Color(0xFFF6F3EC),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      _CalendarProviderCopy.description(context, provider),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.52),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        height: 1.25,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              _Badge(label: _CalendarProviderCopy.status(context, provider)),
+              const SizedBox(width: 4),
+              const Icon(Icons.chevron_right_rounded, color: Color(0xFF8A8A8A)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ProviderGuidePanel extends StatelessWidget {
+  final CalendarProvider provider;
+
+  const _ProviderGuidePanel({required this.provider});
 
   @override
   Widget build(BuildContext context) {
     return _Panel(
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _IconTile(icon: Icons.calendar_month_rounded),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  context.l10n.providerAppleCalendar,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+          Row(
+            children: [
+              _IconTile(icon: _CalendarProviderCopy.icon(provider)),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  context.l10n.calendarExport,
                   style: const TextStyle(
                     color: Color(0xFFF6F3EC),
-                    fontSize: 16,
+                    fontSize: 17,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
-                const SizedBox(height: 5),
-                Text(
-                  context.l10n.appleCalendarExportDescription,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.52),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    height: 1.25,
-                  ),
-                ),
-              ],
+              ),
+              _Badge(label: _CalendarProviderCopy.status(context, provider)),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Text(
+            _CalendarProviderCopy.description(context, provider),
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.62),
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              height: 1.45,
             ),
           ),
-          const SizedBox(width: 10),
-          _Badge(label: context.l10n.statusLocal),
+          const SizedBox(height: 14),
+          _GuideRule(
+            icon: Icons.copy_all_rounded,
+            title: context.l10n.conflictCheck,
+            description: context.l10n.calendarDuplicateProtectionDescription,
+          ),
         ],
       ),
     );
   }
 }
 
-class _GoogleCalendarPanel extends StatelessWidget {
-  const _GoogleCalendarPanel();
+class _GuideRule extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String description;
+
+  const _GuideRule({
+    required this.icon,
+    required this.title,
+    required this.description,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return _Panel(
-      child: Row(
-        children: [
-          const _IconTile(icon: Icons.cloud_sync_rounded),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  context.l10n.providerGoogleCalendar,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Color(0xFFF6F3EC),
-                    fontSize: 16,
-                    fontWeight: FontWeight.w900,
-                  ),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 18, color: const Color(0xFFF6F3EC)),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  color: Color(0xFFF6F3EC),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w900,
                 ),
-                const SizedBox(height: 5),
-                Text(
-                  context.l10n.googleCalendarExportDescription,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.52),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    height: 1.25,
-                  ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                description,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.48),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  height: 1.35,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          const SizedBox(width: 10),
-          _Badge(label: context.l10n.statusOAuth),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
 
 class _TodayQueuePanel extends StatelessWidget {
   final Pomodoro pomodoro;
+  final CalendarProvider? exportProvider;
   final bool exporting;
-  final VoidCallback onExportApple;
-  final VoidCallback onExportGoogle;
+  final VoidCallback? onExport;
 
   const _TodayQueuePanel({
     required this.pomodoro,
-    required this.exporting,
-    required this.onExportApple,
-    required this.onExportGoogle,
+    this.exportProvider,
+    this.exporting = false,
+    this.onExport,
   });
 
   @override
@@ -378,28 +633,24 @@ class _TodayQueuePanel extends StatelessWidget {
                 for (final box in boxes)
                   _QueueRow(
                     box: box,
-                    title: _CalendarTimeBoxTitle.resolve(
-                      context,
-                      pomodoro,
-                      box,
-                    ),
+                    title: _CalendarTimeBoxTitle.resolve(pomodoro, box),
                   ),
               ],
             ),
-          const SizedBox(height: 14),
-          _ExportButton(
-            exporting: exporting,
-            icon: Icons.ios_share_rounded,
-            title: context.l10n.exportAppleTodayAction,
-            onPressed: onExportApple,
-          ),
-          const SizedBox(height: 10),
-          _ExportButton(
-            exporting: exporting,
-            icon: Icons.cloud_upload_rounded,
-            title: context.l10n.exportGoogleTodayAction,
-            onPressed: onExportGoogle,
-          ),
+          if (exportProvider != null && onExport != null) ...[
+            const SizedBox(height: 14),
+            _ExportButton(
+              exporting: exporting,
+              icon: exportProvider == CalendarProvider.apple
+                  ? Icons.ios_share_rounded
+                  : Icons.cloud_upload_rounded,
+              title: _CalendarProviderCopy.exportAction(
+                context,
+                exportProvider!,
+              ),
+              onPressed: onExport!,
+            ),
+          ],
         ],
       ),
     );
@@ -556,6 +807,7 @@ class _Badge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      constraints: const BoxConstraints(maxWidth: 84),
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.08),

@@ -148,6 +148,7 @@ abstract class CalendarExportResultDto with _$CalendarExportResultDto {
         'unavailable' => CalendarExportStatus.unavailable,
         _ => CalendarExportStatus.failed,
       },
+      exportedCount: events.length,
       mappings: events.map((event) => event.toEntity()).toList(),
       message: message,
     );

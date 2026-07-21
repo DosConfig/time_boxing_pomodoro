@@ -9,306 +9,8 @@ part of 'calendar_export_controller.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
-@ProviderFor(appleCalendarPlatformChannel)
-final appleCalendarPlatformChannelProvider =
-    AppleCalendarPlatformChannelProvider._();
-
-final class AppleCalendarPlatformChannelProvider
-    extends
-        $FunctionalProvider<
-          AppleCalendarPlatformChannel,
-          AppleCalendarPlatformChannel,
-          AppleCalendarPlatformChannel
-        >
-    with $Provider<AppleCalendarPlatformChannel> {
-  AppleCalendarPlatformChannelProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'appleCalendarPlatformChannelProvider',
-        isAutoDispose: false,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$appleCalendarPlatformChannelHash();
-
-  @$internal
-  @override
-  $ProviderElement<AppleCalendarPlatformChannel> $createElement(
-    $ProviderPointer pointer,
-  ) => $ProviderElement(pointer);
-
-  @override
-  AppleCalendarPlatformChannel create(Ref ref) {
-    return appleCalendarPlatformChannel(ref);
-  }
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(AppleCalendarPlatformChannel value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<AppleCalendarPlatformChannel>(value),
-    );
-  }
-}
-
-String _$appleCalendarPlatformChannelHash() =>
-    r'f86910da49c3d4cb9a1113fc57ace576c795a2fe';
-
-@ProviderFor(googleCalendarDataSource)
-final googleCalendarDataSourceProvider = GoogleCalendarDataSourceProvider._();
-
-final class GoogleCalendarDataSourceProvider
-    extends
-        $FunctionalProvider<
-          GoogleCalendarDataSource,
-          GoogleCalendarDataSource,
-          GoogleCalendarDataSource
-        >
-    with $Provider<GoogleCalendarDataSource> {
-  GoogleCalendarDataSourceProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'googleCalendarDataSourceProvider',
-        isAutoDispose: false,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$googleCalendarDataSourceHash();
-
-  @$internal
-  @override
-  $ProviderElement<GoogleCalendarDataSource> $createElement(
-    $ProviderPointer pointer,
-  ) => $ProviderElement(pointer);
-
-  @override
-  GoogleCalendarDataSource create(Ref ref) {
-    return googleCalendarDataSource(ref);
-  }
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(GoogleCalendarDataSource value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<GoogleCalendarDataSource>(value),
-    );
-  }
-}
-
-String _$googleCalendarDataSourceHash() =>
-    r'0000527070976bb34d85739fc04801ca0f5fa1ac';
-
-@ProviderFor(calendarMappingLocalDataSource)
-final calendarMappingLocalDataSourceProvider =
-    CalendarMappingLocalDataSourceProvider._();
-
-final class CalendarMappingLocalDataSourceProvider
-    extends
-        $FunctionalProvider<
-          CalendarMappingLocalDataSource,
-          CalendarMappingLocalDataSource,
-          CalendarMappingLocalDataSource
-        >
-    with $Provider<CalendarMappingLocalDataSource> {
-  CalendarMappingLocalDataSourceProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'calendarMappingLocalDataSourceProvider',
-        isAutoDispose: false,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$calendarMappingLocalDataSourceHash();
-
-  @$internal
-  @override
-  $ProviderElement<CalendarMappingLocalDataSource> $createElement(
-    $ProviderPointer pointer,
-  ) => $ProviderElement(pointer);
-
-  @override
-  CalendarMappingLocalDataSource create(Ref ref) {
-    return calendarMappingLocalDataSource(ref);
-  }
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(CalendarMappingLocalDataSource value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<CalendarMappingLocalDataSource>(
-        value,
-      ),
-    );
-  }
-}
-
-String _$calendarMappingLocalDataSourceHash() =>
-    r'0189ecd66d2d52fe249f3aa664d34a8861699361';
-
-@ProviderFor(calendarRepository)
-final calendarRepositoryProvider = CalendarRepositoryProvider._();
-
-final class CalendarRepositoryProvider
-    extends
-        $FunctionalProvider<
-          CalendarRepository,
-          CalendarRepository,
-          CalendarRepository
-        >
-    with $Provider<CalendarRepository> {
-  CalendarRepositoryProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'calendarRepositoryProvider',
-        isAutoDispose: false,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$calendarRepositoryHash();
-
-  @$internal
-  @override
-  $ProviderElement<CalendarRepository> $createElement(
-    $ProviderPointer pointer,
-  ) => $ProviderElement(pointer);
-
-  @override
-  CalendarRepository create(Ref ref) {
-    return calendarRepository(ref);
-  }
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(CalendarRepository value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<CalendarRepository>(value),
-    );
-  }
-}
-
-String _$calendarRepositoryHash() =>
-    r'5062f686324585c34da0bfcd4112eb49327c0093';
-
-@ProviderFor(exportTodayPlanToAppleCalendarUseCase)
-final exportTodayPlanToAppleCalendarUseCaseProvider =
-    ExportTodayPlanToAppleCalendarUseCaseProvider._();
-
-final class ExportTodayPlanToAppleCalendarUseCaseProvider
-    extends
-        $FunctionalProvider<
-          ExportTodayPlanToAppleCalendarUseCase,
-          ExportTodayPlanToAppleCalendarUseCase,
-          ExportTodayPlanToAppleCalendarUseCase
-        >
-    with $Provider<ExportTodayPlanToAppleCalendarUseCase> {
-  ExportTodayPlanToAppleCalendarUseCaseProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'exportTodayPlanToAppleCalendarUseCaseProvider',
-        isAutoDispose: false,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() =>
-      _$exportTodayPlanToAppleCalendarUseCaseHash();
-
-  @$internal
-  @override
-  $ProviderElement<ExportTodayPlanToAppleCalendarUseCase> $createElement(
-    $ProviderPointer pointer,
-  ) => $ProviderElement(pointer);
-
-  @override
-  ExportTodayPlanToAppleCalendarUseCase create(Ref ref) {
-    return exportTodayPlanToAppleCalendarUseCase(ref);
-  }
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(ExportTodayPlanToAppleCalendarUseCase value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride:
-          $SyncValueProvider<ExportTodayPlanToAppleCalendarUseCase>(value),
-    );
-  }
-}
-
-String _$exportTodayPlanToAppleCalendarUseCaseHash() =>
-    r'c881611e329da3e9dc8b58b188fbaa7ab1b521a5';
-
-@ProviderFor(exportTodayPlanToGoogleCalendarUseCase)
-final exportTodayPlanToGoogleCalendarUseCaseProvider =
-    ExportTodayPlanToGoogleCalendarUseCaseProvider._();
-
-final class ExportTodayPlanToGoogleCalendarUseCaseProvider
-    extends
-        $FunctionalProvider<
-          ExportTodayPlanToGoogleCalendarUseCase,
-          ExportTodayPlanToGoogleCalendarUseCase,
-          ExportTodayPlanToGoogleCalendarUseCase
-        >
-    with $Provider<ExportTodayPlanToGoogleCalendarUseCase> {
-  ExportTodayPlanToGoogleCalendarUseCaseProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'exportTodayPlanToGoogleCalendarUseCaseProvider',
-        isAutoDispose: false,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() =>
-      _$exportTodayPlanToGoogleCalendarUseCaseHash();
-
-  @$internal
-  @override
-  $ProviderElement<ExportTodayPlanToGoogleCalendarUseCase> $createElement(
-    $ProviderPointer pointer,
-  ) => $ProviderElement(pointer);
-
-  @override
-  ExportTodayPlanToGoogleCalendarUseCase create(Ref ref) {
-    return exportTodayPlanToGoogleCalendarUseCase(ref);
-  }
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(ExportTodayPlanToGoogleCalendarUseCase value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride:
-          $SyncValueProvider<ExportTodayPlanToGoogleCalendarUseCase>(value),
-    );
-  }
-}
-
-String _$exportTodayPlanToGoogleCalendarUseCaseHash() =>
-    r'024ef6825d278abfb37426331e57684a307c8809';
-
 @ProviderFor(CalendarExportController)
-final calendarExportControllerProvider = CalendarExportControllerProvider._();
+final calendarExportControllerProvider = CalendarExportControllerFamily._();
 
 final class CalendarExportControllerProvider
     extends
@@ -316,31 +18,77 @@ final class CalendarExportControllerProvider
           CalendarExportController,
           CalendarExportResult?
         > {
-  CalendarExportControllerProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'calendarExportControllerProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
+  CalendarExportControllerProvider._({
+    required CalendarExportControllerFamily super.from,
+    required CalendarProvider super.argument,
+  }) : super(
+         retry: null,
+         name: r'calendarExportControllerProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
   @override
   String debugGetCreateSourceHash() => _$calendarExportControllerHash();
 
+  @override
+  String toString() {
+    return r'calendarExportControllerProvider'
+        ''
+        '($argument)';
+  }
+
   @$internal
   @override
   CalendarExportController create() => CalendarExportController();
+
+  @override
+  bool operator ==(Object other) {
+    return other is CalendarExportControllerProvider &&
+        other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
 }
 
 String _$calendarExportControllerHash() =>
-    r'dead6b955d26e8ccc7bd20d673bb732f8dcbcf7e';
+    r'a80e1a0f19abb41aad231b57a82a3e919c6817a9';
+
+final class CalendarExportControllerFamily extends $Family
+    with
+        $ClassFamilyOverride<
+          CalendarExportController,
+          AsyncValue<CalendarExportResult?>,
+          CalendarExportResult?,
+          FutureOr<CalendarExportResult?>,
+          CalendarProvider
+        > {
+  CalendarExportControllerFamily._()
+    : super(
+        retry: null,
+        name: r'calendarExportControllerProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  CalendarExportControllerProvider call(CalendarProvider provider) =>
+      CalendarExportControllerProvider._(argument: provider, from: this);
+
+  @override
+  String toString() => r'calendarExportControllerProvider';
+}
 
 abstract class _$CalendarExportController
     extends $AsyncNotifier<CalendarExportResult?> {
-  FutureOr<CalendarExportResult?> build();
+  late final _$args = ref.$arg as CalendarProvider;
+  CalendarProvider get provider => _$args;
+
+  FutureOr<CalendarExportResult?> build(CalendarProvider provider);
   @$mustCallSuper
   @override
   WhenComplete runBuild() {
@@ -358,6 +106,6 @@ abstract class _$CalendarExportController
               Object?,
               Object?
             >;
-    return element.handleCreate(ref, build);
+    return element.handleCreate(ref, () => build(_$args));
   }
 }

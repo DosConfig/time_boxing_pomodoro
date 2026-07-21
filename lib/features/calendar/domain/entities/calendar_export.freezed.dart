@@ -211,7 +211,7 @@ return $default(_that.timeBoxId,_that.title,_that.startAt,_that.endAt,_that.note
 
 class _CalendarExportItem implements CalendarExportItem {
   const _CalendarExportItem({required this.timeBoxId, required this.title, required this.startAt, required this.endAt, this.notes = ''});
-  
+
 
 @override final  String timeBoxId;
 @override final  String title;
@@ -821,7 +821,7 @@ as DateTime,
 /// @nodoc
 mixin _$CalendarExportResult {
 
- CalendarExportStatus get status; List<TimeBoxCalendarEventMapping> get mappings; String get message;
+ CalendarExportStatus get status; int get exportedCount; List<TimeBoxCalendarEventMapping> get mappings; String get message;
 /// Create a copy of CalendarExportResult
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -832,16 +832,16 @@ $CalendarExportResultCopyWith<CalendarExportResult> get copyWith => _$CalendarEx
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CalendarExportResult&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other.mappings, mappings)&&(identical(other.message, message) || other.message == message));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CalendarExportResult&&(identical(other.status, status) || other.status == status)&&(identical(other.exportedCount, exportedCount) || other.exportedCount == exportedCount)&&const DeepCollectionEquality().equals(other.mappings, mappings)&&(identical(other.message, message) || other.message == message));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,status,const DeepCollectionEquality().hash(mappings),message);
+int get hashCode => Object.hash(runtimeType,status,exportedCount,const DeepCollectionEquality().hash(mappings),message);
 
 @override
 String toString() {
-  return 'CalendarExportResult(status: $status, mappings: $mappings, message: $message)';
+  return 'CalendarExportResult(status: $status, exportedCount: $exportedCount, mappings: $mappings, message: $message)';
 }
 
 
@@ -852,7 +852,7 @@ abstract mixin class $CalendarExportResultCopyWith<$Res>  {
   factory $CalendarExportResultCopyWith(CalendarExportResult value, $Res Function(CalendarExportResult) _then) = _$CalendarExportResultCopyWithImpl;
 @useResult
 $Res call({
- CalendarExportStatus status, List<TimeBoxCalendarEventMapping> mappings, String message
+ CalendarExportStatus status, int exportedCount, List<TimeBoxCalendarEventMapping> mappings, String message
 });
 
 
@@ -869,10 +869,11 @@ class _$CalendarExportResultCopyWithImpl<$Res>
 
 /// Create a copy of CalendarExportResult
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? status = null,Object? mappings = null,Object? message = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? status = null,Object? exportedCount = null,Object? mappings = null,Object? message = null,}) {
   return _then(_self.copyWith(
 status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
-as CalendarExportStatus,mappings: null == mappings ? _self.mappings : mappings // ignore: cast_nullable_to_non_nullable
+as CalendarExportStatus,exportedCount: null == exportedCount ? _self.exportedCount : exportedCount // ignore: cast_nullable_to_non_nullable
+as int,mappings: null == mappings ? _self.mappings : mappings // ignore: cast_nullable_to_non_nullable
 as List<TimeBoxCalendarEventMapping>,message: null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
 as String,
   ));
@@ -959,10 +960,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( CalendarExportStatus status,  List<TimeBoxCalendarEventMapping> mappings,  String message)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( CalendarExportStatus status,  int exportedCount,  List<TimeBoxCalendarEventMapping> mappings,  String message)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _CalendarExportResult() when $default != null:
-return $default(_that.status,_that.mappings,_that.message);case _:
+return $default(_that.status,_that.exportedCount,_that.mappings,_that.message);case _:
   return orElse();
 
 }
@@ -980,10 +981,10 @@ return $default(_that.status,_that.mappings,_that.message);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( CalendarExportStatus status,  List<TimeBoxCalendarEventMapping> mappings,  String message)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( CalendarExportStatus status,  int exportedCount,  List<TimeBoxCalendarEventMapping> mappings,  String message)  $default,) {final _that = this;
 switch (_that) {
 case _CalendarExportResult():
-return $default(_that.status,_that.mappings,_that.message);case _:
+return $default(_that.status,_that.exportedCount,_that.mappings,_that.message);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1000,10 +1001,10 @@ return $default(_that.status,_that.mappings,_that.message);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( CalendarExportStatus status,  List<TimeBoxCalendarEventMapping> mappings,  String message)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( CalendarExportStatus status,  int exportedCount,  List<TimeBoxCalendarEventMapping> mappings,  String message)?  $default,) {final _that = this;
 switch (_that) {
 case _CalendarExportResult() when $default != null:
-return $default(_that.status,_that.mappings,_that.message);case _:
+return $default(_that.status,_that.exportedCount,_that.mappings,_that.message);case _:
   return null;
 
 }
@@ -1015,10 +1016,11 @@ return $default(_that.status,_that.mappings,_that.message);case _:
 
 
 class _CalendarExportResult extends CalendarExportResult {
-  const _CalendarExportResult({this.status = CalendarExportStatus.idle, final  List<TimeBoxCalendarEventMapping> mappings = const <TimeBoxCalendarEventMapping>[], this.message = ''}): _mappings = mappings,super._();
+  const _CalendarExportResult({this.status = CalendarExportStatus.idle, this.exportedCount = 0, final  List<TimeBoxCalendarEventMapping> mappings = const <TimeBoxCalendarEventMapping>[], this.message = ''}): _mappings = mappings,super._();
   
 
 @override@JsonKey() final  CalendarExportStatus status;
+@override@JsonKey() final  int exportedCount;
  final  List<TimeBoxCalendarEventMapping> _mappings;
 @override@JsonKey() List<TimeBoxCalendarEventMapping> get mappings {
   if (_mappings is EqualUnmodifiableListView) return _mappings;
@@ -1038,16 +1040,16 @@ _$CalendarExportResultCopyWith<_CalendarExportResult> get copyWith => __$Calenda
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CalendarExportResult&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other._mappings, _mappings)&&(identical(other.message, message) || other.message == message));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CalendarExportResult&&(identical(other.status, status) || other.status == status)&&(identical(other.exportedCount, exportedCount) || other.exportedCount == exportedCount)&&const DeepCollectionEquality().equals(other._mappings, _mappings)&&(identical(other.message, message) || other.message == message));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,status,const DeepCollectionEquality().hash(_mappings),message);
+int get hashCode => Object.hash(runtimeType,status,exportedCount,const DeepCollectionEquality().hash(_mappings),message);
 
 @override
 String toString() {
-  return 'CalendarExportResult(status: $status, mappings: $mappings, message: $message)';
+  return 'CalendarExportResult(status: $status, exportedCount: $exportedCount, mappings: $mappings, message: $message)';
 }
 
 
@@ -1058,7 +1060,7 @@ abstract mixin class _$CalendarExportResultCopyWith<$Res> implements $CalendarEx
   factory _$CalendarExportResultCopyWith(_CalendarExportResult value, $Res Function(_CalendarExportResult) _then) = __$CalendarExportResultCopyWithImpl;
 @override @useResult
 $Res call({
- CalendarExportStatus status, List<TimeBoxCalendarEventMapping> mappings, String message
+ CalendarExportStatus status, int exportedCount, List<TimeBoxCalendarEventMapping> mappings, String message
 });
 
 
@@ -1075,12 +1077,270 @@ class __$CalendarExportResultCopyWithImpl<$Res>
 
 /// Create a copy of CalendarExportResult
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? status = null,Object? mappings = null,Object? message = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? status = null,Object? exportedCount = null,Object? mappings = null,Object? message = null,}) {
   return _then(_CalendarExportResult(
 status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
-as CalendarExportStatus,mappings: null == mappings ? _self._mappings : mappings // ignore: cast_nullable_to_non_nullable
+as CalendarExportStatus,exportedCount: null == exportedCount ? _self.exportedCount : exportedCount // ignore: cast_nullable_to_non_nullable
+as int,mappings: null == mappings ? _self._mappings : mappings // ignore: cast_nullable_to_non_nullable
 as List<TimeBoxCalendarEventMapping>,message: null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
 as String,
+  ));
+}
+
+
+}
+
+/// @nodoc
+mixin _$CalendarAppOpenResult {
+
+ CalendarAppOpenStatus get status;
+/// Create a copy of CalendarAppOpenResult
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$CalendarAppOpenResultCopyWith<CalendarAppOpenResult> get copyWith => _$CalendarAppOpenResultCopyWithImpl<CalendarAppOpenResult>(this as CalendarAppOpenResult, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CalendarAppOpenResult&&(identical(other.status, status) || other.status == status));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,status);
+
+@override
+String toString() {
+  return 'CalendarAppOpenResult(status: $status)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $CalendarAppOpenResultCopyWith<$Res>  {
+  factory $CalendarAppOpenResultCopyWith(CalendarAppOpenResult value, $Res Function(CalendarAppOpenResult) _then) = _$CalendarAppOpenResultCopyWithImpl;
+@useResult
+$Res call({
+ CalendarAppOpenStatus status
+});
+
+
+
+
+}
+/// @nodoc
+class _$CalendarAppOpenResultCopyWithImpl<$Res>
+    implements $CalendarAppOpenResultCopyWith<$Res> {
+  _$CalendarAppOpenResultCopyWithImpl(this._self, this._then);
+
+  final CalendarAppOpenResult _self;
+  final $Res Function(CalendarAppOpenResult) _then;
+
+/// Create a copy of CalendarAppOpenResult
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? status = null,}) {
+  return _then(_self.copyWith(
+status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+as CalendarAppOpenStatus,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [CalendarAppOpenResult].
+extension CalendarAppOpenResultPatterns on CalendarAppOpenResult {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _CalendarAppOpenResult value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _CalendarAppOpenResult() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _CalendarAppOpenResult value)  $default,){
+final _that = this;
+switch (_that) {
+case _CalendarAppOpenResult():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _CalendarAppOpenResult value)?  $default,){
+final _that = this;
+switch (_that) {
+case _CalendarAppOpenResult() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( CalendarAppOpenStatus status)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _CalendarAppOpenResult() when $default != null:
+return $default(_that.status);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( CalendarAppOpenStatus status)  $default,) {final _that = this;
+switch (_that) {
+case _CalendarAppOpenResult():
+return $default(_that.status);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( CalendarAppOpenStatus status)?  $default,) {final _that = this;
+switch (_that) {
+case _CalendarAppOpenResult() when $default != null:
+return $default(_that.status);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class _CalendarAppOpenResult implements CalendarAppOpenResult {
+  const _CalendarAppOpenResult({this.status = CalendarAppOpenStatus.failed});
+
+
+@override@JsonKey() final  CalendarAppOpenStatus status;
+
+/// Create a copy of CalendarAppOpenResult
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$CalendarAppOpenResultCopyWith<_CalendarAppOpenResult> get copyWith => __$CalendarAppOpenResultCopyWithImpl<_CalendarAppOpenResult>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CalendarAppOpenResult&&(identical(other.status, status) || other.status == status));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,status);
+
+@override
+String toString() {
+  return 'CalendarAppOpenResult(status: $status)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$CalendarAppOpenResultCopyWith<$Res> implements $CalendarAppOpenResultCopyWith<$Res> {
+  factory _$CalendarAppOpenResultCopyWith(_CalendarAppOpenResult value, $Res Function(_CalendarAppOpenResult) _then) = __$CalendarAppOpenResultCopyWithImpl;
+@override @useResult
+$Res call({
+ CalendarAppOpenStatus status
+});
+
+
+
+
+}
+/// @nodoc
+class __$CalendarAppOpenResultCopyWithImpl<$Res>
+    implements _$CalendarAppOpenResultCopyWith<$Res> {
+  __$CalendarAppOpenResultCopyWithImpl(this._self, this._then);
+
+  final _CalendarAppOpenResult _self;
+  final $Res Function(_CalendarAppOpenResult) _then;
+
+/// Create a copy of CalendarAppOpenResult
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? status = null,}) {
+  return _then(_CalendarAppOpenResult(
+status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+as CalendarAppOpenStatus,
   ));
 }
 
