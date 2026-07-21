@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../domain/entities/daily_plan_summary.dart';
@@ -15,6 +17,7 @@ abstract class TimeBoxDto with _$TimeBoxDto {
     @Default('') String title,
     @Default('') String timeRange,
     @Default(30 * 60) int durationSeconds,
+    @Default(<int>[]) List<int> repeatWeekdays,
   }) = _TimeBoxDto;
 
   factory TimeBoxDto.fromJson(Map<String, dynamic> json) =>
@@ -26,6 +29,7 @@ abstract class TimeBoxDto with _$TimeBoxDto {
       title: box.title,
       timeRange: box.timeRange,
       durationSeconds: box.durationSeconds,
+      repeatWeekdays: _normalizedWeekdays(box.repeatWeekdays),
     );
   }
 
@@ -35,7 +39,16 @@ abstract class TimeBoxDto with _$TimeBoxDto {
       title: title,
       timeRange: timeRange,
       durationSeconds: durationSeconds,
+      repeatWeekdays: _normalizedWeekdays(repeatWeekdays),
     );
+  }
+
+  static List<int> _normalizedWeekdays(List<int> weekdays) {
+    return weekdays
+        .where((weekday) => weekday >= 1 && weekday <= 7)
+        .toSet()
+        .toList()
+      ..sort();
   }
 }
 
@@ -46,6 +59,7 @@ abstract class TodayPlanDto with _$TodayPlanDto {
   const factory TodayPlanDto({
     @Default(1) int schemaVersion,
     @Default('') String dateKey,
+    @Default(0) int updatedAtEpochMs,
     @Default(<String>[]) List<String> brainDump,
     @Default(<String>[]) List<String> reminders,
     @Default(<String>['', '', '']) List<String> topPriorities,
@@ -63,12 +77,19 @@ abstract class TodayPlanDto with _$TodayPlanDto {
     return json;
   }
 
+  String contentSignature() {
+    final json = toStorageJson()..remove('updatedAtEpochMs');
+    return jsonEncode(json);
+  }
+
   factory TodayPlanDto.fromEntity(
     Pomodoro pomodoro, {
     required String dateKey,
+    int updatedAtEpochMs = 0,
   }) {
     return TodayPlanDto(
       dateKey: dateKey,
+      updatedAtEpochMs: updatedAtEpochMs,
       brainDump: pomodoro.brainDump,
       reminders: pomodoro.reminders,
       topPriorities: _normalizedPriorities(pomodoro.topPriorities),
@@ -83,12 +104,11 @@ abstract class TodayPlanDto with _$TodayPlanDto {
         .map((box) => box.toEntity())
         .where((box) => box.id.isNotEmpty && box.timeRange.isNotEmpty)
         .toList();
-    final nextBoxes = boxes.isEmpty ? fallback.timeBoxes : boxes;
+    final nextBoxes = boxes;
     final nextActiveBoxId = _normalizedActiveBoxId(nextBoxes, activeTimeBoxId);
-    final activeBox = nextBoxes.firstWhere(
-      (box) => box.id == nextActiveBoxId,
-      orElse: () => nextBoxes.first,
-    );
+    final activeBox = nextActiveBoxId.isEmpty
+        ? null
+        : nextBoxes.firstWhere((box) => box.id == nextActiveBoxId);
 
     return fallback.copyWith(
       brainDump: brainDump,
@@ -97,10 +117,10 @@ abstract class TodayPlanDto with _$TodayPlanDto {
       timeBoxes: nextBoxes,
       activeTimeBoxId: nextActiveBoxId,
       completedSessions: completedSessions < 0 ? 0 : completedSessions,
-      currentTimeBoxTitle: activeBox.title,
-      currentTimeBoxTimeRange: activeBox.timeRange,
-      workDuration: activeBox.durationSeconds,
-      remainingTime: activeBox.durationSeconds,
+      currentTimeBoxTitle: activeBox?.title ?? '',
+      currentTimeBoxTimeRange: activeBox?.timeRange ?? '',
+      workDuration: activeBox?.durationSeconds ?? fallback.workDuration,
+      remainingTime: activeBox?.durationSeconds ?? 0,
       status: PomodoroStatus.idle,
       phase: PomodoroPhase.focus,
     );

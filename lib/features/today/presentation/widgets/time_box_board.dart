@@ -1,13 +1,59 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:pomodoro_method_channel/l10n/l10n.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:time_boxing_pomodoro/l10n/l10n.dart';
 
 import '../../../focus/application/pomodoro_controller.dart';
+import '../../../focus/domain/entities/daily_plan_item_category.dart';
 import '../../../focus/domain/entities/pomodoro.dart';
-import '../../../focus/presentation/time_box_title_l10n.dart';
+import '../../../focus/presentation/time_box_title_display.dart';
+import '../../application/today_ui_controller.dart';
+import 'daily_carry_over_button.dart';
 import 'today_section_card.dart';
 
-class TimeBoxBoard extends StatelessWidget {
+sealed class TimeBoxBoardDragPayload {
+  const TimeBoxBoardDragPayload();
+
+  int get durationSeconds;
+}
+
+class ScheduledTimeBoxDragPayload extends TimeBoxBoardDragPayload {
+  final String id;
+  @override
+  final int durationSeconds;
+  int grabOffsetSlots;
+
+  ScheduledTimeBoxDragPayload({
+    required this.id,
+    required this.durationSeconds,
+    this.grabOffsetSlots = 0,
+  });
+
+  void updateGrabOffset(double localDy, double cardHeight) {
+    final slotCount = (durationSeconds / (30 * 60)).round().clamp(1, 48);
+    final normalizedPosition = cardHeight <= 0
+        ? 0.0
+        : (localDy / cardHeight).clamp(0.0, 0.9999);
+    grabOffsetSlots = (normalizedPosition * slotCount).floor();
+  }
+}
+
+class DraftTimeBoxDragPayload extends TimeBoxBoardDragPayload {
+  final DailyPlanItemCategory source;
+  final int index;
+  final String title;
+  @override
+  final int durationSeconds;
+
+  const DraftTimeBoxDragPayload({
+    required this.source,
+    required this.index,
+    required this.title,
+    this.durationSeconds = 30 * 60,
+  });
+}
+
+class TimeBoxBoard extends ConsumerWidget {
   final Pomodoro pomodoro;
   final PomodoroController notifier;
   final DateTime now;
@@ -31,15 +77,20 @@ class TimeBoxBoard extends StatelessWidget {
 
   static const _slotMinutes = 30;
   static const _slotHeight = 70.0;
+  static const _resizeStepDragDistance = 70.0;
   static const _timelineWidth = 58.0;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final dayStart = _dayStartMinutes();
     final dayEnd = _dayEndMinutes(dayStart);
     final slotCount = ((dayEnd - dayStart) / _slotMinutes).ceil();
     final boardHeight = slotCount * _slotHeight;
     final nowMinutes = _nowMinutes();
+    final actionTimeBoxId = ref.watch(todayTimeBoxActionControllerProvider);
+    final resizeTimeBoxId = ref.watch(todayTimeBoxResizeModeControllerProvider);
+    final interactionActive =
+        actionTimeBoxId.isNotEmpty || resizeTimeBoxId.isNotEmpty;
 
     return TodaySectionCard(
       child: Column(
@@ -62,6 +113,15 @@ class TimeBoxBoard extends StatelessWidget {
               fontWeight: FontWeight.w700,
             ),
           ),
+          if (pomodoro.timeBoxes.isEmpty) ...[
+            const SizedBox(height: 4),
+            DailyCarryOverButton(
+              label: context.l10n.carryOverPreviousSchedule,
+              onPressed: notifier.carryOverPreviousTimeBoxes,
+              onMissing: () =>
+                  _showSnack(context, context.l10n.noPreviousDailyItems),
+            ),
+          ],
           const SizedBox(height: 14),
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
@@ -75,23 +135,37 @@ class TimeBoxBoard extends StatelessWidget {
                     final isCurrentSlot =
                         nowMinutes >= slotStart &&
                         nowMinutes < slotStart + _slotMinutes;
-                    final occupied = _slotOccupied(slotStart);
+                    final occupied = _slotBlocked(slotStart);
 
                     return Positioned(
                       top: index * _slotHeight,
                       left: 0,
                       right: 0,
                       height: _slotHeight,
-                      child: DragTarget<String>(
+                      child: DragTarget<TimeBoxBoardDragPayload>(
+                        onWillAcceptWithDetails: (details) => _slotCanFit(
+                          _dropStartMinutes(details.data, slotStart),
+                          details.data.durationSeconds,
+                          movingBoxId:
+                              details.data is ScheduledTimeBoxDragPayload
+                              ? (details.data as ScheduledTimeBoxDragPayload).id
+                              : null,
+                        ),
                         onAcceptWithDetails: (details) {
                           HapticFeedback.mediumImpact();
-                          notifier.moveTimeBoxToStart(details.data, slotStart);
+                          _acceptDragPayload(
+                            details.data,
+                            _dropStartMinutes(details.data, slotStart),
+                          );
                         },
                         builder: (context, candidates, rejected) {
                           final isTargeted = candidates.isNotEmpty;
                           return GestureDetector(
+                            key: ValueKey('timebox_slot_$slotStart'),
                             behavior: HitTestBehavior.opaque,
-                            onTap: occupied
+                            onTap: interactionActive
+                                ? () => _clearTimeBoxInteraction(ref)
+                                : occupied
                                 ? null
                                 : () =>
                                       _openNewTimeBoxEditor(context, slotStart),
@@ -102,6 +176,10 @@ class TimeBoxBoard extends StatelessWidget {
                                   ? const Color(
                                       0xFFF6F3EC,
                                     ).withValues(alpha: 0.12)
+                                  : rejected.isNotEmpty
+                                  ? const Color(
+                                      0xFFFF8D8D,
+                                    ).withValues(alpha: 0.08)
                                   : isCurrentSlot
                                   ? Colors.white.withValues(alpha: 0.055)
                                   : Colors.transparent,
@@ -143,18 +221,41 @@ class TimeBoxBoard extends StatelessWidget {
                       ),
                     );
                   }),
+                  if (interactionActive)
+                    Positioned.fill(
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.translucent,
+                        onTap: () => _clearTimeBoxInteraction(ref),
+                        child: const SizedBox.expand(),
+                      ),
+                    ),
                   ...pomodoro.timeBoxes.map(
                     (box) => _PositionedTimeBox(
+                      key: ValueKey(box.id),
                       box: box,
-                      title: localizedTimeBoxTitle(context, box),
+                      title: displayTimeBoxTitle(box),
                       activeTimeBoxId: pomodoro.activeTimeBox?.id,
                       dayStart: dayStart,
                       dayEnd: dayEnd,
                       current: _containsNow(box),
+                      actionsActive: actionTimeBoxId == box.id,
                       onDragStarted: onDragStarted,
                       onDragUpdate: onDragUpdate,
                       onDragEnd: onDragEnd,
-                      onTap: () => _openTimeBoxEditor(context, box),
+                      onTap: () => _toggleTimeBoxActions(ref, box.id),
+                      onEdit: () => _openTimeBoxEditor(context, box),
+                      onResizeStartMinutes: (startMinutes) =>
+                          notifier.resizeTimeBoxStart(
+                            box.id,
+                            startMinutes,
+                            minStartMinutes: dayStart,
+                          ),
+                      onResizeEndMinutes: (endMinutes) =>
+                          notifier.resizeTimeBoxEnd(
+                            box.id,
+                            endMinutes,
+                            maxEndMinutes: dayEnd,
+                          ),
                     ),
                   ),
                   if (nowMinutes >= dayStart && nowMinutes <= dayEnd)
@@ -164,24 +265,7 @@ class TimeBoxBoard extends StatelessWidget {
                           _slotHeight,
                       left: _timelineWidth - 4,
                       right: 0,
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFFF6F3EC),
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          Expanded(
-                            child: Container(
-                              height: 2,
-                              color: const Color(0xFFF6F3EC),
-                            ),
-                          ),
-                        ],
-                      ),
+                      child: const _NowTimelineIndicator(),
                     ),
                 ],
               ),
@@ -272,8 +356,125 @@ class TimeBoxBoard extends StatelessWidget {
     return '${_formatClock(startMinutes)}-${_formatClock(startMinutes + _slotMinutes)}';
   }
 
-  bool _slotOccupied(int slotStart) {
-    return pomodoro.timeBoxes.any((box) => box.startMinutes == slotStart);
+  void _acceptDragPayload(TimeBoxBoardDragPayload payload, int startMinutes) {
+    switch (payload) {
+      case ScheduledTimeBoxDragPayload(:final id):
+        notifier.moveTimeBoxToStart(id, startMinutes);
+      case DraftTimeBoxDragPayload(:final source, :final index):
+        switch (source) {
+          case DailyPlanItemCategory.brainDump:
+            notifier.scheduleBrainDumpItemAtStart(index, startMinutes);
+          case DailyPlanItemCategory.topPriority:
+            notifier.scheduleTopPriorityAtStart(index, startMinutes);
+          case DailyPlanItemCategory.reminder:
+            notifier.scheduleReminderAtStart(index, startMinutes);
+        }
+    }
+  }
+
+  int _dropStartMinutes(TimeBoxBoardDragPayload payload, int hoveredSlotStart) {
+    if (payload case ScheduledTimeBoxDragPayload(:final grabOffsetSlots)) {
+      return hoveredSlotStart - (grabOffsetSlots * _slotMinutes);
+    }
+    return hoveredSlotStart;
+  }
+
+  void _toggleTimeBoxActions(WidgetRef ref, String id) {
+    ref.read(todayTimeBoxResizeModeControllerProvider.notifier).clear();
+    ref.read(todayTimeBoxResizeDragControllerProvider.notifier).end(id);
+    ref.read(todayTimeBoxActionControllerProvider.notifier).toggle(id);
+    HapticFeedback.selectionClick();
+  }
+
+  void _clearTimeBoxInteraction(WidgetRef ref) {
+    ref.read(todayTimeBoxActionControllerProvider.notifier).clear();
+    ref.read(todayTimeBoxResizeModeControllerProvider.notifier).clear();
+  }
+
+  bool _slotBlocked(int slotStart, {String? movingBoxId}) {
+    return pomodoro.timeBoxes.any((box) {
+      if (box.id == movingBoxId) {
+        return false;
+      }
+      final start = box.startMinutes;
+      final end = box.endMinutes;
+      if (start == null || end == null) {
+        return false;
+      }
+      return slotStart >= start && slotStart < end;
+    });
+  }
+
+  bool _slotCanFit(int slotStart, int durationSeconds, {String? movingBoxId}) {
+    if (slotStart < _dayStartMinutes()) {
+      return false;
+    }
+    final durationMinutes = (durationSeconds / 60).round();
+    final slotEnd = slotStart + durationMinutes;
+    if (slotEnd > _dayEndMinutes(_dayStartMinutes())) {
+      return false;
+    }
+    return !pomodoro.timeBoxes.any((box) {
+      if (box.id == movingBoxId) {
+        return false;
+      }
+      final start = box.startMinutes;
+      final end = box.endMinutes;
+      if (start == null || end == null) {
+        return false;
+      }
+      return slotStart < end && slotEnd > start;
+    });
+  }
+}
+
+class _NowTimelineIndicator extends StatelessWidget {
+  const _NowTimelineIndicator();
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: Row(
+        children: [
+          Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(
+              color: const Color(0xFF080808),
+              shape: BoxShape.circle,
+              border: Border.all(color: const Color(0xFFF6F3EC), width: 2),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.34),
+                  blurRadius: 5,
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: Stack(
+              alignment: Alignment.centerLeft,
+              children: [
+                Container(
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF080808).withValues(alpha: 0.82),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+                Container(
+                  height: 2,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF6F3EC),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -284,22 +485,31 @@ class _PositionedTimeBox extends StatelessWidget {
   final int dayStart;
   final int dayEnd;
   final bool current;
+  final bool actionsActive;
   final VoidCallback onDragStarted;
   final ValueChanged<DragUpdateDetails> onDragUpdate;
   final VoidCallback onDragEnd;
   final VoidCallback onTap;
+  final VoidCallback onEdit;
+  final ValueChanged<int> onResizeStartMinutes;
+  final ValueChanged<int> onResizeEndMinutes;
 
   const _PositionedTimeBox({
+    super.key,
     required this.box,
     required this.title,
     required this.activeTimeBoxId,
     required this.dayStart,
     required this.dayEnd,
     required this.current,
+    required this.actionsActive,
     required this.onDragStarted,
     required this.onDragUpdate,
     required this.onDragEnd,
     required this.onTap,
+    required this.onEdit,
+    required this.onResizeStartMinutes,
+    required this.onResizeEndMinutes,
   });
 
   @override
@@ -330,107 +540,288 @@ class _PositionedTimeBox extends StatelessWidget {
       child: _TimeBoxBoardCard(
         box: box,
         title: title,
+        cardHeight: height,
         selected: box.id == activeTimeBoxId,
         current: current,
+        actionsActive: actionsActive,
         onDragStarted: onDragStarted,
         onDragUpdate: onDragUpdate,
         onDragEnd: onDragEnd,
         onTap: onTap,
+        onEdit: onEdit,
+        onResizeStartMinutes: onResizeStartMinutes,
+        onResizeEndMinutes: onResizeEndMinutes,
       ),
     );
   }
 }
 
-class _TimeBoxBoardCard extends StatelessWidget {
+class _TimeBoxBoardCard extends ConsumerWidget {
   final TimeBox box;
   final String title;
+  final double cardHeight;
   final bool selected;
   final bool current;
+  final bool actionsActive;
   final VoidCallback onDragStarted;
   final ValueChanged<DragUpdateDetails> onDragUpdate;
   final VoidCallback onDragEnd;
   final VoidCallback onTap;
+  final VoidCallback onEdit;
+  final ValueChanged<int> onResizeStartMinutes;
+  final ValueChanged<int> onResizeEndMinutes;
 
   const _TimeBoxBoardCard({
     required this.box,
     required this.title,
+    required this.cardHeight,
     required this.selected,
     required this.current,
+    required this.actionsActive,
     required this.onDragStarted,
     required this.onDragUpdate,
     required this.onDragEnd,
     required this.onTap,
+    required this.onEdit,
+    required this.onResizeStartMinutes,
+    required this.onResizeEndMinutes,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final resizeModeActive =
+        ref.watch(todayTimeBoxResizeModeControllerProvider) == box.id;
+    final dragPayload = ScheduledTimeBoxDragPayload(
+      id: box.id,
+      durationSeconds: box.rangeDurationSeconds ?? box.durationSeconds,
+    );
+    final surface = _TimeBoxBoardCardSurface(
+      title: title,
+      selected: selected,
+      current: current,
+      reserveResizeHandle: resizeModeActive,
+    );
+
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: _DraggableTimeBoxCard(
+            enabled: !resizeModeActive,
+            payload: dragPayload,
+            title: title,
+            selected: selected,
+            current: current,
+            feedbackHeight: cardHeight,
+            onTap: onTap,
+            onDragStarted: () => _handleMoveStart(ref),
+            onDragUpdate: onDragUpdate,
+            onDragEnd: onDragEnd,
+            child: surface,
+          ),
+        ),
+        if (actionsActive && !resizeModeActive)
+          Positioned(
+            top: 6,
+            right: 6,
+            child: _TimeBoxCardActionOverlay(
+              selected: selected,
+              onEdit: () => _handleEdit(ref),
+              onResize: () => _activateResizeMode(ref),
+            ),
+          ),
+        if (resizeModeActive)
+          Positioned(
+            left: 0,
+            right: 0,
+            top: 0,
+            height: 14,
+            child: _TimeBoxResizeHandle(
+              selected: selected,
+              edge: _ResizeEdge.start,
+              onDragStart: () => _handleResizeStart(ref),
+              onDragUpdate: (delta) =>
+                  _handleResizeUpdate(ref, delta, _ResizeEdge.start),
+              onDragEnd: () => _handleResizeEnd(ref),
+            ),
+          ),
+        if (resizeModeActive)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: 14,
+            child: _TimeBoxResizeHandle(
+              selected: selected,
+              edge: _ResizeEdge.end,
+              onDragStart: () => _handleResizeStart(ref),
+              onDragUpdate: (delta) =>
+                  _handleResizeUpdate(ref, delta, _ResizeEdge.end),
+              onDragEnd: () => _handleResizeEnd(ref),
+            ),
+          ),
+      ],
+    );
+  }
+
+  void _handleMoveStart(WidgetRef ref) {
+    ref.read(todayTimeBoxActionControllerProvider.notifier).clear();
+    ref.read(todayTimeBoxResizeModeControllerProvider.notifier).clear();
+    ref.read(todayTimeBoxResizeDragControllerProvider.notifier).end(box.id);
+    onDragStarted();
+  }
+
+  void _handleEdit(WidgetRef ref) {
+    ref.read(todayTimeBoxActionControllerProvider.notifier).clear();
+    ref.read(todayTimeBoxResizeModeControllerProvider.notifier).clear();
+    onEdit();
+  }
+
+  void _activateResizeMode(WidgetRef ref) {
+    ref.read(todayTimeBoxActionControllerProvider.notifier).clear();
+    ref
+        .read(todayTimeBoxResizeModeControllerProvider.notifier)
+        .activate(box.id);
+    ref.read(todayTimeBoxResizeDragControllerProvider.notifier).end(box.id);
+    HapticFeedback.selectionClick();
+  }
+
+  void _handleResizeStart(WidgetRef ref) {
+    ref.read(todayTimeBoxActionControllerProvider.notifier).clear();
+    ref
+        .read(todayTimeBoxResizeModeControllerProvider.notifier)
+        .activate(box.id);
+    ref.read(todayTimeBoxResizeDragControllerProvider.notifier).start(box.id);
+    HapticFeedback.selectionClick();
+  }
+
+  void _handleResizeUpdate(WidgetRef ref, double deltaDy, _ResizeEdge edge) {
+    final slotDelta = ref
+        .read(todayTimeBoxResizeDragControllerProvider.notifier)
+        .consumeSlotDelta(
+          box.id,
+          deltaDy,
+          TimeBoxBoard._resizeStepDragDistance,
+        );
+    if (slotDelta == 0) {
+      return;
+    }
+
+    switch (edge) {
+      case _ResizeEdge.start:
+        final start = box.startMinutes;
+        if (start == null) {
+          return;
+        }
+        onResizeStartMinutes(start + (slotDelta * TimeBoxBoard._slotMinutes));
+      case _ResizeEdge.end:
+        final end = box.endMinutes;
+        if (end == null) {
+          return;
+        }
+        onResizeEndMinutes(end + (slotDelta * TimeBoxBoard._slotMinutes));
+    }
+    HapticFeedback.selectionClick();
+  }
+
+  void _handleResizeEnd(WidgetRef ref) {
+    ref.read(todayTimeBoxResizeDragControllerProvider.notifier).end(box.id);
+  }
+}
+
+class _DraggableTimeBoxCard extends StatelessWidget {
+  final bool enabled;
+  final ScheduledTimeBoxDragPayload payload;
+  final String title;
+  final bool selected;
+  final bool current;
+  final double feedbackHeight;
+  final VoidCallback onTap;
+  final VoidCallback onDragStarted;
+  final ValueChanged<DragUpdateDetails> onDragUpdate;
+  final VoidCallback onDragEnd;
+  final Widget child;
+
+  const _DraggableTimeBoxCard({
+    required this.enabled,
+    required this.payload,
+    required this.title,
+    required this.selected,
+    required this.current,
+    required this.feedbackHeight,
+    required this.onTap,
+    required this.onDragStarted,
+    required this.onDragUpdate,
+    required this.onDragEnd,
+    required this.child,
   });
 
   @override
   Widget build(BuildContext context) {
-    final surface = _TimeBoxBoardCardSurface(
-      box: box,
-      title: title,
-      selected: selected,
-      current: current,
-    );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final feedbackWidth = constraints.hasBoundedWidth
+            ? constraints.maxWidth
+            : MediaQuery.sizeOf(context).width - 112;
 
-    return LongPressDraggable<String>(
-      data: box.id,
-      delay: const Duration(milliseconds: 220),
-      dragAnchorStrategy: pointerDragAnchorStrategy,
-      feedback: Material(
-        color: Colors.transparent,
-        child: SizedBox(
-          width: MediaQuery.sizeOf(context).width - 110,
-          child: _TimeBoxBoardCardSurface(
-            box: box,
-            title: title,
-            selected: selected,
-            current: current,
-            feedback: true,
+        return Listener(
+          onPointerDown: (event) {
+            payload.updateGrabOffset(event.localPosition.dy, feedbackHeight);
+          },
+          child: LongPressDraggable<TimeBoxBoardDragPayload>(
+            data: payload,
+            maxSimultaneousDrags: enabled ? 1 : 0,
+            delay: const Duration(milliseconds: 220),
+            dragAnchorStrategy: childDragAnchorStrategy,
+            feedback: Material(
+              color: Colors.transparent,
+              child: Transform.rotate(
+                angle: -0.025,
+                child: SizedBox(
+                  width: feedbackWidth,
+                  height: feedbackHeight,
+                  child: _TimeBoxBoardCardSurface(
+                    title: title,
+                    selected: selected,
+                    current: current,
+                    feedback: true,
+                  ),
+                ),
+              ),
+            ),
+            childWhenDragging: Opacity(opacity: 0.22, child: child),
+            onDragStarted: onDragStarted,
+            onDragUpdate: onDragUpdate,
+            onDragEnd: (_) => onDragEnd(),
+            onDragCompleted: onDragEnd,
+            onDraggableCanceled: (_, _) => onDragEnd(),
+            child: Tooltip(
+              message: context.l10n.dragTimeBoxTooltip,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: onTap,
+                child: child,
+              ),
+            ),
           ),
-        ),
-      ),
-      childWhenDragging: Opacity(
-        opacity: 0.28,
-        child: _TimeBoxBoardCardGesture(onTap: onTap, child: surface),
-      ),
-      onDragStarted: onDragStarted,
-      onDragUpdate: onDragUpdate,
-      onDragEnd: (_) => onDragEnd(),
-      onDragCompleted: onDragEnd,
-      onDraggableCanceled: (_, _) => onDragEnd(),
-      child: _TimeBoxBoardCardGesture(onTap: onTap, child: surface),
-    );
-  }
-}
-
-class _TimeBoxBoardCardGesture extends StatelessWidget {
-  final VoidCallback onTap;
-  final Widget child;
-
-  const _TimeBoxBoardCardGesture({required this.onTap, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: child,
+        );
+      },
     );
   }
 }
 
 class _TimeBoxBoardCardSurface extends StatelessWidget {
-  final TimeBox box;
   final String title;
   final bool selected;
   final bool current;
   final bool feedback;
+  final bool reserveResizeHandle;
 
   const _TimeBoxBoardCardSurface({
-    required this.box,
     required this.title,
     required this.selected,
     required this.current,
     this.feedback = false,
+    this.reserveResizeHandle = false,
   });
 
   @override
@@ -438,7 +829,6 @@ class _TimeBoxBoardCardSurface extends StatelessWidget {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 180),
       curve: Curves.easeOutCubic,
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
       decoration: BoxDecoration(
         color: selected
             ? const Color(0xFFF6F3EC)
@@ -463,48 +853,223 @@ class _TimeBoxBoardCardSurface extends StatelessWidget {
               ]
             : null,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxHeight < 70;
+          final bottomInset = !reserveResizeHandle
+              ? 8.0
+              : compact
+              ? 13.0
+              : 16.0;
+          final topInset = !reserveResizeHandle
+              ? (compact ? 7.0 : 10.0)
+              : compact
+              ? 13.0
+              : 16.0;
+          const rightInset = 12.0;
+
+          return Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Positioned.fill(
+                left: 12,
+                top: topInset,
+                right: rightInset,
+                bottom: bottomInset,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: _TimeBoxBoardCardText(
+                    title: title,
+                    selected: selected,
+                    current: current,
+                    compact: compact,
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _TimeBoxBoardCardText extends StatelessWidget {
+  final String title;
+  final bool selected;
+  final bool current;
+  final bool compact;
+
+  const _TimeBoxBoardCardText({
+    required this.title,
+    required this.selected,
+    required this.current,
+    required this.compact,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (current && !selected && !compact) ...[
           Text(
-            box.timeRange,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+            context.l10n.nowBadge,
             style: TextStyle(
-              color: selected
-                  ? const Color(0xFF080808)
-                  : Colors.white.withValues(alpha: 0.5),
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
+              color: Colors.white.withValues(alpha: 0.54),
+              fontSize: 10,
+              fontWeight: FontWeight.w900,
             ),
           ),
-          if (current && !selected) ...[
-            const SizedBox(height: 3),
-            Text(
-              context.l10n.nowBadge,
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.54),
-                fontSize: 10,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ],
           const SizedBox(height: 4),
-          Text(
-            title,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: selected
-                  ? const Color(0xFF080808)
-                  : const Color(0xFFF6F3EC),
-              fontSize: 15,
-              fontWeight: FontWeight.w900,
-              height: 1.08,
+        ],
+        Text(
+          title,
+          maxLines: compact ? 1 : 2,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: selected ? const Color(0xFF080808) : const Color(0xFFF6F3EC),
+            fontSize: compact ? 14 : 15,
+            fontWeight: FontWeight.w900,
+            height: compact ? 1.0 : 1.08,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+enum _ResizeEdge { start, end }
+
+class _TimeBoxResizeHandle extends StatelessWidget {
+  final bool selected;
+  final _ResizeEdge edge;
+  final VoidCallback onDragStart;
+  final ValueChanged<double> onDragUpdate;
+  final VoidCallback onDragEnd;
+
+  const _TimeBoxResizeHandle({
+    required this.selected,
+    required this.edge,
+    required this.onDragStart,
+    required this.onDragUpdate,
+    required this.onDragEnd,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final foreground = selected
+        ? const Color(0xFF080808)
+        : const Color(0xFFF6F3EC);
+
+    return Tooltip(
+      message: context.l10n.resizeTimeBoxActiveTooltip,
+      child: Listener(
+        behavior: HitTestBehavior.opaque,
+        onPointerDown: (_) => onDragStart(),
+        onPointerMove: (event) => onDragUpdate(event.delta.dy),
+        onPointerUp: (_) => onDragEnd(),
+        onPointerCancel: (_) => onDragEnd(),
+        child: Align(
+          alignment: edge == _ResizeEdge.start
+              ? Alignment.topCenter
+              : Alignment.bottomCenter,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 140),
+            curve: Curves.easeOutCubic,
+            width: 36,
+            height: 3,
+            margin: edge == _ResizeEdge.start
+                ? const EdgeInsets.only(top: 3)
+                : const EdgeInsets.only(bottom: 3),
+            decoration: BoxDecoration(
+              color: foreground.withValues(alpha: 0.66),
+              borderRadius: BorderRadius.circular(999),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TimeBoxCardActionOverlay extends StatelessWidget {
+  final bool selected;
+  final VoidCallback onEdit;
+  final VoidCallback onResize;
+
+  const _TimeBoxCardActionOverlay({
+    required this.selected,
+    required this.onEdit,
+    required this.onResize,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final foreground = selected
+        ? const Color(0xFF080808)
+        : const Color(0xFFF6F3EC);
+    final background = selected
+        ? const Color(0xFFF6F3EC).withValues(alpha: 0.88)
+        : const Color(0xFF080808).withValues(alpha: 0.72);
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: foreground.withValues(alpha: 0.12)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _TimeBoxCardActionButton(
+            icon: Icons.edit_rounded,
+            label: context.l10n.editAction,
+            foreground: foreground,
+            onPressed: onEdit,
+          ),
+          Container(
+            width: 1,
+            height: 18,
+            color: foreground.withValues(alpha: 0.12),
+          ),
+          _TimeBoxCardActionButton(
+            icon: Icons.unfold_more_rounded,
+            label: context.l10n.resizeTimeBoxTooltip,
+            foreground: foreground,
+            onPressed: onResize,
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _TimeBoxCardActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color foreground;
+  final VoidCallback onPressed;
+
+  const _TimeBoxCardActionButton({
+    required this.icon,
+    required this.label,
+    required this.foreground,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: label,
+      child: IconButton(
+        onPressed: onPressed,
+        icon: Icon(icon, size: 17),
+        color: foreground,
+        visualDensity: VisualDensity.compact,
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints.tightFor(width: 34, height: 34),
       ),
     );
   }
@@ -531,11 +1096,13 @@ class _TimeBoxEditorSheet extends StatefulWidget {
 
 class _TimeBoxEditorSheetState extends State<_TimeBoxEditorSheet> {
   late final TextEditingController _titleController;
+  late Set<int> _repeatWeekdays;
 
   @override
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.box?.title ?? '');
+    _repeatWeekdays = {...?widget.box?.repeatWeekdays};
   }
 
   @override
@@ -578,6 +1145,7 @@ class _TimeBoxEditorSheetState extends State<_TimeBoxEditorSheet> {
             ),
             const SizedBox(height: 12),
             _TimeBoxTextField(
+              key: const ValueKey('timebox_title_field'),
               controller: _titleController,
               label: context.l10n.titleLabel,
               textInputAction: TextInputAction.done,
@@ -597,8 +1165,18 @@ class _TimeBoxEditorSheetState extends State<_TimeBoxEditorSheet> {
                 ),
               ),
             ),
+            const SizedBox(height: 14),
+            _TimeBoxRepeatSelector(
+              selectedWeekdays: _repeatWeekdays,
+              onChanged: (weekdays) {
+                setState(() {
+                  _repeatWeekdays = weekdays;
+                });
+              },
+            ),
             const SizedBox(height: 16),
             FilledButton.icon(
+              key: const ValueKey('timebox_save'),
               onPressed: () => _save(context),
               icon: const Icon(Icons.check_rounded),
               label: Text(context.l10n.saveAction),
@@ -632,13 +1210,192 @@ class _TimeBoxEditorSheetState extends State<_TimeBoxEditorSheet> {
           title: _titleController.text.trim().isEmpty
               ? widget.fallbackTitle
               : _titleController.text,
+          repeatWeekdays: _repeatWeekdays.toList()..sort(),
         );
       }
     } else {
-      widget.notifier.updateTimeBox(box.id, title: _titleController.text);
+      widget.notifier.updateTimeBox(
+        box.id,
+        title: _titleController.text,
+        repeatWeekdays: _repeatWeekdays.toList()..sort(),
+      );
     }
     Navigator.of(context).pop();
   }
+}
+
+class _TimeBoxRepeatSelector extends StatelessWidget {
+  final Set<int> selectedWeekdays;
+  final ValueChanged<Set<int>> onChanged;
+
+  const _TimeBoxRepeatSelector({
+    required this.selectedWeekdays,
+    required this.onChanged,
+  });
+
+  static const _weekdays = [
+    DateTime.monday,
+    DateTime.tuesday,
+    DateTime.wednesday,
+    DateTime.thursday,
+    DateTime.friday,
+    DateTime.saturday,
+    DateTime.sunday,
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final dailySelected = selectedWeekdays.length == 7;
+    final weekdaysSelected =
+        selectedWeekdays.length == 5 &&
+        selectedWeekdays.containsAll(_weekdays.take(5));
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          context.l10n.repeatTimeBoxLabel,
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.52),
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _RepeatPresetButton(
+              label: context.l10n.repeatNone,
+              selected: selectedWeekdays.isEmpty,
+              onTap: () => onChanged(<int>{}),
+            ),
+            _RepeatPresetButton(
+              label: context.l10n.repeatDaily,
+              selected: dailySelected,
+              onTap: () => onChanged({..._weekdays}),
+            ),
+            _RepeatPresetButton(
+              label: context.l10n.repeatWeekdays,
+              selected: weekdaysSelected,
+              onTap: () => onChanged({..._weekdays.take(5)}),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: [
+            for (final weekday in _weekdays)
+              _RepeatWeekdayChip(
+                label: _weekdayLabel(context, weekday),
+                selected: selectedWeekdays.contains(weekday),
+                onTap: () {
+                  final nextWeekdays = {...selectedWeekdays};
+                  if (nextWeekdays.contains(weekday)) {
+                    nextWeekdays.remove(weekday);
+                  } else {
+                    nextWeekdays.add(weekday);
+                  }
+                  onChanged(nextWeekdays);
+                },
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  String _weekdayLabel(BuildContext context, int weekday) {
+    return switch (weekday) {
+      DateTime.monday => context.l10n.weekdayMonNarrow,
+      DateTime.tuesday => context.l10n.weekdayTueNarrow,
+      DateTime.wednesday => context.l10n.weekdayWedNarrow,
+      DateTime.thursday => context.l10n.weekdayThuNarrow,
+      DateTime.friday => context.l10n.weekdayFriNarrow,
+      DateTime.saturday => context.l10n.weekdaySatNarrow,
+      DateTime.sunday => context.l10n.weekdaySunNarrow,
+      _ => '',
+    };
+  }
+}
+
+class _RepeatPresetButton extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _RepeatPresetButton({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ChoiceChip(
+      label: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+      selected: selected,
+      checkmarkColor: const Color(0xFF080808),
+      onSelected: (_) => onTap(),
+      selectedColor: const Color(0xFFF6F3EC),
+      backgroundColor: Colors.white.withValues(alpha: 0.055),
+      side: BorderSide(color: Colors.white.withValues(alpha: 0.12)),
+      labelStyle: TextStyle(
+        color: selected ? const Color(0xFF080808) : const Color(0xFFF6F3EC),
+        fontSize: 12,
+        fontWeight: FontWeight.w900,
+      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+    );
+  }
+}
+
+class _RepeatWeekdayChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _RepeatWeekdayChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return FilterChip(
+      label: Text(label),
+      selected: selected,
+      onSelected: (_) => onTap(),
+      showCheckmark: false,
+      selectedColor: const Color(0xFFF6F3EC),
+      backgroundColor: Colors.white.withValues(alpha: 0.035),
+      side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+      labelStyle: TextStyle(
+        color: selected ? const Color(0xFF080808) : const Color(0xFFF6F3EC),
+        fontSize: 12,
+        fontWeight: FontWeight.w900,
+      ),
+      padding: EdgeInsets.zero,
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+    );
+  }
+}
+
+void _showSnack(BuildContext context, String message) {
+  final messenger = ScaffoldMessenger.of(context);
+  messenger.hideCurrentSnackBar();
+  messenger.showSnackBar(
+    SnackBar(
+      content: Text(message),
+      behavior: SnackBarBehavior.floating,
+      duration: const Duration(milliseconds: 1600),
+    ),
+  );
 }
 
 class _TimeBoxTextField extends StatelessWidget {
@@ -649,6 +1406,7 @@ class _TimeBoxTextField extends StatelessWidget {
   final ValueChanged<String>? onSubmitted;
 
   const _TimeBoxTextField({
+    super.key,
     required this.controller,
     required this.label,
     required this.textInputAction,

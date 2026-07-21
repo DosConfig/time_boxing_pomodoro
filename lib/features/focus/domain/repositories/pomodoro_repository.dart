@@ -5,7 +5,10 @@ import '../entities/daily_plan_summary.dart';
 abstract class PomodoroRepository {
   Pomodoro getPomodoro();
   void updatePomodoro(Pomodoro pomodoro);
+  Future<void> flushPendingWrites();
+  Future<void> clearLocalPlanData();
   Future<Pomodoro> restoreTodayPlan(Pomodoro fallback);
+  Future<Pomodoro?> loadPreviousPlan(Pomodoro fallback);
   Future<List<DailyPlanSummary>> loadDailyPlanHistory({int days = 7});
   Stream<int> startTimer({
     required String phase,

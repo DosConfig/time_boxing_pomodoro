@@ -17,6 +17,8 @@ class PomodoroLocalDataSource {
 
   Pomodoro _currentPomodoro = Pomodoro.initial();
   String? _lastPersistedPlanJson;
+  bool _lastRestoreFoundTodayPlan = false;
+  Future<void> _persistQueue = Future.value();
 
   // 네이티브 onTick을 UI로 흘리는 단일 통로 (진실의 원천 = 네이티브 타이머)
   final StreamController<int> _tickController =
@@ -40,39 +42,63 @@ class PomodoroLocalDataSource {
 
   Pomodoro getPomodoro() => _currentPomodoro;
 
+  bool get lastRestoreFoundTodayPlan => _lastRestoreFoundTodayPlan;
+
   /// 네이티브 tick 스트림 (startTimer 없이 구독만 — 상태 복원 시 사용)
   Stream<int> ticks() => _tickController.stream;
 
   Future<Pomodoro> restoreTodayPlan(Pomodoro fallback) async {
+    final dto = await loadTodayPlanDto();
+    if (dto == null) {
+      _currentPomodoro = fallback;
+      return fallback;
+    }
+
+    final restored = dto.toEntity(fallback);
+    _currentPomodoro = restored;
+    return restored;
+  }
+
+  Future<TodayPlanDto?> loadTodayPlanDto() async {
     final todayKey = _dateKey(DateTime.now());
     final preferences = await SharedPreferences.getInstance();
     final encoded = preferences.getString(_storageKey(todayKey));
     if (encoded == null || encoded.isEmpty) {
-      _currentPomodoro = fallback;
+      _lastRestoreFoundTodayPlan = false;
       _lastPersistedPlanJson = null;
-      return fallback;
+      return null;
     }
 
     try {
       final decoded = jsonDecode(encoded);
       if (decoded is! Map<String, dynamic>) {
+        _lastRestoreFoundTodayPlan = false;
         _lastPersistedPlanJson = null;
-        return fallback;
+        return null;
       }
 
-      final dto = TodayPlanDto.fromJson(decoded);
+      var dto = TodayPlanDto.fromJson(decoded);
       if (dto.dateKey != todayKey) {
+        _lastRestoreFoundTodayPlan = false;
         _lastPersistedPlanJson = null;
-        return fallback;
+        return null;
       }
 
-      final restored = dto.toEntity(fallback);
-      _currentPomodoro = restored;
-      _lastPersistedPlanJson = _encodePlan(restored, todayKey);
-      return restored;
+      // Legacy local plans predate conflict metadata. Treat an existing local
+      // plan as the newest source once, then persist the migrated timestamp.
+      if (dto.updatedAtEpochMs <= 0) {
+        dto = dto.copyWith(
+          updatedAtEpochMs: DateTime.now().millisecondsSinceEpoch,
+        );
+      }
+
+      _lastRestoreFoundTodayPlan = true;
+      _lastPersistedPlanJson = encoded;
+      return dto;
     } catch (_) {
+      _lastRestoreFoundTodayPlan = false;
       _lastPersistedPlanJson = null;
-      return fallback;
+      return null;
     }
   }
 
@@ -102,14 +128,65 @@ class PomodoroLocalDataSource {
     return summaries;
   }
 
+  Future<Pomodoro?> loadPreviousPlan(Pomodoro fallback) async {
+    final preferences = await SharedPreferences.getInstance();
+    final todayKey = _dateKey(DateTime.now());
+    final indexedKeys = preferences.getStringList(_todayPlanKeysKey) ?? [];
+    final previousKeys =
+        indexedKeys.where((dateKey) => dateKey.compareTo(todayKey) < 0).toList()
+          ..sort((a, b) => b.compareTo(a));
+
+    for (final dateKey in previousKeys) {
+      final encoded = preferences.getString(_storageKey(dateKey));
+      if (encoded == null || encoded.isEmpty) {
+        continue;
+      }
+
+      try {
+        final decoded = jsonDecode(encoded);
+        if (decoded is Map<String, dynamic>) {
+          return TodayPlanDto.fromJson(decoded).toEntity(fallback);
+        }
+      } catch (_) {
+        continue;
+      }
+    }
+
+    return null;
+  }
+
   Future<NativeTimerStateDto> restoreState(Pomodoro fallback) async {
     final state = await PomodoroPlatformChannel.restoreState();
     return NativeTimerStateDto.fromPlatformMap(state, fallback: fallback);
   }
 
-  void updatePomodoro(Pomodoro pomodoro) {
+  void updatePomodoro(Pomodoro pomodoro, {int? updatedAtEpochMs}) {
     _currentPomodoro = pomodoro;
-    unawaited(_persistTodayPlan(pomodoro));
+    final todayKey = _dateKey(DateTime.now());
+    final dto = TodayPlanDto.fromEntity(
+      pomodoro,
+      dateKey: todayKey,
+      updatedAtEpochMs:
+          updatedAtEpochMs ?? DateTime.now().millisecondsSinceEpoch,
+    );
+    _persistQueue = _persistQueue.then((_) => _persistTodayPlan(dto));
+  }
+
+  Future<void> flushPendingWrites() => _persistQueue;
+
+  Future<void> clearPlanData() async {
+    await _persistQueue;
+    final preferences = await SharedPreferences.getInstance();
+    final indexedKeys = preferences.getStringList(_todayPlanKeysKey) ?? [];
+    for (final dateKey in indexedKeys) {
+      await preferences.remove(_storageKey(dateKey));
+    }
+    await preferences.remove(_todayPlanKeysKey);
+
+    _currentPomodoro = Pomodoro.initial();
+    _lastPersistedPlanJson = null;
+    _lastRestoreFoundTodayPlan = false;
+    _persistQueue = Future.value();
   }
 
   Stream<int> startTimer({
@@ -163,23 +240,16 @@ class PomodoroLocalDataSource {
     );
   }
 
-  Future<void> _persistTodayPlan(Pomodoro pomodoro) async {
-    final todayKey = _dateKey(DateTime.now());
-    final encoded = _encodePlan(pomodoro, todayKey);
+  Future<void> _persistTodayPlan(TodayPlanDto dto) async {
+    final encoded = jsonEncode(dto.toStorageJson());
     if (encoded == _lastPersistedPlanJson) {
       return;
     }
 
-    _lastPersistedPlanJson = encoded;
     final preferences = await SharedPreferences.getInstance();
-    await preferences.setString(_storageKey(todayKey), encoded);
-    await _indexDateKey(preferences, todayKey);
-  }
-
-  String _encodePlan(Pomodoro pomodoro, String todayKey) {
-    return jsonEncode(
-      TodayPlanDto.fromEntity(pomodoro, dateKey: todayKey).toStorageJson(),
-    );
+    await preferences.setString(_storageKey(dto.dateKey), encoded);
+    await _indexDateKey(preferences, dto.dateKey);
+    _lastPersistedPlanJson = encoded;
   }
 
   String _storageKey(String dateKey) => '$_todayPlanKeyPrefix$dateKey';

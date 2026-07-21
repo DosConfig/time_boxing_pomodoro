@@ -1,4 +1,4 @@
-import 'package:pomodoro_method_channel/l10n/generated/app_localizations.dart';
+import 'package:time_boxing_pomodoro/l10n/generated/app_localizations.dart';
 
 import '../domain/entities/native_timer_copy.dart';
 

@@ -3,15 +3,17 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
-import 'package:pomodoro_method_channel/l10n/l10n.dart';
+import 'package:time_boxing_pomodoro/l10n/l10n.dart';
 
 import '../../focus/application/pomodoro_controller.dart';
 import '../../focus/domain/entities/daily_plan_summary.dart';
+import '../../focus/domain/entities/daily_plan_item_category.dart';
 import '../../focus/domain/entities/pomodoro.dart';
 import '../../focus/presentation/native_timer_copy_l10n.dart';
-import '../../focus/presentation/time_box_title_l10n.dart';
+import '../../focus/presentation/time_box_title_display.dart';
 import '../../settings/application/app_preferences_controller.dart';
 import '../application/today_ui_controller.dart';
+import 'widgets/daily_carry_over_button.dart';
 import 'widgets/time_box_board.dart';
 import 'widgets/today_section_card.dart';
 
@@ -43,8 +45,11 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     final now = ref.watch(todayClockProvider);
     final history = ref.watch(dailyPlanHistoryProvider(days: 7));
     final isTimeBoxDragging = ref.watch(todayTimeBoxDragControllerProvider);
+    final isTimeBoxResizing = ref
+        .watch(todayTimeBoxResizeDragControllerProvider)
+        .isNotEmpty;
     final notifier = ref.read(pomodoroControllerProvider.notifier);
-    final priorities = _normalizedPriorities(pomodoro);
+    final priorities = pomodoro.topPrioritySlots;
 
     return SafeArea(
       child: Stack(
@@ -52,8 +57,11 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
           ScrollConfiguration(
             behavior: const _AppScrollBehavior(),
             child: CustomScrollView(
+              key: const ValueKey('today_scroll'),
               controller: _scrollController,
-              physics: const ClampingScrollPhysics(),
+              physics: isTimeBoxResizing
+                  ? const NeverScrollableScrollPhysics()
+                  : const ClampingScrollPhysics(),
               slivers: [
                 SliverPadding(
                   padding: const EdgeInsets.fromLTRB(24, 22, 24, 32),
@@ -66,11 +74,26 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                         _TopPrioritiesPanel(
                           priorities: priorities,
                           notifier: notifier,
+                          onDragStarted: _beginDraftScheduleDrag,
+                          onDragUpdate: _handleTimeBoxDragUpdate,
+                          onDragEnd: _endDraftScheduleDrag,
                         ),
                         const SizedBox(height: 16),
-                        _BrainDumpPanel(pomodoro: pomodoro, notifier: notifier),
+                        _BrainDumpPanel(
+                          pomodoro: pomodoro,
+                          notifier: notifier,
+                          onDragStarted: _beginDraftScheduleDrag,
+                          onDragUpdate: _handleTimeBoxDragUpdate,
+                          onDragEnd: _endDraftScheduleDrag,
+                        ),
                         const SizedBox(height: 16),
-                        _ReminderPanel(pomodoro: pomodoro, notifier: notifier),
+                        _ReminderPanel(
+                          pomodoro: pomodoro,
+                          notifier: notifier,
+                          onDragStarted: _beginDraftScheduleDrag,
+                          onDragUpdate: _handleTimeBoxDragUpdate,
+                          onDragEnd: _endDraftScheduleDrag,
+                        ),
                         const SizedBox(height: 16),
                         TimeBoxBoard(
                           pomodoro: pomodoro,
@@ -84,11 +107,24 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                         ),
                         const SizedBox(height: 18),
                         FilledButton.icon(
+                          key: const ValueKey('start_focus'),
                           onPressed: () async {
                             final nativeCopy = context.l10n.nativeTimerCopy;
                             FocusScope.of(context).unfocus();
                             HapticFeedback.mediumImpact();
                             await notifier.selectCurrentTimeBoxForNow();
+                            final syncedPomodoro = ref.read(
+                              pomodoroControllerProvider,
+                            );
+                            if (!syncedPomodoro.canStartFocus) {
+                              if (context.mounted) {
+                                _showSnack(
+                                  context,
+                                  context.l10n.currentTimeBoxRequired,
+                                );
+                              }
+                              return;
+                            }
                             await notifier.start(nativeCopy);
                             if (context.mounted) {
                               widget.onOpenFocus();
@@ -130,7 +166,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
           ),
           _TimeBoxTrashTarget(
             visible: isTimeBoxDragging,
-            enabled: pomodoro.timeBoxes.length > 1,
+            enabled: pomodoro.timeBoxes.isNotEmpty,
             onAccept: (id) {
               HapticFeedback.heavyImpact();
               unawaited(notifier.removeTimeBox(id));
@@ -140,14 +176,6 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
         ],
       ),
     );
-  }
-
-  List<String> _normalizedPriorities(Pomodoro pomodoro) {
-    final priorities = List<String>.from(pomodoro.topPriorities.take(3));
-    while (priorities.length < 3) {
-      priorities.add('');
-    }
-    return priorities;
   }
 
   void _handleTimeBoxDragUpdate(DragUpdateDetails details) {
@@ -182,9 +210,17 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     ref.read(todayTimeBoxDragControllerProvider.notifier).begin();
   }
 
+  void _beginDraftScheduleDrag() {
+    HapticFeedback.selectionClick();
+  }
+
   void _endTimeBoxDrag() {
     _stopDragAutoScroll();
     ref.read(todayTimeBoxDragControllerProvider.notifier).end();
+  }
+
+  void _endDraftScheduleDrag() {
+    _stopDragAutoScroll();
   }
 
   void _startDragAutoScroll() {
@@ -278,9 +314,15 @@ class _TimeBoxTrashTarget extends StatelessWidget {
             child: AnimatedOpacity(
               duration: const Duration(milliseconds: 180),
               opacity: visible ? 1 : 0,
-              child: DragTarget<String>(
-                onWillAcceptWithDetails: (_) => enabled,
-                onAcceptWithDetails: (details) => onAccept(details.data),
+              child: DragTarget<TimeBoxBoardDragPayload>(
+                onWillAcceptWithDetails: (details) =>
+                    enabled && details.data is ScheduledTimeBoxDragPayload,
+                onAcceptWithDetails: (details) {
+                  final payload = details.data;
+                  if (payload is ScheduledTimeBoxDragPayload) {
+                    onAccept(payload.id);
+                  }
+                },
                 builder: (context, candidates, rejected) {
                   final targeted = candidates.isNotEmpty;
                   return AnimatedContainer(
@@ -329,56 +371,88 @@ class _TimeBoxTrashTarget extends StatelessWidget {
 class _BrainDumpPanel extends StatelessWidget {
   final Pomodoro pomodoro;
   final PomodoroController notifier;
+  final VoidCallback onDragStarted;
+  final ValueChanged<DragUpdateDetails> onDragUpdate;
+  final VoidCallback onDragEnd;
 
-  const _BrainDumpPanel({required this.pomodoro, required this.notifier});
+  const _BrainDumpPanel({
+    required this.pomodoro,
+    required this.notifier,
+    required this.onDragStarted,
+    required this.onDragUpdate,
+    required this.onDragEnd,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return TodaySectionCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  context.l10n.brainDumpTitle,
-                  style: TextStyle(
-                    color: Color(0xFFF6F3EC),
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
+    return _DailyPlanDropTarget(
+      category: DailyPlanItemCategory.brainDump,
+      notifier: notifier,
+      child: TodaySectionCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    context.l10n.brainDumpTitle,
+                    style: TextStyle(
+                      color: Color(0xFFF6F3EC),
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
-              ),
-              Tooltip(
-                message: context.l10n.addBrainDumpTooltip,
-                child: IconButton(
-                  onPressed: () => _openAddSheet(context),
-                  icon: const Icon(Icons.add_rounded),
-                  style: IconButton.styleFrom(
-                    foregroundColor: const Color(0xFFF6F3EC),
-                    visualDensity: VisualDensity.compact,
+                Tooltip(
+                  message: context.l10n.addBrainDumpTooltip,
+                  child: IconButton(
+                    onPressed: () => _openAddSheet(context),
+                    icon: const Icon(Icons.add_rounded),
+                    style: IconButton.styleFrom(
+                      foregroundColor: const Color(0xFFF6F3EC),
+                      visualDensity: VisualDensity.compact,
+                    ),
                   ),
                 ),
+              ],
+            ),
+            if (pomodoro.brainDump.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              ...List.generate(pomodoro.brainDump.length, (index) {
+                final item = pomodoro.brainDump[index];
+                return Padding(
+                  padding: EdgeInsets.only(
+                    bottom: index == pomodoro.brainDump.length - 1 ? 0 : 8,
+                  ),
+                  child: _ScheduleSourceDraggable(
+                    payload: DraftTimeBoxDragPayload(
+                      source: DailyPlanItemCategory.brainDump,
+                      index: index,
+                      title: item,
+                    ),
+                    label: item,
+                    onDragStarted: onDragStarted,
+                    onDragUpdate: onDragUpdate,
+                    onDragEnd: onDragEnd,
+                    child: _BrainDumpRow(
+                      item: item,
+                      onTap: () => _showBrainDumpActions(context, index),
+                    ),
+                  ),
+                );
+              }),
+            ] else ...[
+              const SizedBox(height: 8),
+              DailyCarryOverButton(
+                label: context.l10n.carryOverPreviousBrainDump,
+                onPressed: notifier.carryOverPreviousBrainDump,
+                onMissing: () =>
+                    _showSnack(context, context.l10n.noPreviousDailyItems),
               ),
             ],
-          ),
-          if (pomodoro.brainDump.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            ...List.generate(pomodoro.brainDump.length, (index) {
-              final item = pomodoro.brainDump[index];
-              return Padding(
-                padding: EdgeInsets.only(
-                  bottom: index == pomodoro.brainDump.length - 1 ? 0 : 8,
-                ),
-                child: _BrainDumpRow(
-                  item: item,
-                  onTap: () => _showBrainDumpActions(context, index),
-                ),
-              );
-            }),
           ],
-        ],
+        ),
       ),
     );
   }
@@ -505,56 +579,88 @@ class _BrainDumpRow extends StatelessWidget {
 class _ReminderPanel extends StatelessWidget {
   final Pomodoro pomodoro;
   final PomodoroController notifier;
+  final VoidCallback onDragStarted;
+  final ValueChanged<DragUpdateDetails> onDragUpdate;
+  final VoidCallback onDragEnd;
 
-  const _ReminderPanel({required this.pomodoro, required this.notifier});
+  const _ReminderPanel({
+    required this.pomodoro,
+    required this.notifier,
+    required this.onDragStarted,
+    required this.onDragUpdate,
+    required this.onDragEnd,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return TodaySectionCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  context.l10n.keepInMindTitle,
-                  style: TextStyle(
-                    color: Color(0xFFF6F3EC),
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
+    return _DailyPlanDropTarget(
+      category: DailyPlanItemCategory.reminder,
+      notifier: notifier,
+      child: TodaySectionCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    context.l10n.keepInMindTitle,
+                    style: TextStyle(
+                      color: Color(0xFFF6F3EC),
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
-              ),
-              Tooltip(
-                message: context.l10n.addReminderTooltip,
-                child: IconButton(
-                  onPressed: () => _openAddSheet(context),
-                  icon: const Icon(Icons.add_rounded),
-                  style: IconButton.styleFrom(
-                    foregroundColor: const Color(0xFFF6F3EC),
-                    visualDensity: VisualDensity.compact,
+                Tooltip(
+                  message: context.l10n.addReminderTooltip,
+                  child: IconButton(
+                    onPressed: () => _openAddSheet(context),
+                    icon: const Icon(Icons.add_rounded),
+                    style: IconButton.styleFrom(
+                      foregroundColor: const Color(0xFFF6F3EC),
+                      visualDensity: VisualDensity.compact,
+                    ),
                   ),
                 ),
+              ],
+            ),
+            if (pomodoro.reminders.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              ...List.generate(pomodoro.reminders.length, (index) {
+                final item = pomodoro.reminders[index];
+                return Padding(
+                  padding: EdgeInsets.only(
+                    bottom: index == pomodoro.reminders.length - 1 ? 0 : 8,
+                  ),
+                  child: _ScheduleSourceDraggable(
+                    payload: DraftTimeBoxDragPayload(
+                      source: DailyPlanItemCategory.reminder,
+                      index: index,
+                      title: item,
+                    ),
+                    label: item,
+                    onDragStarted: onDragStarted,
+                    onDragUpdate: onDragUpdate,
+                    onDragEnd: onDragEnd,
+                    child: _ReminderRow(
+                      item: item,
+                      onTap: () => _showReminderActions(context, index),
+                    ),
+                  ),
+                );
+              }),
+            ] else ...[
+              const SizedBox(height: 8),
+              DailyCarryOverButton(
+                label: context.l10n.carryOverPreviousReminders,
+                onPressed: notifier.carryOverPreviousReminders,
+                onMissing: () =>
+                    _showSnack(context, context.l10n.noPreviousDailyItems),
               ),
             ],
-          ),
-          if (pomodoro.reminders.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            ...List.generate(pomodoro.reminders.length, (index) {
-              final item = pomodoro.reminders[index];
-              return Padding(
-                padding: EdgeInsets.only(
-                  bottom: index == pomodoro.reminders.length - 1 ? 0 : 8,
-                ),
-                child: _ReminderRow(
-                  item: item,
-                  onTap: () => _showReminderActions(context, index),
-                ),
-              );
-            }),
           ],
-        ],
+        ),
       ),
     );
   }
@@ -652,6 +758,158 @@ class _ReminderRow extends StatelessWidget {
               height: 1.18,
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ScheduleSourceDraggable extends StatelessWidget {
+  final TimeBoxBoardDragPayload payload;
+  final String label;
+  final Widget child;
+  final VoidCallback onDragStarted;
+  final ValueChanged<DragUpdateDetails> onDragUpdate;
+  final VoidCallback onDragEnd;
+
+  const _ScheduleSourceDraggable({
+    required this.payload,
+    required this.label,
+    required this.child,
+    required this.onDragStarted,
+    required this.onDragUpdate,
+    required this.onDragEnd,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final feedbackWidth = constraints.hasBoundedWidth
+            ? constraints.maxWidth
+            : MediaQuery.sizeOf(context).width - 48;
+        return LongPressDraggable<TimeBoxBoardDragPayload>(
+          data: payload,
+          delay: const Duration(milliseconds: 160),
+          dragAnchorStrategy: childDragAnchorStrategy,
+          feedback: Material(
+            color: Colors.transparent,
+            child: SizedBox(
+              width: feedbackWidth,
+              child: _ScheduleDragFeedback(label: label),
+            ),
+          ),
+          childWhenDragging: Opacity(opacity: 0.2, child: child),
+          onDragStarted: onDragStarted,
+          onDragUpdate: onDragUpdate,
+          onDragEnd: (_) => onDragEnd(),
+          onDragCompleted: onDragEnd,
+          onDraggableCanceled: (_, _) => onDragEnd(),
+          child: Tooltip(
+            message: context.l10n.dragTimeBoxTooltip,
+            child: child,
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _DailyPlanDropTarget extends StatelessWidget {
+  final DailyPlanItemCategory category;
+  final PomodoroController notifier;
+  final Widget child;
+
+  const _DailyPlanDropTarget({
+    required this.category,
+    required this.notifier,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return DragTarget<TimeBoxBoardDragPayload>(
+      onWillAcceptWithDetails: (details) {
+        return switch (details.data) {
+          DraftTimeBoxDragPayload(:final source) =>
+            notifier.canAcceptDailyPlanItem(category, source: source),
+          ScheduledTimeBoxDragPayload() => notifier.canAcceptDailyPlanItem(
+            category,
+          ),
+        };
+      },
+      onAcceptWithDetails: (details) {
+        switch (details.data) {
+          case DraftTimeBoxDragPayload(:final source, :final index):
+            notifier.moveDailyPlanItem(
+              source: source,
+              index: index,
+              target: category,
+            );
+          case ScheduledTimeBoxDragPayload(:final id):
+            unawaited(notifier.moveTimeBoxToDailyPlanItem(id, category));
+        }
+        HapticFeedback.mediumImpact();
+      },
+      builder: (context, candidates, rejected) {
+        return Stack(
+          children: [
+            child,
+            if (candidates.isNotEmpty || rejected.isNotEmpty)
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 140),
+                    decoration: BoxDecoration(
+                      color: candidates.isNotEmpty
+                          ? const Color(0xFFF6F3EC).withValues(alpha: 0.08)
+                          : const Color(0xFFFF8D8D).withValues(alpha: 0.05),
+                      border: Border.all(
+                        color: candidates.isNotEmpty
+                            ? const Color(0xFFF6F3EC).withValues(alpha: 0.5)
+                            : const Color(0xFFFF8D8D).withValues(alpha: 0.3),
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _ScheduleDragFeedback extends StatelessWidget {
+  final String label;
+
+  const _ScheduleDragFeedback({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 11, 12, 11),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF6F3EC),
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.36),
+            blurRadius: 18,
+            offset: const Offset(0, 9),
+          ),
+        ],
+      ),
+      child: Text(
+        label,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(
+          color: Color(0xFF080808),
+          fontSize: 14,
+          fontWeight: FontWeight.w900,
+          height: 1.15,
         ),
       ),
     );
@@ -1246,7 +1504,7 @@ class _NextTimeBoxSummary extends StatelessWidget {
             child: Text(
               currentBox == null
                   ? context.l10n.noActiveTimeBox
-                  : '${currentBox.timeRange}  ${localizedTimeBoxTitle(context, currentBox)}',
+                  : displayTimeBoxTitle(currentBox),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
@@ -1319,6 +1577,7 @@ void _showTodayReviewSheet(
   HapticFeedback.selectionClick();
   showModalBottomSheet<void>(
     context: context,
+    isScrollControlled: true,
     backgroundColor: const Color(0xFF101010),
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
@@ -1353,82 +1612,159 @@ class _TodayReviewSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final activeBox = pomodoro.activeTimeBox;
+    final boxes = [...pomodoro.timeBoxes]
+      ..sort((a, b) {
+        final startA = a.startMinutes ?? (24 * 60);
+        final startB = b.startMinutes ?? (24 * 60);
+        return startA.compareTo(startB);
+      });
 
     return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
+      child: DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.72,
+        minChildSize: 0.34,
+        maxChildSize: 0.92,
+        builder: (context, scrollController) {
+          return SingleChildScrollView(
+            controller: scrollController,
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(
-                  child: Text(
-                    context.l10n.todayReviewTitle,
-                    style: const TextStyle(
-                      color: Color(0xFFF6F3EC),
-                      fontSize: 18,
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        context.l10n.todayReviewTitle,
+                        style: const TextStyle(
+                          color: Color(0xFFF6F3EC),
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.close_rounded),
+                      color: const Color(0xFFF6F3EC),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                _TodayReviewStats(
+                  priorityCount: priorityCount,
+                  plannedBoxes: plannedBoxes,
+                  completedBoxes: completedBoxes,
+                ),
+                const SizedBox(height: 18),
+                _TodayReviewTimeline(boxes: boxes, activeBox: activeBox),
+                const SizedBox(height: 18),
+                FilledButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    onOpenFocus();
+                  },
+                  icon: const Icon(Icons.center_focus_strong_rounded),
+                  label: Text(
+                    context.l10n.openFocusAction,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFFF6F3EC),
+                    foregroundColor: const Color(0xFF080808),
+                    minimumSize: const Size.fromHeight(50),
+                    textStyle: const TextStyle(
+                      fontSize: 15,
                       fontWeight: FontWeight.w900,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
                     ),
                   ),
                 ),
-                IconButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.close_rounded),
-                  color: const Color(0xFFF6F3EC),
-                ),
               ],
             ),
-            const SizedBox(height: 8),
-            _TodayReviewRow(
-              icon: Icons.flag_rounded,
-              label: context.l10n.planMetric,
-              value: '$priorityCount/3',
-            ),
-            const SizedBox(height: 8),
-            _TodayReviewRow(
-              icon: Icons.view_timeline_rounded,
-              label: context.l10n.timeBoxesMetric,
-              value: '$plannedBoxes',
-            ),
-            const SizedBox(height: 8),
-            _TodayReviewRow(
-              icon: Icons.check_circle_outline_rounded,
-              label: context.l10n.focusMetric,
-              value: '$completedBoxes/$plannedBoxes',
-            ),
-            const SizedBox(height: 8),
-            _TodayReviewRow(
-              icon: Icons.schedule_rounded,
-              label: context.l10n.nextTimeBoxLabel,
-              value: activeBox == null
-                  ? context.l10n.noActiveTimeBox
-                  : '${activeBox.timeRange}  ${localizedTimeBoxTitle(context, activeBox)}',
-            ),
-            const SizedBox(height: 16),
-            FilledButton.icon(
-              onPressed: () {
-                Navigator.of(context).pop();
-                onOpenFocus();
-              },
-              icon: const Icon(Icons.center_focus_strong_rounded),
-              label: Text(
-                context.l10n.openFocusAction,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _TodayReviewStats extends StatelessWidget {
+  final int priorityCount;
+  final int plannedBoxes;
+  final int completedBoxes;
+
+  const _TodayReviewStats({
+    required this.priorityCount,
+    required this.plannedBoxes,
+    required this.completedBoxes,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        _TodayReviewStatPill(
+          label: context.l10n.planMetric,
+          value: '$priorityCount/3',
+        ),
+        const SizedBox(width: 8),
+        _TodayReviewStatPill(
+          label: context.l10n.timeBoxesMetric,
+          value: '$plannedBoxes',
+        ),
+        const SizedBox(width: 8),
+        _TodayReviewStatPill(
+          label: context.l10n.focusMetric,
+          value: '$completedBoxes/$plannedBoxes',
+        ),
+      ],
+    );
+  }
+}
+
+class _TodayReviewStatPill extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _TodayReviewStatPill({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.045),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Color(0xFFF6F3EC),
+                fontSize: 15,
+                fontWeight: FontWeight.w900,
               ),
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFFF6F3EC),
-                foregroundColor: const Color(0xFF080808),
-                minimumSize: const Size.fromHeight(50),
-                textStyle: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w900,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
+            ),
+            const SizedBox(height: 3),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.48),
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
               ),
             ),
           ],
@@ -1438,56 +1774,197 @@ class _TodayReviewSheet extends StatelessWidget {
   }
 }
 
-class _TodayReviewRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
+class _TodayReviewTimeline extends StatelessWidget {
+  final List<TimeBox> boxes;
+  final TimeBox? activeBox;
 
-  const _TodayReviewRow({
-    required this.icon,
-    required this.label,
-    required this.value,
+  const _TodayReviewTimeline({required this.boxes, required this.activeBox});
+
+  @override
+  Widget build(BuildContext context) {
+    if (boxes.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.04),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        ),
+        child: Text(
+          context.l10n.noTodayBoxesProgress,
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.62),
+            fontSize: 13,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        for (var index = 0; index < boxes.length; index += 1)
+          _TodayReviewTimelineEntry(
+            box: boxes[index],
+            active: boxes[index].id == activeBox?.id,
+            first: index == 0,
+            last: index == boxes.length - 1,
+          ),
+      ],
+    );
+  }
+}
+
+class _TodayReviewTimelineEntry extends StatelessWidget {
+  final TimeBox box;
+  final bool active;
+  final bool first;
+  final bool last;
+
+  const _TodayReviewTimelineEntry({
+    required this.box,
+    required this.active,
+    required this.first,
+    required this.last,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.045),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: Colors.white.withValues(alpha: 0.56), size: 19),
-          const SizedBox(width: 10),
-          Expanded(
+    final title = displayTimeBoxTitle(box);
+    final dotColor = active
+        ? const Color(0xFFF6F3EC)
+        : Colors.white.withValues(alpha: 0.42);
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 54,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 12),
             child: Text(
-              label,
+              box.timeRange.split('-').first.trim(),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.5),
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Flexible(
-            child: Text(
-              value,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.end,
-              style: const TextStyle(
-                color: Color(0xFFF6F3EC),
-                fontSize: 13,
+                color: active
+                    ? const Color(0xFFF6F3EC)
+                    : Colors.white.withValues(alpha: 0.44),
+                fontSize: 11,
                 fontWeight: FontWeight.w900,
               ),
             ),
           ),
-        ],
+        ),
+        SizedBox(
+          width: 24,
+          child: Column(
+            children: [
+              Container(
+                width: 2,
+                height: first ? 12 : 8,
+                color: first
+                    ? Colors.transparent
+                    : Colors.white.withValues(alpha: 0.14),
+              ),
+              Container(
+                width: active ? 12 : 8,
+                height: active ? 12 : 8,
+                decoration: BoxDecoration(
+                  color: active ? const Color(0xFF080808) : dotColor,
+                  shape: BoxShape.circle,
+                  border: active
+                      ? Border.all(color: const Color(0xFFF6F3EC), width: 2)
+                      : null,
+                ),
+              ),
+              Container(
+                width: 2,
+                height: last ? 18 : 42,
+                color: last
+                    ? Colors.transparent
+                    : Colors.white.withValues(alpha: 0.14),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+              decoration: BoxDecoration(
+                color: active
+                    ? const Color(0xFFF6F3EC).withValues(alpha: 0.12)
+                    : Colors.white.withValues(alpha: 0.04),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: active
+                      ? const Color(0xFFF6F3EC).withValues(alpha: 0.4)
+                      : Colors.white.withValues(alpha: 0.08),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Color(0xFFF6F3EC),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w900,
+                      height: 1.14,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          box.timeRange,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.48),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                      if (active) ...[
+                        const SizedBox(width: 8),
+                        _TodayReviewNowBadge(),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _TodayReviewNowBadge extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF6F3EC),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        context.l10n.nowLabel,
+        style: const TextStyle(
+          color: Color(0xFF080808),
+          fontSize: 10,
+          fontWeight: FontWeight.w900,
+        ),
       ),
     );
   }
@@ -1496,8 +1973,17 @@ class _TodayReviewRow extends StatelessWidget {
 class _TopPrioritiesPanel extends StatelessWidget {
   final List<String> priorities;
   final PomodoroController notifier;
+  final VoidCallback onDragStarted;
+  final ValueChanged<DragUpdateDetails> onDragUpdate;
+  final VoidCallback onDragEnd;
 
-  const _TopPrioritiesPanel({required this.priorities, required this.notifier});
+  const _TopPrioritiesPanel({
+    required this.priorities,
+    required this.notifier,
+    required this.onDragStarted,
+    required this.onDragUpdate,
+    required this.onDragEnd,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1507,65 +1993,87 @@ class _TopPrioritiesPanel extends StatelessWidget {
           (index: index, value: priorities[index].trim()),
     ];
 
-    return TodaySectionCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  context.l10n.topPrioritiesTitle,
-                  style: TextStyle(
-                    color: Color(0xFFF6F3EC),
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
+    return _DailyPlanDropTarget(
+      category: DailyPlanItemCategory.topPriority,
+      notifier: notifier,
+      child: TodaySectionCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    context.l10n.topPrioritiesTitle,
+                    style: TextStyle(
+                      color: Color(0xFFF6F3EC),
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
-              ),
-              Tooltip(
-                message: context.l10n.addPriorityTooltip,
-                child: IconButton(
-                  onPressed: () => _openAddPriority(context),
-                  icon: const Icon(Icons.add_rounded),
-                  style: IconButton.styleFrom(
-                    foregroundColor: const Color(0xFFF6F3EC),
-                    visualDensity: VisualDensity.compact,
+                Tooltip(
+                  message: context.l10n.addPriorityTooltip,
+                  child: IconButton(
+                    onPressed: () => _openAddPriority(context),
+                    icon: const Icon(Icons.add_rounded),
+                    style: IconButton.styleFrom(
+                      foregroundColor: const Color(0xFFF6F3EC),
+                      visualDensity: VisualDensity.compact,
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          if (filledPriorities.isEmpty) ...[
-            const SizedBox(height: 8),
-            Text(
-              context.l10n.noPrioritiesYet,
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.42),
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-              ),
+              ],
             ),
-          ] else ...[
-            const SizedBox(height: 12),
-            ...filledPriorities.map((priority) {
-              return Padding(
-                padding: EdgeInsets.only(
-                  bottom: priority == filledPriorities.last ? 0 : 8,
+            if (filledPriorities.isEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                context.l10n.noPrioritiesYet,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.42),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
                 ),
-                child: _PriorityRow(
-                  index: priority.index,
-                  value: priority.value,
-                  onTap: () => _openEditPriority(
-                    context,
-                    priority.index,
-                    priority.value,
+              ),
+              const SizedBox(height: 4),
+              DailyCarryOverButton(
+                label: context.l10n.carryOverPreviousPriorities,
+                onPressed: notifier.carryOverPreviousTopPriorities,
+                onMissing: () =>
+                    _showSnack(context, context.l10n.noPreviousDailyItems),
+              ),
+            ] else ...[
+              const SizedBox(height: 12),
+              ...filledPriorities.map((priority) {
+                return Padding(
+                  padding: EdgeInsets.only(
+                    bottom: priority == filledPriorities.last ? 0 : 8,
                   ),
-                ),
-              );
-            }),
+                  child: _ScheduleSourceDraggable(
+                    payload: DraftTimeBoxDragPayload(
+                      source: DailyPlanItemCategory.topPriority,
+                      index: priority.index,
+                      title: priority.value,
+                    ),
+                    label: priority.value,
+                    onDragStarted: onDragStarted,
+                    onDragUpdate: onDragUpdate,
+                    onDragEnd: onDragEnd,
+                    child: _PriorityRow(
+                      index: priority.index,
+                      value: priority.value,
+                      onTap: () => _openEditPriority(
+                        context,
+                        priority.index,
+                        priority.value,
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

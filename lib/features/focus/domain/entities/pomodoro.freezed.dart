@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$TimeBox {
 
- String get id; String get title; String get timeRange; int get durationSeconds;
+ String get id; String get title; String get timeRange; int get durationSeconds; List<int> get repeatWeekdays;
 /// Create a copy of TimeBox
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $TimeBoxCopyWith<TimeBox> get copyWith => _$TimeBoxCopyWithImpl<TimeBox>(this as
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is TimeBox&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.timeRange, timeRange) || other.timeRange == timeRange)&&(identical(other.durationSeconds, durationSeconds) || other.durationSeconds == durationSeconds));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TimeBox&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.timeRange, timeRange) || other.timeRange == timeRange)&&(identical(other.durationSeconds, durationSeconds) || other.durationSeconds == durationSeconds)&&const DeepCollectionEquality().equals(other.repeatWeekdays, repeatWeekdays));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,title,timeRange,durationSeconds);
+int get hashCode => Object.hash(runtimeType,id,title,timeRange,durationSeconds,const DeepCollectionEquality().hash(repeatWeekdays));
 
 @override
 String toString() {
-  return 'TimeBox(id: $id, title: $title, timeRange: $timeRange, durationSeconds: $durationSeconds)';
+  return 'TimeBox(id: $id, title: $title, timeRange: $timeRange, durationSeconds: $durationSeconds, repeatWeekdays: $repeatWeekdays)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $TimeBoxCopyWith<$Res>  {
   factory $TimeBoxCopyWith(TimeBox value, $Res Function(TimeBox) _then) = _$TimeBoxCopyWithImpl;
 @useResult
 $Res call({
- String id, String title, String timeRange, int durationSeconds
+ String id, String title, String timeRange, int durationSeconds, List<int> repeatWeekdays
 });
 
 
@@ -62,13 +62,14 @@ class _$TimeBoxCopyWithImpl<$Res>
 
 /// Create a copy of TimeBox
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? timeRange = null,Object? durationSeconds = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? timeRange = null,Object? durationSeconds = null,Object? repeatWeekdays = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String,timeRange: null == timeRange ? _self.timeRange : timeRange // ignore: cast_nullable_to_non_nullable
 as String,durationSeconds: null == durationSeconds ? _self.durationSeconds : durationSeconds // ignore: cast_nullable_to_non_nullable
-as int,
+as int,repeatWeekdays: null == repeatWeekdays ? _self.repeatWeekdays : repeatWeekdays // ignore: cast_nullable_to_non_nullable
+as List<int>,
   ));
 }
 
@@ -153,10 +154,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String title,  String timeRange,  int durationSeconds)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String title,  String timeRange,  int durationSeconds,  List<int> repeatWeekdays)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _TimeBox() when $default != null:
-return $default(_that.id,_that.title,_that.timeRange,_that.durationSeconds);case _:
+return $default(_that.id,_that.title,_that.timeRange,_that.durationSeconds,_that.repeatWeekdays);case _:
   return orElse();
 
 }
@@ -174,10 +175,10 @@ return $default(_that.id,_that.title,_that.timeRange,_that.durationSeconds);case
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String title,  String timeRange,  int durationSeconds)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String title,  String timeRange,  int durationSeconds,  List<int> repeatWeekdays)  $default,) {final _that = this;
 switch (_that) {
 case _TimeBox():
-return $default(_that.id,_that.title,_that.timeRange,_that.durationSeconds);case _:
+return $default(_that.id,_that.title,_that.timeRange,_that.durationSeconds,_that.repeatWeekdays);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -194,10 +195,10 @@ return $default(_that.id,_that.title,_that.timeRange,_that.durationSeconds);case
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String title,  String timeRange,  int durationSeconds)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String title,  String timeRange,  int durationSeconds,  List<int> repeatWeekdays)?  $default,) {final _that = this;
 switch (_that) {
 case _TimeBox() when $default != null:
-return $default(_that.id,_that.title,_that.timeRange,_that.durationSeconds);case _:
+return $default(_that.id,_that.title,_that.timeRange,_that.durationSeconds,_that.repeatWeekdays);case _:
   return null;
 
 }
@@ -209,13 +210,20 @@ return $default(_that.id,_that.title,_that.timeRange,_that.durationSeconds);case
 
 
 class _TimeBox extends TimeBox {
-  const _TimeBox({required this.id, required this.title, required this.timeRange, required this.durationSeconds}): super._();
+  const _TimeBox({required this.id, required this.title, required this.timeRange, required this.durationSeconds, final  List<int> repeatWeekdays = const <int>[]}): _repeatWeekdays = repeatWeekdays,super._();
   
 
 @override final  String id;
 @override final  String title;
 @override final  String timeRange;
 @override final  int durationSeconds;
+ final  List<int> _repeatWeekdays;
+@override@JsonKey() List<int> get repeatWeekdays {
+  if (_repeatWeekdays is EqualUnmodifiableListView) return _repeatWeekdays;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_repeatWeekdays);
+}
+
 
 /// Create a copy of TimeBox
 /// with the given fields replaced by the non-null parameter values.
@@ -227,16 +235,16 @@ _$TimeBoxCopyWith<_TimeBox> get copyWith => __$TimeBoxCopyWithImpl<_TimeBox>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _TimeBox&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.timeRange, timeRange) || other.timeRange == timeRange)&&(identical(other.durationSeconds, durationSeconds) || other.durationSeconds == durationSeconds));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _TimeBox&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.timeRange, timeRange) || other.timeRange == timeRange)&&(identical(other.durationSeconds, durationSeconds) || other.durationSeconds == durationSeconds)&&const DeepCollectionEquality().equals(other._repeatWeekdays, _repeatWeekdays));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,title,timeRange,durationSeconds);
+int get hashCode => Object.hash(runtimeType,id,title,timeRange,durationSeconds,const DeepCollectionEquality().hash(_repeatWeekdays));
 
 @override
 String toString() {
-  return 'TimeBox(id: $id, title: $title, timeRange: $timeRange, durationSeconds: $durationSeconds)';
+  return 'TimeBox(id: $id, title: $title, timeRange: $timeRange, durationSeconds: $durationSeconds, repeatWeekdays: $repeatWeekdays)';
 }
 
 
@@ -247,7 +255,7 @@ abstract mixin class _$TimeBoxCopyWith<$Res> implements $TimeBoxCopyWith<$Res> {
   factory _$TimeBoxCopyWith(_TimeBox value, $Res Function(_TimeBox) _then) = __$TimeBoxCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String title, String timeRange, int durationSeconds
+ String id, String title, String timeRange, int durationSeconds, List<int> repeatWeekdays
 });
 
 
@@ -264,13 +272,14 @@ class __$TimeBoxCopyWithImpl<$Res>
 
 /// Create a copy of TimeBox
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? timeRange = null,Object? durationSeconds = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? timeRange = null,Object? durationSeconds = null,Object? repeatWeekdays = null,}) {
   return _then(_TimeBox(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String,timeRange: null == timeRange ? _self.timeRange : timeRange // ignore: cast_nullable_to_non_nullable
 as String,durationSeconds: null == durationSeconds ? _self.durationSeconds : durationSeconds // ignore: cast_nullable_to_non_nullable
-as int,
+as int,repeatWeekdays: null == repeatWeekdays ? _self._repeatWeekdays : repeatWeekdays // ignore: cast_nullable_to_non_nullable
+as List<int>,
   ));
 }
 
@@ -781,7 +790,7 @@ return $default(_that.workDuration,_that.breakDuration,_that.longBreakDuration,_
 
 
 class _Pomodoro extends Pomodoro {
-  const _Pomodoro({this.workDuration = 25 * 60, this.breakDuration = 5 * 60, this.longBreakDuration = 15 * 60, this.sessionsUntilLongBreak = 5, this.remainingTime = 25 * 60, this.completedSessions = 0, this.status = PomodoroStatus.idle, this.phase = PomodoroPhase.focus, this.preset = PomodoroPreset.classic, this.autoStartBreaks = true, this.autoStartFocus = false, this.notificationsEnabled = true, this.soundEnabled = true, final  List<String> brainDump = const [], final  List<String> reminders = const [], final  List<String> topPriorities = const ['', '', ''], this.currentTimeBoxTitle = '', this.currentTimeBoxTimeRange = '', final  List<TimeBox> timeBoxes = TimeBox.defaultDay, this.activeTimeBoxId = 'box-0900'}): _brainDump = brainDump,_reminders = reminders,_topPriorities = topPriorities,_timeBoxes = timeBoxes,super._();
+  const _Pomodoro({this.workDuration = 25 * 60, this.breakDuration = 5 * 60, this.longBreakDuration = 15 * 60, this.sessionsUntilLongBreak = 5, this.remainingTime = 25 * 60, this.completedSessions = 0, this.status = PomodoroStatus.idle, this.phase = PomodoroPhase.focus, this.preset = PomodoroPreset.classic, this.autoStartBreaks = true, this.autoStartFocus = false, this.notificationsEnabled = true, this.soundEnabled = true, final  List<String> brainDump = const [], final  List<String> reminders = const [], final  List<String> topPriorities = const ['', '', ''], this.currentTimeBoxTitle = '', this.currentTimeBoxTimeRange = '', final  List<TimeBox> timeBoxes = const <TimeBox>[], this.activeTimeBoxId = ''}): _brainDump = brainDump,_reminders = reminders,_topPriorities = topPriorities,_timeBoxes = timeBoxes,super._();
   
 
 @override@JsonKey() final  int workDuration;

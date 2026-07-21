@@ -2,23 +2,23 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pomodoro_method_channel/l10n/generated/app_localizations.dart';
-import 'package:pomodoro_method_channel/l10n/l10n.dart';
+import 'package:time_boxing_pomodoro/l10n/generated/app_localizations.dart';
+import 'package:time_boxing_pomodoro/l10n/l10n.dart';
 
 import '../application/pomodoro_controller.dart';
 import '../domain/entities/pomodoro.dart';
 import 'native_timer_copy_l10n.dart';
-import 'time_box_title_l10n.dart';
+import 'time_box_title_display.dart';
 import 'widgets/focus_timer_dial.dart';
 
 class TimerScreen extends ConsumerWidget {
-  const TimerScreen({super.key});
+  final VoidCallback? onOpenToday;
+
+  const TimerScreen({super.key, this.onOpenToday});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = context.l10n;
     final pomodoro = ref.watch(pomodoroControllerProvider);
-    final notifier = ref.read(pomodoroControllerProvider.notifier);
 
     return Scaffold(
       backgroundColor: const Color(0xFF080808),
@@ -55,26 +55,12 @@ class TimerScreen extends ConsumerWidget {
                         children: [
                           _Header(pomodoro: pomodoro),
                           SizedBox(height: isCompactHeight ? 18 : 24),
-                          _ActiveTimeBox(pomodoro: pomodoro),
-                          SizedBox(height: isCompactHeight ? 22 : 30),
-                          Align(
-                            child: SizedBox(
-                              width: dialSize,
-                              child: FocusTimerDial(
-                                minutes: pomodoro.minutes,
-                                seconds: pomodoro.seconds,
-                                progress: pomodoro.progress,
-                                label: _phaseLabel(l10n, pomodoro.phase),
-                                pausedLabel: l10n.pausedLabel,
-                                isPaused:
-                                    pomodoro.status == PomodoroStatus.paused,
-                              ),
-                            ),
+                          _FocusContent(
+                            pomodoro: pomodoro,
+                            dialSize: dialSize,
+                            isCompactHeight: isCompactHeight,
+                            onOpenToday: onOpenToday,
                           ),
-                          SizedBox(height: isCompactHeight ? 22 : 28),
-                          _SessionDots(pomodoro: pomodoro),
-                          SizedBox(height: isCompactHeight ? 22 : 26),
-                          _Controls(pomodoro: pomodoro, notifier: notifier),
                         ],
                       ),
                     ),
@@ -97,6 +83,126 @@ class TimerScreen extends ConsumerWidget {
       case PomodoroPhase.longBreak:
         return l10n.longBreakLabel;
     }
+  }
+}
+
+class _FocusContent extends ConsumerWidget {
+  final Pomodoro pomodoro;
+  final double dialSize;
+  final bool isCompactHeight;
+  final VoidCallback? onOpenToday;
+
+  const _FocusContent({
+    required this.pomodoro,
+    required this.dialSize,
+    required this.isCompactHeight,
+    required this.onOpenToday,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final hasActiveFocus =
+        pomodoro.canStartFocus ||
+        pomodoro.status == PomodoroStatus.running ||
+        pomodoro.status == PomodoroStatus.paused;
+
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 220),
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeInCubic,
+      child: hasActiveFocus
+          ? _ActiveFocusContent(
+              key: const ValueKey('active-focus'),
+              pomodoro: pomodoro,
+              notifier: ref.read(pomodoroControllerProvider.notifier),
+              dialSize: dialSize,
+              isCompactHeight: isCompactHeight,
+              onOpenToday: onOpenToday,
+            )
+          : _EmptyFocusContent(
+              key: const ValueKey('empty-focus'),
+              pomodoro: pomodoro,
+              notifier: ref.read(pomodoroControllerProvider.notifier),
+              onOpenToday: onOpenToday,
+              isCompactHeight: isCompactHeight,
+            ),
+    );
+  }
+}
+
+class _ActiveFocusContent extends StatelessWidget {
+  final Pomodoro pomodoro;
+  final PomodoroController notifier;
+  final double dialSize;
+  final bool isCompactHeight;
+  final VoidCallback? onOpenToday;
+
+  const _ActiveFocusContent({
+    super.key,
+    required this.pomodoro,
+    required this.notifier,
+    required this.dialSize,
+    required this.isCompactHeight,
+    required this.onOpenToday,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _ActiveTimeBox(pomodoro: pomodoro, onOpenToday: onOpenToday),
+        SizedBox(height: isCompactHeight ? 22 : 30),
+        Align(
+          child: SizedBox(
+            width: dialSize,
+            child: FocusTimerDial(
+              minutes: pomodoro.minutes,
+              seconds: pomodoro.seconds,
+              progress: pomodoro.progress,
+              label: TimerScreen._phaseLabel(context.l10n, pomodoro.phase),
+              pausedLabel: context.l10n.pausedLabel,
+              isPaused: pomodoro.status == PomodoroStatus.paused,
+            ),
+          ),
+        ),
+        SizedBox(height: isCompactHeight ? 22 : 28),
+        _SessionDots(pomodoro: pomodoro),
+        SizedBox(height: isCompactHeight ? 22 : 26),
+        _ScheduleTrackingControl(pomodoro: pomodoro, notifier: notifier),
+      ],
+    );
+  }
+}
+
+class _EmptyFocusContent extends StatelessWidget {
+  final Pomodoro pomodoro;
+  final PomodoroController notifier;
+  final VoidCallback? onOpenToday;
+  final bool isCompactHeight;
+
+  const _EmptyFocusContent({
+    super.key,
+    required this.pomodoro,
+    required this.notifier,
+    required this.onOpenToday,
+    required this.isCompactHeight,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _NoCurrentTimeBoxPanel(onOpenToday: onOpenToday),
+        if (pomodoro.timeBoxes.isNotEmpty) ...[
+          SizedBox(height: isCompactHeight ? 18 : 24),
+          _SessionDots(pomodoro: pomodoro),
+        ],
+        SizedBox(height: isCompactHeight ? 18 : 24),
+        _ScheduleTrackingControl(pomodoro: pomodoro, notifier: notifier),
+      ],
+    );
   }
 }
 
@@ -152,11 +258,18 @@ class _Header extends StatelessWidget {
 
 class _ActiveTimeBox extends StatelessWidget {
   final Pomodoro pomodoro;
+  final VoidCallback? onOpenToday;
 
-  const _ActiveTimeBox({required this.pomodoro});
+  const _ActiveTimeBox({required this.pomodoro, this.onOpenToday});
 
   @override
   Widget build(BuildContext context) {
+    if (!pomodoro.canStartFocus &&
+        pomodoro.status != PomodoroStatus.running &&
+        pomodoro.status != PomodoroStatus.paused) {
+      return _NoCurrentTimeBoxPanel(onOpenToday: onOpenToday);
+    }
+
     final range = pomodoro.liveActivityTimeBoxRange;
 
     return Container(
@@ -179,7 +292,7 @@ class _ActiveTimeBox extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            localizedPomodoroTimeBoxTitle(context, pomodoro),
+            displayPomodoroTimeBoxTitle(pomodoro),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
@@ -200,6 +313,105 @@ class _ActiveTimeBox extends StatelessWidget {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+class _NoCurrentTimeBoxPanel extends StatelessWidget {
+  final VoidCallback? onOpenToday;
+
+  const _NoCurrentTimeBoxPanel({this.onOpenToday});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.035),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              Icons.view_timeline_outlined,
+              color: Colors.white.withValues(alpha: 0.7),
+              size: 19,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  context.l10n.noCurrentTimeBoxTitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFFF6F3EC),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  context.l10n.noCurrentTimeBoxBody,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.5),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    height: 1.25,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (onOpenToday != null) ...[
+            const SizedBox(width: 10),
+            _PlanCurrentSlotButton(onPressed: onOpenToday),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _PlanCurrentSlotButton extends StatelessWidget {
+  final VoidCallback? onPressed;
+
+  const _PlanCurrentSlotButton({required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 134),
+      child: OutlinedButton.icon(
+        onPressed: onPressed,
+        icon: const Icon(Icons.add_rounded, size: 18),
+        label: Text(
+          context.l10n.planCurrentSlotAction,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: const Color(0xFFF6F3EC),
+          side: BorderSide(color: Colors.white.withValues(alpha: 0.16)),
+          minimumSize: const Size(0, 40),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+        ),
       ),
     );
   }
@@ -247,6 +459,18 @@ class _SessionDots extends StatelessWidget {
     final totalBoxes = math.max(1, pomodoro.timeBoxes.length);
     final completedBoxes = math.min(pomodoro.completedSessions, totalBoxes);
 
+    if (pomodoro.timeBoxes.isEmpty) {
+      return Text(
+        context.l10n.noTodayBoxesProgress,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          color: Colors.white.withValues(alpha: 0.5),
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
+        ),
+      );
+    }
+
     return Column(
       children: [
         Text(
@@ -284,82 +508,76 @@ class _SessionDots extends StatelessWidget {
   }
 }
 
-class _Controls extends StatelessWidget {
+class _ScheduleTrackingControl extends StatelessWidget {
   final Pomodoro pomodoro;
   final PomodoroController notifier;
 
-  const _Controls({required this.pomodoro, required this.notifier});
-
-  @override
-  Widget build(BuildContext context) {
-    final isRunning = pomodoro.status == PomodoroStatus.running;
-    final primaryIcon = isRunning
-        ? Icons.pause_rounded
-        : Icons.play_arrow_rounded;
-    final primaryLabel = isRunning
-        ? context.l10n.pauseAction
-        : context.l10n.startAction;
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _RoundActionButton(
-          icon: Icons.restart_alt_rounded,
-          label: context.l10n.resetAction,
-          onTap: notifier.reset,
-          isPrimary: false,
-        ),
-        const SizedBox(width: 18),
-        _RoundActionButton(
-          icon: primaryIcon,
-          label: primaryLabel,
-          onTap: isRunning
-              ? notifier.pause
-              : () => notifier.start(context.l10n.nativeTimerCopy),
-          isPrimary: true,
-        ),
-      ],
-    );
-  }
-}
-
-class _RoundActionButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  final bool isPrimary;
-
-  const _RoundActionButton({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    required this.isPrimary,
+  const _ScheduleTrackingControl({
+    required this.pomodoro,
+    required this.notifier,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: label,
+    final enabled = pomodoro.autoStartFocus;
+    return Material(
+      color: Colors.white.withValues(alpha: 0.045),
+      shape: RoundedRectangleBorder(
+        side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+        borderRadius: BorderRadius.circular(8),
+      ),
       child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(999),
-        child: Container(
-          width: isPrimary ? 82 : 62,
-          height: isPrimary ? 82 : 62,
-          decoration: BoxDecoration(
-            color: isPrimary ? const Color(0xFFF6F3EC) : Colors.transparent,
-            border: Border.all(
-              color: Colors.white.withValues(alpha: isPrimary ? 0 : 0.18),
-            ),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            icon,
-            size: isPrimary ? 38 : 28,
-            color: isPrimary
-                ? const Color(0xFF0A0A0A)
-                : const Color(0xFFF6F3EC),
+        onTap: () => notifier.setScheduleTrackingEnabled(
+          !enabled,
+          context.l10n.nativeTimerCopy,
+        ),
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 13, 8, 13),
+          child: Row(
+            children: [
+              Icon(
+                enabled ? Icons.sensors_rounded : Icons.sensors_off_rounded,
+                color: const Color(0xFFF6F3EC),
+                size: 22,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      context.l10n.liveTrackingTitle,
+                      style: const TextStyle(
+                        color: Color(0xFFF6F3EC),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      context.l10n.liveTrackingDescription,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.5),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        height: 1.2,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Switch(
+                value: enabled,
+                onChanged: (value) => notifier.setScheduleTrackingEnabled(
+                  value,
+                  context.l10n.nativeTimerCopy,
+                ),
+              ),
+            ],
           ),
         ),
       ),

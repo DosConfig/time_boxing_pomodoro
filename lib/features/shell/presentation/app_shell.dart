@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pomodoro_method_channel/l10n/l10n.dart';
+import 'package:time_boxing_pomodoro/l10n/l10n.dart';
 
 import '../../calendar/presentation/calendar_sync_screen.dart';
 import '../../focus/application/pomodoro_controller.dart';
 import '../../focus/domain/entities/pomodoro.dart';
+import '../../focus/presentation/native_timer_copy_l10n.dart';
 import '../../focus/presentation/timer_screen.dart';
 import '../../settings/presentation/settings_screen.dart';
 import '../application/app_shell_controller.dart';
@@ -16,6 +17,9 @@ class AppShell extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
+    ref
+        .read(pomodoroControllerProvider.notifier)
+        .updateNativeCopy(l10n.nativeTimerCopy);
     final index = ref.watch(appShellControllerProvider);
     ref.listen<Pomodoro>(pomodoroControllerProvider, (previous, next) {
       if (previous == null || !previous.notificationsEnabled) {
@@ -37,7 +41,7 @@ class AppShell extends ConsumerWidget {
         index: index,
         children: [
           TodayScreen(onOpenFocus: () => _setIndex(ref, 1)),
-          const TimerScreen(),
+          TimerScreen(onOpenToday: () => _setIndex(ref, 0)),
           const CalendarSyncScreen(),
           const SettingsScreen(),
         ],

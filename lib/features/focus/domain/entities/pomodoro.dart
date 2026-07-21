@@ -17,6 +17,7 @@ abstract class TimeBox with _$TimeBox {
     required String title,
     required String timeRange,
     required int durationSeconds,
+    @Default(<int>[]) List<int> repeatWeekdays,
   }) = _TimeBox;
 
   static const List<TimeBox> defaultDay = [
@@ -76,6 +77,8 @@ abstract class TimeBox with _$TimeBox {
     }
     return (end - start) * 60;
   }
+
+  bool repeatsOn(int weekday) => repeatWeekdays.contains(weekday);
 
   static int? _clockMinutes(String value) {
     final match = RegExp(r'^\s*(\d{1,2}):(\d{2})\s*$').firstMatch(value);
@@ -145,8 +148,8 @@ abstract class Pomodoro with _$Pomodoro {
     @Default(['', '', '']) List<String> topPriorities,
     @Default('') String currentTimeBoxTitle,
     @Default('') String currentTimeBoxTimeRange,
-    @Default(TimeBox.defaultDay) List<TimeBox> timeBoxes,
-    @Default('box-0900') String activeTimeBoxId,
+    @Default(<TimeBox>[]) List<TimeBox> timeBoxes,
+    @Default('') String activeTimeBoxId,
   }) = _Pomodoro;
 
   factory Pomodoro.initial() => const Pomodoro();
@@ -179,11 +182,25 @@ abstract class Pomodoro with _$Pomodoro {
   bool get nextBreakIsLong =>
       (completedSessions + 1) % sessionsUntilLongBreak == 0;
 
+  bool get canStartFocus =>
+      phase == PomodoroPhase.focus &&
+      activeTimeBox != null &&
+      currentTimeBoxTimeRange.trim().isNotEmpty &&
+      remainingTime > 0;
+
   List<String> get visibleTopPriorities => topPriorities
       .map((priority) => priority.trim())
       .where((priority) => priority.isNotEmpty)
       .take(3)
       .toList();
+
+  List<String> get topPrioritySlots {
+    final priorities = List<String>.from(topPriorities.take(3));
+    while (priorities.length < 3) {
+      priorities.add('');
+    }
+    return priorities;
+  }
 
   String get liveActivityTimeBoxTitle {
     final trimmed = currentTimeBoxTitle.trim();
@@ -194,7 +211,7 @@ abstract class Pomodoro with _$Pomodoro {
     if (box != null) {
       return box.title;
     }
-    return isBreakPhase ? 'Break block' : 'Focus block';
+    return isBreakPhase ? 'Break block' : '';
   }
 
   String get liveActivityTimeBoxRange {
@@ -211,7 +228,7 @@ abstract class Pomodoro with _$Pomodoro {
         return box;
       }
     }
-    return timeBoxes.isEmpty ? null : timeBoxes.first;
+    return null;
   }
 
   String get phaseValue {
