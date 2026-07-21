@@ -12,6 +12,62 @@ class AppLocalizationsKo extends AppLocalizations {
   String get appName => '타임박스 마크';
 
   @override
+  String get introBrandEyebrow => '적게 입력하고, 바로 실행하세요.';
+
+  @override
+  String get introBrandTitle => '하루를 타임박스로';
+
+  @override
+  String get introBrandBody =>
+      '브레인 덤프를 우선순위, 30분 블록, 집중, 알림, 캘린더 계획으로 빠르게 바꿉니다.';
+
+  @override
+  String get introBrainDumpTitle => '머릿속을 비우기';
+
+  @override
+  String get introBrainDumpBody => '검증된 타임박싱과 포모도로 원칙으로, 먼저 적고 나중에 정리하세요.';
+
+  @override
+  String get introPrioritiesTitle => '오늘의 세 가지';
+
+  @override
+  String get introPrioritiesBody => '하루가 끌고 가기 전에, 오늘 볼 최우선 항목 세 개를 먼저 고정합니다.';
+
+  @override
+  String get introTimeBoxTitle => '30분 블록 배치';
+
+  @override
+  String get introTimeBoxBody => '빈 슬롯을 탭해 30분 박스를 만들고, 적은 입력으로 하루를 배치하세요.';
+
+  @override
+  String get introFocusTitle => '집중은 시간에 맞춰';
+
+  @override
+  String get introFocusBody =>
+      '로그인 후 현재 블록이 집중, Live Activity, 알림, 클라우드 동기화를 이끕니다.';
+
+  @override
+  String get introBackAction => '뒤로';
+
+  @override
+  String get introNextAction => '다음';
+
+  @override
+  String get introStartAction => '시작하기';
+
+  @override
+  String get introSkipAction => '건너뛰기';
+
+  @override
+  String get introSampleTopPriority => '런칭 계획';
+
+  @override
+  String get introSampleDeepWork => '딥워크';
+
+  @override
+  String get introSampleFollowUp => '후속 작업';
+
+  @override
   String get navToday => '오늘';
 
   @override
@@ -71,6 +127,33 @@ class AppLocalizationsKo extends AppLocalizations {
   String get settingsTitle => '설정';
 
   @override
+  String get languageTitle => '언어';
+
+  @override
+  String get languageSystem => '시스템 기본값';
+
+  @override
+  String get languageKorean => '한국어';
+
+  @override
+  String get languageEnglish => '영어';
+
+  @override
+  String get languageJapanese => '일본어';
+
+  @override
+  String get languageChinese => '중국어';
+
+  @override
+  String get languageSpanish => '스페인어';
+
+  @override
+  String get languageFrench => '프랑스어';
+
+  @override
+  String get languageGerman => '독일어';
+
+  @override
   String get awakeWindowTitle => '깨어있는 시간';
 
   @override
@@ -83,6 +166,13 @@ class AppLocalizationsKo extends AppLocalizations {
   String get autoStartNextTimeBox => '다음 타임박스 자동 시작';
 
   @override
+  String get liveTrackingTitle => '타임박스 실시간 추적';
+
+  @override
+  String get liveTrackingDescription =>
+      '현재 블록을 Focus, 라이브 액티비티와 알림에서 자동으로 추적합니다.';
+
+  @override
   String get alertsTitle => '알림';
 
   @override
@@ -90,6 +180,9 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get soundLabel => '사운드';
+
+  @override
+  String get soundDescription => '완료 알림에 iOS 기본 알림음을 사용합니다.';
 
   @override
   String get saveAction => '저장';
@@ -234,6 +327,23 @@ class AppLocalizationsKo extends AppLocalizations {
   String get calendarExportFailed => '캘린더 내보내기에 실패했습니다. 다시 시도하세요.';
 
   @override
+  String get calendarProviderSelectDescription =>
+      '내보낼 캘린더를 하나 선택하세요. 제공자별 안내와 진행 상태가 분리됩니다.';
+
+  @override
+  String get calendarDuplicateProtectionDescription =>
+      '같은 날짜와 제공자에 이미 연결된 타임박스는 다시 내보내지 않습니다.';
+
+  @override
+  String get calendarExportAlreadySynced => '오늘 타임박스는 이미 동기화되어 있습니다.';
+
+  @override
+  String get openCalendarAction => '캘린더 열기';
+
+  @override
+  String get calendarOpenFailed => '캘린더 앱을 열 수 없습니다.';
+
+  @override
   String get todayTitle => '오늘';
 
   @override
@@ -300,6 +410,21 @@ class AppLocalizationsKo extends AppLocalizations {
   String get noActiveTimeBox => '타임박스 없음';
 
   @override
+  String get noCurrentTimeBoxTitle => '지금은 비어있는 슬롯';
+
+  @override
+  String get noCurrentTimeBoxBody => '오늘 탭에서 현재 30분 슬롯에 타임박스를 추가하세요.';
+
+  @override
+  String get planCurrentSlotAction => '현재 슬롯 계획';
+
+  @override
+  String get currentTimeBoxRequired => '현재 시간대의 타임박스를 먼저 추가하세요.';
+
+  @override
+  String get noTodayBoxesProgress => '아직 계획된 타임박스가 없습니다.';
+
+  @override
   String get openFocusAction => 'Focus 열기';
 
   @override
@@ -310,6 +435,21 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get noPrioritiesYet => '아직 우선순위가 없습니다';
+
+  @override
+  String get carryOverPreviousPriorities => '이전 우선순위 가져오기';
+
+  @override
+  String get carryOverPreviousBrainDump => '이전 브레인덤프 가져오기';
+
+  @override
+  String get carryOverPreviousReminders => '이전 기억할 것 가져오기';
+
+  @override
+  String get carryOverPreviousSchedule => '이전 스케줄 가져오기';
+
+  @override
+  String get noPreviousDailyItems => '가져올 이전 항목이 없어요.';
 
   @override
   String get threePrioritiesAlreadySet => '우선순위 3개가 이미 설정됐습니다.';
@@ -353,7 +493,16 @@ class AppLocalizationsKo extends AppLocalizations {
   String get timeBoxesTitle => '타임박스';
 
   @override
-  String get timeBoxesHint => '빈 슬롯을 탭해 추가하고, 박스를 탭해 수정하세요.';
+  String get timeBoxesHint => '카드는 탭해 수정, 길게 눌러 이동, 아래 막대로 길이 조절.';
+
+  @override
+  String get dragTimeBoxTooltip => '드래그해 이동';
+
+  @override
+  String get resizeTimeBoxTooltip => '탭해 길이 조절 켜기';
+
+  @override
+  String get resizeTimeBoxActiveTooltip => '위아래로 드래그해 길이 조절';
 
   @override
   String get nowBadge => '지금';
@@ -371,6 +520,18 @@ class AppLocalizationsKo extends AppLocalizations {
   String timeBoxRange(String range) {
     return '타임박스 $range';
   }
+
+  @override
+  String get repeatTimeBoxLabel => '반복';
+
+  @override
+  String get repeatNone => '없음';
+
+  @override
+  String get repeatDaily => '매일';
+
+  @override
+  String get repeatWeekdays => '평일';
 
   @override
   String get newTimeBoxDefaultTitle => '새 타임박스';
@@ -409,32 +570,23 @@ class AppLocalizationsKo extends AppLocalizations {
   String get notificationBreakCompleteBody => '다음 집중 블록을 준비하세요.';
 
   @override
-  String get defaultTimeBoxTopPriority => '최우선 항목';
-
-  @override
-  String get defaultTimeBoxDeepWork => '딥워크';
-
-  @override
-  String get defaultTimeBoxAdmin => '관리 업무';
-
-  @override
-  String get defaultTimeBoxSecondPriority => '두 번째 우선순위';
-
-  @override
-  String get defaultTimeBoxFollowUp => '후속 작업';
-
-  @override
   String get accountTitle => '계정';
+
+  @override
+  String get authGateSubtitle => '로그인하고 시작하세요.';
 
   @override
   String get firebaseSetupRequired => 'Firebase 설정 필요';
 
   @override
   String get firebaseSetupDescription =>
-      '클라우드 로그인을 사용하려면 GoogleService-Info.plist를 추가하고 Firebase에서 Apple 로그인을 활성화하세요.';
+      '클라우드 로그인을 사용하려면 로컬 FlutterFire 파일을 생성하고 iOS URL scheme을 설정하세요.';
 
   @override
   String get signInWithAppleAction => 'Apple로 로그인';
+
+  @override
+  String get signInWithGoogleAction => 'Google로 로그인';
 
   @override
   String signedInAs(String label) {
@@ -442,7 +594,50 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get appleAccountConnected => 'Apple 계정 연결됨';
+
+  @override
+  String get googleAccountConnected => 'Google 계정 연결됨';
+
+  @override
+  String get accountConnected => '계정 연결됨';
+
+  @override
   String get signOutAction => '로그아웃';
+
+  @override
+  String get deleteAccountAction => '계정 삭제';
+
+  @override
+  String get deleteAccountTitle => '계정 삭제';
+
+  @override
+  String get deleteAccountBody =>
+      '계정과 동기화된 모든 Timebox Mark 데이터가 영구적으로 삭제됩니다. 삭제된 데이터는 복원할 수 없습니다.';
+
+  @override
+  String get accountDeleted => '계정이 삭제되었습니다.';
+
+  @override
+  String get accountDeleteFailed => '계정을 삭제하지 못했습니다. 다시 로그인한 뒤 시도하세요.';
+
+  @override
+  String get legalTitle => '법적 정보';
+
+  @override
+  String get privacyPolicyAction => '개인정보 처리방침';
+
+  @override
+  String get termsAction => '이용약관';
+
+  @override
+  String get supportAction => '지원';
+
+  @override
+  String get linkOpenFailed => '링크를 열 수 없습니다.';
+
+  @override
+  String get cancelAction => '취소';
 
   @override
   String get authSignInFailed => '로그인에 실패했습니다. 다시 시도하세요.';

@@ -42,7 +42,7 @@ final class AppPreferencesControllerProvider
 }
 
 String _$appPreferencesControllerHash() =>
-    r'62b246ed0441f8e76933d3244b2beaf40852ba2e';
+    r'7a9cecc34e05ce912a2a2ba90655954c08a79b30';
 
 abstract class _$AppPreferencesController extends $Notifier<AppPreferences> {
   AppPreferences build();

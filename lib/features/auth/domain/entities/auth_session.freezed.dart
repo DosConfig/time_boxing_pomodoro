@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$AuthSession {
 
- bool get isConfigured; String get userId; String get email; String get displayName;
+ bool get isConfigured; String get userId; String get email; String get displayName; String get providerId;
 /// Create a copy of AuthSession
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $AuthSessionCopyWith<AuthSession> get copyWith => _$AuthSessionCopyWithImpl<Auth
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AuthSession&&(identical(other.isConfigured, isConfigured) || other.isConfigured == isConfigured)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.email, email) || other.email == email)&&(identical(other.displayName, displayName) || other.displayName == displayName));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AuthSession&&(identical(other.isConfigured, isConfigured) || other.isConfigured == isConfigured)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.email, email) || other.email == email)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.providerId, providerId) || other.providerId == providerId));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,isConfigured,userId,email,displayName);
+int get hashCode => Object.hash(runtimeType,isConfigured,userId,email,displayName,providerId);
 
 @override
 String toString() {
-  return 'AuthSession(isConfigured: $isConfigured, userId: $userId, email: $email, displayName: $displayName)';
+  return 'AuthSession(isConfigured: $isConfigured, userId: $userId, email: $email, displayName: $displayName, providerId: $providerId)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $AuthSessionCopyWith<$Res>  {
   factory $AuthSessionCopyWith(AuthSession value, $Res Function(AuthSession) _then) = _$AuthSessionCopyWithImpl;
 @useResult
 $Res call({
- bool isConfigured, String userId, String email, String displayName
+ bool isConfigured, String userId, String email, String displayName, String providerId
 });
 
 
@@ -62,12 +62,13 @@ class _$AuthSessionCopyWithImpl<$Res>
 
 /// Create a copy of AuthSession
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? isConfigured = null,Object? userId = null,Object? email = null,Object? displayName = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? isConfigured = null,Object? userId = null,Object? email = null,Object? displayName = null,Object? providerId = null,}) {
   return _then(_self.copyWith(
 isConfigured: null == isConfigured ? _self.isConfigured : isConfigured // ignore: cast_nullable_to_non_nullable
 as bool,userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
 as String,email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
 as String,displayName: null == displayName ? _self.displayName : displayName // ignore: cast_nullable_to_non_nullable
+as String,providerId: null == providerId ? _self.providerId : providerId // ignore: cast_nullable_to_non_nullable
 as String,
   ));
 }
@@ -153,10 +154,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool isConfigured,  String userId,  String email,  String displayName)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool isConfigured,  String userId,  String email,  String displayName,  String providerId)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AuthSession() when $default != null:
-return $default(_that.isConfigured,_that.userId,_that.email,_that.displayName);case _:
+return $default(_that.isConfigured,_that.userId,_that.email,_that.displayName,_that.providerId);case _:
   return orElse();
 
 }
@@ -174,10 +175,10 @@ return $default(_that.isConfigured,_that.userId,_that.email,_that.displayName);c
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool isConfigured,  String userId,  String email,  String displayName)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool isConfigured,  String userId,  String email,  String displayName,  String providerId)  $default,) {final _that = this;
 switch (_that) {
 case _AuthSession():
-return $default(_that.isConfigured,_that.userId,_that.email,_that.displayName);case _:
+return $default(_that.isConfigured,_that.userId,_that.email,_that.displayName,_that.providerId);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -194,10 +195,10 @@ return $default(_that.isConfigured,_that.userId,_that.email,_that.displayName);c
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool isConfigured,  String userId,  String email,  String displayName)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool isConfigured,  String userId,  String email,  String displayName,  String providerId)?  $default,) {final _that = this;
 switch (_that) {
 case _AuthSession() when $default != null:
-return $default(_that.isConfigured,_that.userId,_that.email,_that.displayName);case _:
+return $default(_that.isConfigured,_that.userId,_that.email,_that.displayName,_that.providerId);case _:
   return null;
 
 }
@@ -209,13 +210,14 @@ return $default(_that.isConfigured,_that.userId,_that.email,_that.displayName);c
 
 
 class _AuthSession extends AuthSession {
-  const _AuthSession({this.isConfigured = false, this.userId = '', this.email = '', this.displayName = ''}): super._();
+  const _AuthSession({this.isConfigured = false, this.userId = '', this.email = '', this.displayName = '', this.providerId = ''}): super._();
   
 
 @override@JsonKey() final  bool isConfigured;
 @override@JsonKey() final  String userId;
 @override@JsonKey() final  String email;
 @override@JsonKey() final  String displayName;
+@override@JsonKey() final  String providerId;
 
 /// Create a copy of AuthSession
 /// with the given fields replaced by the non-null parameter values.
@@ -227,16 +229,16 @@ _$AuthSessionCopyWith<_AuthSession> get copyWith => __$AuthSessionCopyWithImpl<_
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AuthSession&&(identical(other.isConfigured, isConfigured) || other.isConfigured == isConfigured)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.email, email) || other.email == email)&&(identical(other.displayName, displayName) || other.displayName == displayName));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AuthSession&&(identical(other.isConfigured, isConfigured) || other.isConfigured == isConfigured)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.email, email) || other.email == email)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.providerId, providerId) || other.providerId == providerId));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,isConfigured,userId,email,displayName);
+int get hashCode => Object.hash(runtimeType,isConfigured,userId,email,displayName,providerId);
 
 @override
 String toString() {
-  return 'AuthSession(isConfigured: $isConfigured, userId: $userId, email: $email, displayName: $displayName)';
+  return 'AuthSession(isConfigured: $isConfigured, userId: $userId, email: $email, displayName: $displayName, providerId: $providerId)';
 }
 
 
@@ -247,7 +249,7 @@ abstract mixin class _$AuthSessionCopyWith<$Res> implements $AuthSessionCopyWith
   factory _$AuthSessionCopyWith(_AuthSession value, $Res Function(_AuthSession) _then) = __$AuthSessionCopyWithImpl;
 @override @useResult
 $Res call({
- bool isConfigured, String userId, String email, String displayName
+ bool isConfigured, String userId, String email, String displayName, String providerId
 });
 
 
@@ -264,12 +266,13 @@ class __$AuthSessionCopyWithImpl<$Res>
 
 /// Create a copy of AuthSession
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? isConfigured = null,Object? userId = null,Object? email = null,Object? displayName = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? isConfigured = null,Object? userId = null,Object? email = null,Object? displayName = null,Object? providerId = null,}) {
   return _then(_AuthSession(
 isConfigured: null == isConfigured ? _self.isConfigured : isConfigured // ignore: cast_nullable_to_non_nullable
 as bool,userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
 as String,email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
 as String,displayName: null == displayName ? _self.displayName : displayName // ignore: cast_nullable_to_non_nullable
+as String,providerId: null == providerId ? _self.providerId : providerId // ignore: cast_nullable_to_non_nullable
 as String,
   ));
 }

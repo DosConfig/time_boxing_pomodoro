@@ -12,6 +12,65 @@ class AppLocalizationsEs extends AppLocalizations {
   String get appName => 'Timebox Mark';
 
   @override
+  String get introBrandEyebrow => 'Planifica menos. Avanza más.';
+
+  @override
+  String get introBrandTitle => 'Timeboxea tu día';
+
+  @override
+  String get introBrandBody =>
+      'Convierte ideas sueltas en prioridades, bloques de 30 minutos, Focus, avisos y planes listos para calendario.';
+
+  @override
+  String get introBrainDumpTitle => 'Vacía la mente';
+
+  @override
+  String get introBrainDumpBody =>
+      'Basado en timeboxing y Pomodoro: captura primero, decide después.';
+
+  @override
+  String get introPrioritiesTitle => 'Elige tres claves';
+
+  @override
+  String get introPrioritiesBody =>
+      'Fija tres prioridades visibles antes de que el día te arrastre.';
+
+  @override
+  String get introTimeBoxTitle => 'Bloques de 30 minutos';
+
+  @override
+  String get introTimeBoxBody =>
+      'Toca un hueco y planifica el día en bloques de 30 minutos.';
+
+  @override
+  String get introFocusTitle => 'Focus sigue el reloj';
+
+  @override
+  String get introFocusBody =>
+      'Tras iniciar sesión, el bloque actual guía Focus, Live Activity, avisos y sincronización.';
+
+  @override
+  String get introBackAction => 'Atrás';
+
+  @override
+  String get introNextAction => 'Siguiente';
+
+  @override
+  String get introStartAction => 'Empezar';
+
+  @override
+  String get introSkipAction => 'Omitir';
+
+  @override
+  String get introSampleTopPriority => 'Plan de lanzamiento';
+
+  @override
+  String get introSampleDeepWork => 'Trabajo profundo';
+
+  @override
+  String get introSampleFollowUp => 'Seguimiento';
+
+  @override
   String get navToday => 'Hoy';
 
   @override
@@ -73,6 +132,33 @@ class AppLocalizationsEs extends AppLocalizations {
   String get settingsTitle => 'Ajustes';
 
   @override
+  String get languageTitle => 'Idioma';
+
+  @override
+  String get languageSystem => 'Predeterminado del sistema';
+
+  @override
+  String get languageKorean => 'Coreano';
+
+  @override
+  String get languageEnglish => 'Inglés';
+
+  @override
+  String get languageJapanese => 'Japonés';
+
+  @override
+  String get languageChinese => 'Chino';
+
+  @override
+  String get languageSpanish => 'Español';
+
+  @override
+  String get languageFrench => 'Francés';
+
+  @override
+  String get languageGerman => 'Alemán';
+
+  @override
   String get awakeWindowTitle => 'Horas activas';
 
   @override
@@ -86,6 +172,13 @@ class AppLocalizationsEs extends AppLocalizations {
       'Iniciar automáticamente el siguiente bloque';
 
   @override
+  String get liveTrackingTitle => 'Seguimiento en vivo';
+
+  @override
+  String get liveTrackingDescription =>
+      'Sigue el bloque actual automáticamente en Enfoque, Live Activity y notificaciones.';
+
+  @override
   String get alertsTitle => 'Alertas';
 
   @override
@@ -93,6 +186,10 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get soundLabel => 'Sonido';
+
+  @override
+  String get soundDescription =>
+      'Usa el sonido predeterminado de iOS al completar.';
 
   @override
   String get saveAction => 'Guardar';
@@ -243,6 +340,25 @@ class AppLocalizationsEs extends AppLocalizations {
       'La exportación falló. Inténtalo de nuevo.';
 
   @override
+  String get calendarProviderSelectDescription =>
+      'Elige un destino. Cada proveedor tiene su propia guía y estado de exportación.';
+
+  @override
+  String get calendarDuplicateProtectionDescription =>
+      'Se omite cualquier bloque ya vinculado para la misma fecha y proveedor.';
+
+  @override
+  String get calendarExportAlreadySynced =>
+      'Los bloques de hoy ya están sincronizados.';
+
+  @override
+  String get openCalendarAction => 'Abrir calendario';
+
+  @override
+  String get calendarOpenFailed =>
+      'No se pudo abrir la aplicación de calendario.';
+
+  @override
   String get todayTitle => 'Hoy';
 
   @override
@@ -310,6 +426,23 @@ class AppLocalizationsEs extends AppLocalizations {
   String get noActiveTimeBox => 'Sin bloque';
 
   @override
+  String get noCurrentTimeBoxTitle => 'No hay bloque ahora';
+
+  @override
+  String get noCurrentTimeBoxBody =>
+      'Agrega un bloque al tramo actual de 30 minutos desde Hoy.';
+
+  @override
+  String get planCurrentSlotAction => 'Planificar tramo actual';
+
+  @override
+  String get currentTimeBoxRequired =>
+      'Agrega primero un bloque para el tramo actual.';
+
+  @override
+  String get noTodayBoxesProgress => 'Aún no hay bloques planificados.';
+
+  @override
   String get openFocusAction => 'Abrir Focus';
 
   @override
@@ -320,6 +453,21 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get noPrioritiesYet => 'Aún no hay prioridades';
+
+  @override
+  String get carryOverPreviousPriorities => 'Traer prioridades anteriores';
+
+  @override
+  String get carryOverPreviousBrainDump => 'Traer descarga mental anterior';
+
+  @override
+  String get carryOverPreviousReminders => 'Traer recordatorios anteriores';
+
+  @override
+  String get carryOverPreviousSchedule => 'Traer horario anterior';
+
+  @override
+  String get noPreviousDailyItems => 'No hay elementos diarios anteriores.';
 
   @override
   String get threePrioritiesAlreadySet => 'Ya hay tres prioridades.';
@@ -364,7 +512,16 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get timeBoxesHint =>
-      'Toca un espacio vacío para agregar. Toca un bloque para editar.';
+      'Toca la tarjeta para editar. Mantén pulsado para mover y la barra inferior para ajustar.';
+
+  @override
+  String get dragTimeBoxTooltip => 'Arrastra para mover';
+
+  @override
+  String get resizeTimeBoxTooltip => 'Toca para ajustar';
+
+  @override
+  String get resizeTimeBoxActiveTooltip => 'Arrastra arriba o abajo';
 
   @override
   String get nowBadge => 'Ahora';
@@ -382,6 +539,18 @@ class AppLocalizationsEs extends AppLocalizations {
   String timeBoxRange(String range) {
     return 'Bloque $range';
   }
+
+  @override
+  String get repeatTimeBoxLabel => 'Repetir';
+
+  @override
+  String get repeatNone => 'Ninguno';
+
+  @override
+  String get repeatDaily => 'Diario';
+
+  @override
+  String get repeatWeekdays => 'Días laborables';
 
   @override
   String get newTimeBoxDefaultTitle => 'Nuevo bloque';
@@ -422,32 +591,23 @@ class AppLocalizationsEs extends AppLocalizations {
       'Tu siguiente bloque de concentración está listo.';
 
   @override
-  String get defaultTimeBoxTopPriority => 'Prioridad principal';
-
-  @override
-  String get defaultTimeBoxDeepWork => 'Trabajo profundo';
-
-  @override
-  String get defaultTimeBoxAdmin => 'Administración';
-
-  @override
-  String get defaultTimeBoxSecondPriority => 'Segunda prioridad';
-
-  @override
-  String get defaultTimeBoxFollowUp => 'Seguimiento';
-
-  @override
   String get accountTitle => 'Cuenta';
+
+  @override
+  String get authGateSubtitle => 'Inicia sesión para empezar.';
 
   @override
   String get firebaseSetupRequired => 'Configura Firebase';
 
   @override
   String get firebaseSetupDescription =>
-      'Agrega GoogleService-Info.plist y habilita el inicio con Apple en Firebase para usar login en la nube.';
+      'Genera los archivos locales de FlutterFire y configura el esquema URL de iOS antes de usar login en la nube.';
 
   @override
   String get signInWithAppleAction => 'Iniciar con Apple';
+
+  @override
+  String get signInWithGoogleAction => 'Iniciar con Google';
 
   @override
   String signedInAs(String label) {
@@ -455,7 +615,51 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String get appleAccountConnected => 'Cuenta de Apple conectada';
+
+  @override
+  String get googleAccountConnected => 'Cuenta de Google conectada';
+
+  @override
+  String get accountConnected => 'Cuenta conectada';
+
+  @override
   String get signOutAction => 'Cerrar sesión';
+
+  @override
+  String get deleteAccountAction => 'Eliminar cuenta';
+
+  @override
+  String get deleteAccountTitle => 'Eliminar cuenta';
+
+  @override
+  String get deleteAccountBody =>
+      'Tu cuenta y todos los datos sincronizados de Timebox Mark se eliminarán de forma permanente. Los datos eliminados no se pueden recuperar.';
+
+  @override
+  String get accountDeleted => 'Cuenta eliminada.';
+
+  @override
+  String get accountDeleteFailed =>
+      'No se pudo eliminar la cuenta. Inicia sesión otra vez y vuelve a intentarlo.';
+
+  @override
+  String get legalTitle => 'Legal';
+
+  @override
+  String get privacyPolicyAction => 'Política de privacidad';
+
+  @override
+  String get termsAction => 'Términos de uso';
+
+  @override
+  String get supportAction => 'Soporte';
+
+  @override
+  String get linkOpenFailed => 'No se pudo abrir el enlace.';
+
+  @override
+  String get cancelAction => 'Cancelar';
 
   @override
   String get authSignInFailed =>

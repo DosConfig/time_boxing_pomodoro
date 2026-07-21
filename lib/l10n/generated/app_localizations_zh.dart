@@ -12,6 +12,60 @@ class AppLocalizationsZh extends AppLocalizations {
   String get appName => 'Timebox Mark';
 
   @override
+  String get introBrandEyebrow => '少输入，快执行。';
+
+  @override
+  String get introBrandTitle => '把一天装进时间块';
+
+  @override
+  String get introBrandBody => '把脑中事项变成重点、30分钟区块、Focus、提醒和可同步的日历计划。';
+
+  @override
+  String get introBrainDumpTitle => '清空脑中事项';
+
+  @override
+  String get introBrainDumpBody => '基于成熟的时间块和番茄钟原则：先记录，再决定。';
+
+  @override
+  String get introPrioritiesTitle => '选出前三件事';
+
+  @override
+  String get introPrioritiesBody => '在一天被打散前，先固定三个可见重点。';
+
+  @override
+  String get introTimeBoxTitle => '安排30分钟块';
+
+  @override
+  String get introTimeBoxBody => '轻点空档，用30分钟时间块安排一天。';
+
+  @override
+  String get introFocusTitle => 'Focus跟随时间';
+
+  @override
+  String get introFocusBody => '登录后，当前时间块会驱动Focus、Live Activity、提醒和云同步。';
+
+  @override
+  String get introBackAction => '返回';
+
+  @override
+  String get introNextAction => '下一步';
+
+  @override
+  String get introStartAction => '开始使用';
+
+  @override
+  String get introSkipAction => '跳过';
+
+  @override
+  String get introSampleTopPriority => '发布计划';
+
+  @override
+  String get introSampleDeepWork => '深度工作';
+
+  @override
+  String get introSampleFollowUp => '跟进';
+
+  @override
   String get navToday => '今天';
 
   @override
@@ -71,6 +125,33 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsTitle => '设置';
 
   @override
+  String get languageTitle => '语言';
+
+  @override
+  String get languageSystem => '跟随系统';
+
+  @override
+  String get languageKorean => '韩语';
+
+  @override
+  String get languageEnglish => '英语';
+
+  @override
+  String get languageJapanese => '日语';
+
+  @override
+  String get languageChinese => '中文';
+
+  @override
+  String get languageSpanish => '西班牙语';
+
+  @override
+  String get languageFrench => '法语';
+
+  @override
+  String get languageGerman => '德语';
+
+  @override
   String get awakeWindowTitle => '清醒时段';
 
   @override
@@ -83,6 +164,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get autoStartNextTimeBox => '自动开始下一个时间盒';
 
   @override
+  String get liveTrackingTitle => '实时追踪时间盒';
+
+  @override
+  String get liveTrackingDescription => '在专注、实时活动和通知中自动追踪当前区块。';
+
+  @override
   String get alertsTitle => '提醒';
 
   @override
@@ -90,6 +177,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get soundLabel => '声音';
+
+  @override
+  String get soundDescription => '完成提醒使用 iOS 默认提示音。';
 
   @override
   String get saveAction => '保存';
@@ -234,6 +324,23 @@ class AppLocalizationsZh extends AppLocalizations {
   String get calendarExportFailed => '日历导出失败，请重试。';
 
   @override
+  String get calendarProviderSelectDescription =>
+      '请选择一个导出目标。每个提供方都有独立的说明和进度状态。';
+
+  @override
+  String get calendarDuplicateProtectionDescription =>
+      '同一日期和提供方中已关联的时间盒不会重复导出。';
+
+  @override
+  String get calendarExportAlreadySynced => '今天的时间盒已同步。';
+
+  @override
+  String get openCalendarAction => '打开日历';
+
+  @override
+  String get calendarOpenFailed => '无法打开日历应用。';
+
+  @override
   String get todayTitle => '今天';
 
   @override
@@ -300,6 +407,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get noActiveTimeBox => '无时间盒';
 
   @override
+  String get noCurrentTimeBoxTitle => '当前没有时间盒';
+
+  @override
+  String get noCurrentTimeBoxBody => '请在今天页为当前30分钟时段添加时间盒。';
+
+  @override
+  String get planCurrentSlotAction => '规划当前时段';
+
+  @override
+  String get currentTimeBoxRequired => '请先为当前时段添加时间盒。';
+
+  @override
+  String get noTodayBoxesProgress => '今天还没有计划时间盒。';
+
+  @override
   String get openFocusAction => '打开 Focus';
 
   @override
@@ -310,6 +432,21 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get noPrioritiesYet => '还没有优先级';
+
+  @override
+  String get carryOverPreviousPriorities => '导入上次优先级';
+
+  @override
+  String get carryOverPreviousBrainDump => '导入上次脑内清单';
+
+  @override
+  String get carryOverPreviousReminders => '导入上次提醒';
+
+  @override
+  String get carryOverPreviousSchedule => '导入上次日程';
+
+  @override
+  String get noPreviousDailyItems => '没有找到上次每日项目。';
 
   @override
   String get threePrioritiesAlreadySet => '已设置 3 个优先级。';
@@ -353,7 +490,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get timeBoxesTitle => '时间盒';
 
   @override
-  String get timeBoxesHint => '点击空槽添加，点击时间盒编辑。';
+  String get timeBoxesHint => '点按卡片编辑。长按移动，拖动底部条调整长度。';
+
+  @override
+  String get dragTimeBoxTooltip => '拖动以移动';
+
+  @override
+  String get resizeTimeBoxTooltip => '点按调整长度';
+
+  @override
+  String get resizeTimeBoxActiveTooltip => '上下拖动调整';
 
   @override
   String get nowBadge => '现在';
@@ -371,6 +517,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String timeBoxRange(String range) {
     return '时间盒 $range';
   }
+
+  @override
+  String get repeatTimeBoxLabel => '重复';
+
+  @override
+  String get repeatNone => '无';
+
+  @override
+  String get repeatDaily => '每天';
+
+  @override
+  String get repeatWeekdays => '工作日';
 
   @override
   String get newTimeBoxDefaultTitle => '新时间盒';
@@ -409,32 +567,23 @@ class AppLocalizationsZh extends AppLocalizations {
   String get notificationBreakCompleteBody => '下一个专注时段已准备好。';
 
   @override
-  String get defaultTimeBoxTopPriority => '最高优先级';
-
-  @override
-  String get defaultTimeBoxDeepWork => '深度工作';
-
-  @override
-  String get defaultTimeBoxAdmin => '事务处理';
-
-  @override
-  String get defaultTimeBoxSecondPriority => '第二优先级';
-
-  @override
-  String get defaultTimeBoxFollowUp => '跟进';
-
-  @override
   String get accountTitle => '账户';
+
+  @override
+  String get authGateSubtitle => '登录后开始。';
 
   @override
   String get firebaseSetupRequired => '需要 Firebase 设置';
 
   @override
   String get firebaseSetupDescription =>
-      '要使用云登录，请添加 GoogleService-Info.plist，并在 Firebase 中启用 Apple 登录。';
+      '要使用云登录，请生成本地 FlutterFire 文件并设置 iOS URL scheme。';
 
   @override
   String get signInWithAppleAction => '使用 Apple 登录';
+
+  @override
+  String get signInWithGoogleAction => '使用 Google 登录';
 
   @override
   String signedInAs(String label) {
@@ -442,7 +591,50 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get appleAccountConnected => '已连接 Apple 账户';
+
+  @override
+  String get googleAccountConnected => '已连接 Google 账户';
+
+  @override
+  String get accountConnected => '已连接账户';
+
+  @override
   String get signOutAction => '退出登录';
+
+  @override
+  String get deleteAccountAction => '删除账户';
+
+  @override
+  String get deleteAccountTitle => '删除账户';
+
+  @override
+  String get deleteAccountBody =>
+      '你的账户和所有已同步的 Timebox Mark 数据将被永久删除。删除后的数据无法恢复。';
+
+  @override
+  String get accountDeleted => '账户已删除。';
+
+  @override
+  String get accountDeleteFailed => '无法删除账户。请重新登录后再试。';
+
+  @override
+  String get legalTitle => '法律信息';
+
+  @override
+  String get privacyPolicyAction => '隐私政策';
+
+  @override
+  String get termsAction => '使用条款';
+
+  @override
+  String get supportAction => '支持';
+
+  @override
+  String get linkOpenFailed => '无法打开链接。';
+
+  @override
+  String get cancelAction => '取消';
 
   @override
   String get authSignInFailed => '登录失败，请重试。';

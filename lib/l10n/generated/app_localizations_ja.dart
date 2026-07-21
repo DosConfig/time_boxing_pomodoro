@@ -12,6 +12,60 @@ class AppLocalizationsJa extends AppLocalizations {
   String get appName => 'Timebox Mark';
 
   @override
+  String get introBrandEyebrow => '少ない入力で、すぐ実行。';
+
+  @override
+  String get introBrandTitle => '一日をタイムボックス化';
+
+  @override
+  String get introBrandBody => 'ブレインダンプを優先事項、30分ブロック、Focus、通知、カレンダー計画に変えます。';
+
+  @override
+  String get introBrainDumpTitle => '頭の中を空に';
+
+  @override
+  String get introBrainDumpBody => '実績あるタイムボックスとポモドーロの考え方で、まず記録して後で選びます。';
+
+  @override
+  String get introPrioritiesTitle => '上位3つを選ぶ';
+
+  @override
+  String get introPrioritiesBody => '一日に流される前に、見える優先事項を3つに絞ります。';
+
+  @override
+  String get introTimeBoxTitle => '30分ブロックを配置';
+
+  @override
+  String get introTimeBoxBody => '空き枠をタップし、30分ブロックで一日を組みます。';
+
+  @override
+  String get introFocusTitle => 'Focusは時間に同期';
+
+  @override
+  String get introFocusBody => 'ログイン後、現在のブロックがFocus、Live Activity、通知、同期を動かします。';
+
+  @override
+  String get introBackAction => '戻る';
+
+  @override
+  String get introNextAction => '次へ';
+
+  @override
+  String get introStartAction => '始める';
+
+  @override
+  String get introSkipAction => 'スキップ';
+
+  @override
+  String get introSampleTopPriority => 'ローンチ計画';
+
+  @override
+  String get introSampleDeepWork => 'ディープワーク';
+
+  @override
+  String get introSampleFollowUp => 'フォローアップ';
+
+  @override
   String get navToday => '今日';
 
   @override
@@ -71,6 +125,33 @@ class AppLocalizationsJa extends AppLocalizations {
   String get settingsTitle => '設定';
 
   @override
+  String get languageTitle => '言語';
+
+  @override
+  String get languageSystem => 'システム設定';
+
+  @override
+  String get languageKorean => '韓国語';
+
+  @override
+  String get languageEnglish => '英語';
+
+  @override
+  String get languageJapanese => '日本語';
+
+  @override
+  String get languageChinese => '中国語';
+
+  @override
+  String get languageSpanish => 'スペイン語';
+
+  @override
+  String get languageFrench => 'フランス語';
+
+  @override
+  String get languageGerman => 'ドイツ語';
+
+  @override
   String get awakeWindowTitle => '活動時間';
 
   @override
@@ -83,6 +164,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get autoStartNextTimeBox => '次のタイムボックスを自動開始';
 
   @override
+  String get liveTrackingTitle => 'タイムボックスのライブ追跡';
+
+  @override
+  String get liveTrackingDescription => '現在のブロックをFocus、ライブアクティビティ、通知で自動追跡します。';
+
+  @override
   String get alertsTitle => '通知';
 
   @override
@@ -90,6 +177,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get soundLabel => 'サウンド';
+
+  @override
+  String get soundDescription => '完了通知にiOS標準音を使います。';
 
   @override
   String get saveAction => '保存';
@@ -234,6 +324,23 @@ class AppLocalizationsJa extends AppLocalizations {
   String get calendarExportFailed => 'カレンダー書き出しに失敗しました。もう一度お試しください。';
 
   @override
+  String get calendarProviderSelectDescription =>
+      '書き出し先を1つ選択してください。案内と進行状況は提供元ごとに分かれています。';
+
+  @override
+  String get calendarDuplicateProtectionDescription =>
+      '同じ日付と提供元にすでに連携済みの時間枠は再度書き出しません。';
+
+  @override
+  String get calendarExportAlreadySynced => '今日の時間枠はすでに同期されています。';
+
+  @override
+  String get openCalendarAction => 'カレンダーを開く';
+
+  @override
+  String get calendarOpenFailed => 'カレンダーアプリを開けませんでした。';
+
+  @override
   String get todayTitle => '今日';
 
   @override
@@ -300,6 +407,21 @@ class AppLocalizationsJa extends AppLocalizations {
   String get noActiveTimeBox => '時間枠なし';
 
   @override
+  String get noCurrentTimeBoxTitle => '現在のブロックはありません';
+
+  @override
+  String get noCurrentTimeBoxBody => '今日タブで現在の30分枠に時間枠を追加してください。';
+
+  @override
+  String get planCurrentSlotAction => '現在の枠を計画';
+
+  @override
+  String get currentTimeBoxRequired => '現在の時間帯のタイムボックスを先に追加してください。';
+
+  @override
+  String get noTodayBoxesProgress => '今日の時間枠はまだありません。';
+
+  @override
   String get openFocusAction => 'Focusを開く';
 
   @override
@@ -310,6 +432,21 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get noPrioritiesYet => '優先事項はまだありません';
+
+  @override
+  String get carryOverPreviousPriorities => '前回の優先事項を取り込む';
+
+  @override
+  String get carryOverPreviousBrainDump => '前回のメモを取り込む';
+
+  @override
+  String get carryOverPreviousReminders => '前回のリマインダーを取り込む';
+
+  @override
+  String get carryOverPreviousSchedule => '前回の予定を取り込む';
+
+  @override
+  String get noPreviousDailyItems => '前回のデイリー項目がありません。';
 
   @override
   String get threePrioritiesAlreadySet => '優先事項はすでに3つ設定されています。';
@@ -353,7 +490,16 @@ class AppLocalizationsJa extends AppLocalizations {
   String get timeBoxesTitle => 'タイムボックス';
 
   @override
-  String get timeBoxesHint => '空きスロットをタップして追加。ボックスをタップして編集。';
+  String get timeBoxesHint => 'カードをタップして編集。長押しで移動、下のバーで長さ調整。';
+
+  @override
+  String get dragTimeBoxTooltip => 'ドラッグして移動';
+
+  @override
+  String get resizeTimeBoxTooltip => 'タップして長さ調整';
+
+  @override
+  String get resizeTimeBoxActiveTooltip => '上下にドラッグして調整';
 
   @override
   String get nowBadge => '現在';
@@ -371,6 +517,18 @@ class AppLocalizationsJa extends AppLocalizations {
   String timeBoxRange(String range) {
     return 'タイムボックス $range';
   }
+
+  @override
+  String get repeatTimeBoxLabel => '繰り返し';
+
+  @override
+  String get repeatNone => 'なし';
+
+  @override
+  String get repeatDaily => '毎日';
+
+  @override
+  String get repeatWeekdays => '平日';
 
   @override
   String get newTimeBoxDefaultTitle => '新しいタイムボックス';
@@ -409,32 +567,23 @@ class AppLocalizationsJa extends AppLocalizations {
   String get notificationBreakCompleteBody => '次の集中ブロックの準備ができました。';
 
   @override
-  String get defaultTimeBoxTopPriority => '最優先';
-
-  @override
-  String get defaultTimeBoxDeepWork => 'ディープワーク';
-
-  @override
-  String get defaultTimeBoxAdmin => '管理';
-
-  @override
-  String get defaultTimeBoxSecondPriority => '2番目の優先事項';
-
-  @override
-  String get defaultTimeBoxFollowUp => 'フォローアップ';
-
-  @override
   String get accountTitle => 'アカウント';
+
+  @override
+  String get authGateSubtitle => 'サインインして開始します。';
 
   @override
   String get firebaseSetupRequired => 'Firebase設定が必要です';
 
   @override
   String get firebaseSetupDescription =>
-      'クラウドログインを使うにはGoogleService-Info.plistを追加し、FirebaseでAppleログインを有効にしてください。';
+      'クラウドログインを使うにはローカルのFlutterFireファイルを生成し、iOSのURLスキームを設定してください。';
 
   @override
   String get signInWithAppleAction => 'Appleでサインイン';
+
+  @override
+  String get signInWithGoogleAction => 'Googleでサインイン';
 
   @override
   String signedInAs(String label) {
@@ -442,7 +591,50 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String get appleAccountConnected => 'Appleアカウント接続済み';
+
+  @override
+  String get googleAccountConnected => 'Googleアカウント接続済み';
+
+  @override
+  String get accountConnected => 'アカウント接続済み';
+
+  @override
   String get signOutAction => 'サインアウト';
+
+  @override
+  String get deleteAccountAction => 'アカウントを削除';
+
+  @override
+  String get deleteAccountTitle => 'アカウントを削除';
+
+  @override
+  String get deleteAccountBody =>
+      'アカウントと同期済みのTimebox Markデータはすべて完全に削除されます。削除したデータは復元できません。';
+
+  @override
+  String get accountDeleted => 'アカウントを削除しました。';
+
+  @override
+  String get accountDeleteFailed => 'アカウントを削除できませんでした。再ログインしてもう一度お試しください。';
+
+  @override
+  String get legalTitle => '法的情報';
+
+  @override
+  String get privacyPolicyAction => 'プライバシーポリシー';
+
+  @override
+  String get termsAction => '利用規約';
+
+  @override
+  String get supportAction => 'サポート';
+
+  @override
+  String get linkOpenFailed => 'リンクを開けませんでした。';
+
+  @override
+  String get cancelAction => 'キャンセル';
 
   @override
   String get authSignInFailed => 'サインインに失敗しました。もう一度お試しください。';

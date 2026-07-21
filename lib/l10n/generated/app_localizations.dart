@@ -114,6 +114,114 @@ abstract class AppLocalizations {
   /// **'Timebox Mark'**
   String get appName;
 
+  /// No description provided for @introBrandEyebrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan less. Move faster.'**
+  String get introBrandEyebrow;
+
+  /// No description provided for @introBrandTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Timebox your day'**
+  String get introBrandTitle;
+
+  /// No description provided for @introBrandBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn brain dumps into priorities, 30-minute blocks, Focus, alerts, and calendar-ready plans.'**
+  String get introBrandBody;
+
+  /// No description provided for @introBrainDumpTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Empty your head'**
+  String get introBrainDumpTitle;
+
+  /// No description provided for @introBrainDumpBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Built on proven timeboxing and Pomodoro principles: capture first, decide later.'**
+  String get introBrainDumpBody;
+
+  /// No description provided for @introPrioritiesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick the top three'**
+  String get introPrioritiesTitle;
+
+  /// No description provided for @introPrioritiesBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn the noisy list into three visible priorities before the day pulls you around.'**
+  String get introPrioritiesBody;
+
+  /// No description provided for @introTimeBoxTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Place 30-minute blocks'**
+  String get introTimeBoxTitle;
+
+  /// No description provided for @introTimeBoxBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap a slot, add a box, and plan the day in 30-minute blocks with less typing.'**
+  String get introTimeBoxBody;
+
+  /// No description provided for @introFocusTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus follows the clock'**
+  String get introFocusTitle;
+
+  /// No description provided for @introFocusBody.
+  ///
+  /// In en, this message translates to:
+  /// **'After sign-in, the current block drives Focus, Live Activity, alerts, and cloud sync.'**
+  String get introFocusBody;
+
+  /// No description provided for @introBackAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get introBackAction;
+
+  /// No description provided for @introNextAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get introNextAction;
+
+  /// No description provided for @introStartAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Get started'**
+  String get introStartAction;
+
+  /// No description provided for @introSkipAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get introSkipAction;
+
+  /// No description provided for @introSampleTopPriority.
+  ///
+  /// In en, this message translates to:
+  /// **'Launch plan'**
+  String get introSampleTopPriority;
+
+  /// No description provided for @introSampleDeepWork.
+  ///
+  /// In en, this message translates to:
+  /// **'Deep work'**
+  String get introSampleDeepWork;
+
+  /// No description provided for @introSampleFollowUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow-up'**
+  String get introSampleFollowUp;
+
   /// No description provided for @navToday.
   ///
   /// In en, this message translates to:
@@ -228,6 +336,60 @@ abstract class AppLocalizations {
   /// **'Settings'**
   String get settingsTitle;
 
+  /// No description provided for @languageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get languageTitle;
+
+  /// No description provided for @languageSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System default'**
+  String get languageSystem;
+
+  /// No description provided for @languageKorean.
+  ///
+  /// In en, this message translates to:
+  /// **'Korean'**
+  String get languageKorean;
+
+  /// No description provided for @languageEnglish.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get languageEnglish;
+
+  /// No description provided for @languageJapanese.
+  ///
+  /// In en, this message translates to:
+  /// **'Japanese'**
+  String get languageJapanese;
+
+  /// No description provided for @languageChinese.
+  ///
+  /// In en, this message translates to:
+  /// **'Chinese'**
+  String get languageChinese;
+
+  /// No description provided for @languageSpanish.
+  ///
+  /// In en, this message translates to:
+  /// **'Spanish'**
+  String get languageSpanish;
+
+  /// No description provided for @languageFrench.
+  ///
+  /// In en, this message translates to:
+  /// **'French'**
+  String get languageFrench;
+
+  /// No description provided for @languageGerman.
+  ///
+  /// In en, this message translates to:
+  /// **'German'**
+  String get languageGerman;
+
   /// No description provided for @awakeWindowTitle.
   ///
   /// In en, this message translates to:
@@ -252,6 +414,18 @@ abstract class AppLocalizations {
   /// **'Auto-start next time box'**
   String get autoStartNextTimeBox;
 
+  /// No description provided for @liveTrackingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Live timebox tracking'**
+  String get liveTrackingTitle;
+
+  /// No description provided for @liveTrackingDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Follows the current block automatically in Focus, Live Activity, and notifications.'**
+  String get liveTrackingDescription;
+
   /// No description provided for @alertsTitle.
   ///
   /// In en, this message translates to:
@@ -269,6 +443,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sound'**
   String get soundLabel;
+
+  /// No description provided for @soundDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Uses the iOS default sound for completion alerts.'**
+  String get soundDescription;
 
   /// No description provided for @saveAction.
   ///
@@ -516,6 +696,36 @@ abstract class AppLocalizations {
   /// **'Calendar export failed. Try again.'**
   String get calendarExportFailed;
 
+  /// No description provided for @calendarProviderSelectDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose one destination. Each provider has its own guide and export state.'**
+  String get calendarProviderSelectDescription;
+
+  /// No description provided for @calendarDuplicateProtectionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'A time box already mapped for the same date and provider is skipped.'**
+  String get calendarDuplicateProtectionDescription;
+
+  /// No description provided for @calendarExportAlreadySynced.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s time boxes are already synced.'**
+  String get calendarExportAlreadySynced;
+
+  /// No description provided for @openCalendarAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Open calendar'**
+  String get openCalendarAction;
+
+  /// No description provided for @calendarOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The calendar app could not be opened.'**
+  String get calendarOpenFailed;
+
   /// No description provided for @todayTitle.
   ///
   /// In en, this message translates to:
@@ -648,6 +858,36 @@ abstract class AppLocalizations {
   /// **'No time box'**
   String get noActiveTimeBox;
 
+  /// No description provided for @noCurrentTimeBoxTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No block right now'**
+  String get noCurrentTimeBoxTitle;
+
+  /// No description provided for @noCurrentTimeBoxBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a box to the current 30-minute slot from Today.'**
+  String get noCurrentTimeBoxBody;
+
+  /// No description provided for @planCurrentSlotAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan current slot'**
+  String get planCurrentSlotAction;
+
+  /// No description provided for @currentTimeBoxRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a time box for the current slot first.'**
+  String get currentTimeBoxRequired;
+
+  /// No description provided for @noTodayBoxesProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'No time boxes planned yet.'**
+  String get noTodayBoxesProgress;
+
   /// No description provided for @openFocusAction.
   ///
   /// In en, this message translates to:
@@ -671,6 +911,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No priorities yet'**
   String get noPrioritiesYet;
+
+  /// No description provided for @carryOverPreviousPriorities.
+  ///
+  /// In en, this message translates to:
+  /// **'Bring in previous priorities'**
+  String get carryOverPreviousPriorities;
+
+  /// No description provided for @carryOverPreviousBrainDump.
+  ///
+  /// In en, this message translates to:
+  /// **'Bring in previous brain dump'**
+  String get carryOverPreviousBrainDump;
+
+  /// No description provided for @carryOverPreviousReminders.
+  ///
+  /// In en, this message translates to:
+  /// **'Bring in previous reminders'**
+  String get carryOverPreviousReminders;
+
+  /// No description provided for @carryOverPreviousSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Bring in previous schedule'**
+  String get carryOverPreviousSchedule;
+
+  /// No description provided for @noPreviousDailyItems.
+  ///
+  /// In en, this message translates to:
+  /// **'No previous daily items found.'**
+  String get noPreviousDailyItems;
 
   /// No description provided for @threePrioritiesAlreadySet.
   ///
@@ -753,8 +1023,26 @@ abstract class AppLocalizations {
   /// No description provided for @timeBoxesHint.
   ///
   /// In en, this message translates to:
-  /// **'Tap an empty slot to add. Tap a box to edit.'**
+  /// **'Tap a card to edit. Long-press to move. Pull the bottom bar to resize.'**
   String get timeBoxesHint;
+
+  /// No description provided for @dragTimeBoxTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag to move'**
+  String get dragTimeBoxTooltip;
+
+  /// No description provided for @resizeTimeBoxTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to resize'**
+  String get resizeTimeBoxTooltip;
+
+  /// No description provided for @resizeTimeBoxActiveTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag up or down to resize'**
+  String get resizeTimeBoxActiveTooltip;
 
   /// No description provided for @nowBadge.
   ///
@@ -785,6 +1073,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Time box {range}'**
   String timeBoxRange(String range);
+
+  /// No description provided for @repeatTimeBoxLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeat'**
+  String get repeatTimeBoxLabel;
+
+  /// No description provided for @repeatNone.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get repeatNone;
+
+  /// No description provided for @repeatDaily.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily'**
+  String get repeatDaily;
+
+  /// No description provided for @repeatWeekdays.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekdays'**
+  String get repeatWeekdays;
 
   /// No description provided for @newTimeBoxDefaultTitle.
   ///
@@ -858,41 +1170,17 @@ abstract class AppLocalizations {
   /// **'Your next focus block is ready.'**
   String get notificationBreakCompleteBody;
 
-  /// No description provided for @defaultTimeBoxTopPriority.
-  ///
-  /// In en, this message translates to:
-  /// **'Top priority'**
-  String get defaultTimeBoxTopPriority;
-
-  /// No description provided for @defaultTimeBoxDeepWork.
-  ///
-  /// In en, this message translates to:
-  /// **'Deep work'**
-  String get defaultTimeBoxDeepWork;
-
-  /// No description provided for @defaultTimeBoxAdmin.
-  ///
-  /// In en, this message translates to:
-  /// **'Admin'**
-  String get defaultTimeBoxAdmin;
-
-  /// No description provided for @defaultTimeBoxSecondPriority.
-  ///
-  /// In en, this message translates to:
-  /// **'Second priority'**
-  String get defaultTimeBoxSecondPriority;
-
-  /// No description provided for @defaultTimeBoxFollowUp.
-  ///
-  /// In en, this message translates to:
-  /// **'Follow-up'**
-  String get defaultTimeBoxFollowUp;
-
   /// No description provided for @accountTitle.
   ///
   /// In en, this message translates to:
   /// **'Account'**
   String get accountTitle;
+
+  /// No description provided for @authGateSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to start.'**
+  String get authGateSubtitle;
 
   /// No description provided for @firebaseSetupRequired.
   ///
@@ -903,7 +1191,7 @@ abstract class AppLocalizations {
   /// No description provided for @firebaseSetupDescription.
   ///
   /// In en, this message translates to:
-  /// **'Add GoogleService-Info.plist and enable Apple sign-in in Firebase before cloud login is available.'**
+  /// **'Generate the local FlutterFire files and set the iOS URL scheme before cloud login is available.'**
   String get firebaseSetupDescription;
 
   /// No description provided for @signInWithAppleAction.
@@ -912,17 +1200,107 @@ abstract class AppLocalizations {
   /// **'Sign in with Apple'**
   String get signInWithAppleAction;
 
+  /// No description provided for @signInWithGoogleAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with Google'**
+  String get signInWithGoogleAction;
+
   /// No description provided for @signedInAs.
   ///
   /// In en, this message translates to:
   /// **'Signed in as {label}'**
   String signedInAs(String label);
 
+  /// No description provided for @appleAccountConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Apple account connected'**
+  String get appleAccountConnected;
+
+  /// No description provided for @googleAccountConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Google account connected'**
+  String get googleAccountConnected;
+
+  /// No description provided for @accountConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Account connected'**
+  String get accountConnected;
+
   /// No description provided for @signOutAction.
   ///
   /// In en, this message translates to:
   /// **'Sign out'**
   String get signOutAction;
+
+  /// No description provided for @deleteAccountAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete account'**
+  String get deleteAccountAction;
+
+  /// No description provided for @deleteAccountTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete account'**
+  String get deleteAccountTitle;
+
+  /// No description provided for @deleteAccountBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account and all synced Timebox Mark data will be permanently deleted. Deleted data cannot be recovered.'**
+  String get deleteAccountBody;
+
+  /// No description provided for @accountDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Account deleted.'**
+  String get accountDeleted;
+
+  /// No description provided for @accountDeleteFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not delete account. Sign in again and try once more.'**
+  String get accountDeleteFailed;
+
+  /// No description provided for @legalTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Legal'**
+  String get legalTitle;
+
+  /// No description provided for @privacyPolicyAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy Policy'**
+  String get privacyPolicyAction;
+
+  /// No description provided for @termsAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms of Use'**
+  String get termsAction;
+
+  /// No description provided for @supportAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Support'**
+  String get supportAction;
+
+  /// No description provided for @linkOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open link.'**
+  String get linkOpenFailed;
+
+  /// No description provided for @cancelAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancelAction;
 
   /// No description provided for @authSignInFailed.
   ///

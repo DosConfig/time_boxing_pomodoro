@@ -1,39 +1,11 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../data/datasources/firebase_auth_datasource.dart';
-import '../data/repositories/auth_repository_impl.dart';
+import '../di/auth_providers.dart';
 import '../domain/entities/auth_session.dart';
-import '../domain/repositories/auth_repository.dart';
-import '../domain/usecases/get_auth_session.dart';
-import '../domain/usecases/sign_in_with_apple.dart';
-import '../domain/usecases/sign_out.dart';
+
+export '../di/auth_providers.dart';
 
 part 'auth_controller.g.dart';
-
-@Riverpod(keepAlive: true)
-FirebaseAuthDataSource firebaseAuthDataSource(Ref ref) {
-  return FirebaseAuthDataSource();
-}
-
-@Riverpod(keepAlive: true)
-AuthRepository authRepository(Ref ref) {
-  return AuthRepositoryImpl(ref.watch(firebaseAuthDataSourceProvider));
-}
-
-@Riverpod(keepAlive: true)
-GetAuthSessionUseCase getAuthSessionUseCase(Ref ref) {
-  return GetAuthSessionUseCase(ref.watch(authRepositoryProvider));
-}
-
-@Riverpod(keepAlive: true)
-SignInWithAppleUseCase signInWithAppleUseCase(Ref ref) {
-  return SignInWithAppleUseCase(ref.watch(authRepositoryProvider));
-}
-
-@Riverpod(keepAlive: true)
-SignOutUseCase signOutUseCase(Ref ref) {
-  return SignOutUseCase(ref.watch(authRepositoryProvider));
-}
 
 @riverpod
 class AuthController extends _$AuthController {
@@ -49,9 +21,41 @@ class AuthController extends _$AuthController {
     return session;
   }
 
+  Future<AuthSession> signInWithGoogle() async {
+    state = const AsyncLoading();
+    final session = await ref.read(signInWithGoogleUseCaseProvider).call();
+    state = AsyncData(session);
+    return session;
+  }
+
   Future<void> signOut() async {
     state = const AsyncLoading();
-    await ref.read(signOutUseCaseProvider).call();
-    state = AsyncData(await ref.read(getAuthSessionUseCaseProvider).call());
+    try {
+      await ref.read(signOutUseCaseProvider).call();
+    } finally {
+      state = const AsyncData(AuthSession(isConfigured: true));
+    }
+  }
+
+  Future<bool> deleteAccount() async {
+    final previous = state.asData?.value;
+    state = const AsyncLoading();
+    try {
+      final deleted = await ref.read(deleteAccountUseCaseProvider).call();
+      if (deleted) {
+        state = const AsyncData(AuthSession(isConfigured: true));
+        return true;
+      }
+
+      state = AsyncData(
+        previous ?? await ref.read(getAuthSessionUseCaseProvider).call(),
+      );
+      return false;
+    } catch (_) {
+      state = AsyncData(
+        previous ?? await ref.read(getAuthSessionUseCaseProvider).call(),
+      );
+      return false;
+    }
   }
 }

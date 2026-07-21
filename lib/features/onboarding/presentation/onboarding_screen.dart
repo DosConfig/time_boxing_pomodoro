@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pomodoro_method_channel/l10n/l10n.dart';
+import 'package:time_boxing_pomodoro/l10n/l10n.dart';
 
 import '../application/onboarding_draft_controller.dart';
 import '../../settings/application/app_preferences_controller.dart';
@@ -109,6 +109,7 @@ class OnboardingScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 24),
               FilledButton(
+                key: const ValueKey('onboarding_complete'),
                 onPressed: () async {
                   HapticFeedback.mediumImpact();
                   await ref

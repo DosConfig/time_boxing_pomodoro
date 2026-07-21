@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$AppPreferences {
 
- bool get isLoaded; bool get onboardingCompleted; int get awakeStartMinutes; int get awakeEndMinutes;
+ bool get isLoaded; bool get introCompleted; bool get onboardingCompleted; int get awakeStartMinutes; int get awakeEndMinutes; String get localeCode;
 /// Create a copy of AppPreferences
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $AppPreferencesCopyWith<AppPreferences> get copyWith => _$AppPreferencesCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AppPreferences&&(identical(other.isLoaded, isLoaded) || other.isLoaded == isLoaded)&&(identical(other.onboardingCompleted, onboardingCompleted) || other.onboardingCompleted == onboardingCompleted)&&(identical(other.awakeStartMinutes, awakeStartMinutes) || other.awakeStartMinutes == awakeStartMinutes)&&(identical(other.awakeEndMinutes, awakeEndMinutes) || other.awakeEndMinutes == awakeEndMinutes));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AppPreferences&&(identical(other.isLoaded, isLoaded) || other.isLoaded == isLoaded)&&(identical(other.introCompleted, introCompleted) || other.introCompleted == introCompleted)&&(identical(other.onboardingCompleted, onboardingCompleted) || other.onboardingCompleted == onboardingCompleted)&&(identical(other.awakeStartMinutes, awakeStartMinutes) || other.awakeStartMinutes == awakeStartMinutes)&&(identical(other.awakeEndMinutes, awakeEndMinutes) || other.awakeEndMinutes == awakeEndMinutes)&&(identical(other.localeCode, localeCode) || other.localeCode == localeCode));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,isLoaded,onboardingCompleted,awakeStartMinutes,awakeEndMinutes);
+int get hashCode => Object.hash(runtimeType,isLoaded,introCompleted,onboardingCompleted,awakeStartMinutes,awakeEndMinutes,localeCode);
 
 @override
 String toString() {
-  return 'AppPreferences(isLoaded: $isLoaded, onboardingCompleted: $onboardingCompleted, awakeStartMinutes: $awakeStartMinutes, awakeEndMinutes: $awakeEndMinutes)';
+  return 'AppPreferences(isLoaded: $isLoaded, introCompleted: $introCompleted, onboardingCompleted: $onboardingCompleted, awakeStartMinutes: $awakeStartMinutes, awakeEndMinutes: $awakeEndMinutes, localeCode: $localeCode)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $AppPreferencesCopyWith<$Res>  {
   factory $AppPreferencesCopyWith(AppPreferences value, $Res Function(AppPreferences) _then) = _$AppPreferencesCopyWithImpl;
 @useResult
 $Res call({
- bool isLoaded, bool onboardingCompleted, int awakeStartMinutes, int awakeEndMinutes
+ bool isLoaded, bool introCompleted, bool onboardingCompleted, int awakeStartMinutes, int awakeEndMinutes, String localeCode
 });
 
 
@@ -62,13 +62,15 @@ class _$AppPreferencesCopyWithImpl<$Res>
 
 /// Create a copy of AppPreferences
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? isLoaded = null,Object? onboardingCompleted = null,Object? awakeStartMinutes = null,Object? awakeEndMinutes = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? isLoaded = null,Object? introCompleted = null,Object? onboardingCompleted = null,Object? awakeStartMinutes = null,Object? awakeEndMinutes = null,Object? localeCode = null,}) {
   return _then(_self.copyWith(
 isLoaded: null == isLoaded ? _self.isLoaded : isLoaded // ignore: cast_nullable_to_non_nullable
+as bool,introCompleted: null == introCompleted ? _self.introCompleted : introCompleted // ignore: cast_nullable_to_non_nullable
 as bool,onboardingCompleted: null == onboardingCompleted ? _self.onboardingCompleted : onboardingCompleted // ignore: cast_nullable_to_non_nullable
 as bool,awakeStartMinutes: null == awakeStartMinutes ? _self.awakeStartMinutes : awakeStartMinutes // ignore: cast_nullable_to_non_nullable
 as int,awakeEndMinutes: null == awakeEndMinutes ? _self.awakeEndMinutes : awakeEndMinutes // ignore: cast_nullable_to_non_nullable
-as int,
+as int,localeCode: null == localeCode ? _self.localeCode : localeCode // ignore: cast_nullable_to_non_nullable
+as String,
   ));
 }
 
@@ -153,10 +155,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool isLoaded,  bool onboardingCompleted,  int awakeStartMinutes,  int awakeEndMinutes)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool isLoaded,  bool introCompleted,  bool onboardingCompleted,  int awakeStartMinutes,  int awakeEndMinutes,  String localeCode)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AppPreferences() when $default != null:
-return $default(_that.isLoaded,_that.onboardingCompleted,_that.awakeStartMinutes,_that.awakeEndMinutes);case _:
+return $default(_that.isLoaded,_that.introCompleted,_that.onboardingCompleted,_that.awakeStartMinutes,_that.awakeEndMinutes,_that.localeCode);case _:
   return orElse();
 
 }
@@ -174,10 +176,10 @@ return $default(_that.isLoaded,_that.onboardingCompleted,_that.awakeStartMinutes
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool isLoaded,  bool onboardingCompleted,  int awakeStartMinutes,  int awakeEndMinutes)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool isLoaded,  bool introCompleted,  bool onboardingCompleted,  int awakeStartMinutes,  int awakeEndMinutes,  String localeCode)  $default,) {final _that = this;
 switch (_that) {
 case _AppPreferences():
-return $default(_that.isLoaded,_that.onboardingCompleted,_that.awakeStartMinutes,_that.awakeEndMinutes);case _:
+return $default(_that.isLoaded,_that.introCompleted,_that.onboardingCompleted,_that.awakeStartMinutes,_that.awakeEndMinutes,_that.localeCode);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -194,10 +196,10 @@ return $default(_that.isLoaded,_that.onboardingCompleted,_that.awakeStartMinutes
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool isLoaded,  bool onboardingCompleted,  int awakeStartMinutes,  int awakeEndMinutes)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool isLoaded,  bool introCompleted,  bool onboardingCompleted,  int awakeStartMinutes,  int awakeEndMinutes,  String localeCode)?  $default,) {final _that = this;
 switch (_that) {
 case _AppPreferences() when $default != null:
-return $default(_that.isLoaded,_that.onboardingCompleted,_that.awakeStartMinutes,_that.awakeEndMinutes);case _:
+return $default(_that.isLoaded,_that.introCompleted,_that.onboardingCompleted,_that.awakeStartMinutes,_that.awakeEndMinutes,_that.localeCode);case _:
   return null;
 
 }
@@ -209,13 +211,15 @@ return $default(_that.isLoaded,_that.onboardingCompleted,_that.awakeStartMinutes
 
 
 class _AppPreferences implements AppPreferences {
-  const _AppPreferences({this.isLoaded = false, this.onboardingCompleted = false, this.awakeStartMinutes = 7 * 60, this.awakeEndMinutes = 23 * 60});
+  const _AppPreferences({this.isLoaded = false, this.introCompleted = false, this.onboardingCompleted = false, this.awakeStartMinutes = 7 * 60, this.awakeEndMinutes = 23 * 60, this.localeCode = ''});
   
 
 @override@JsonKey() final  bool isLoaded;
+@override@JsonKey() final  bool introCompleted;
 @override@JsonKey() final  bool onboardingCompleted;
 @override@JsonKey() final  int awakeStartMinutes;
 @override@JsonKey() final  int awakeEndMinutes;
+@override@JsonKey() final  String localeCode;
 
 /// Create a copy of AppPreferences
 /// with the given fields replaced by the non-null parameter values.
@@ -227,16 +231,16 @@ _$AppPreferencesCopyWith<_AppPreferences> get copyWith => __$AppPreferencesCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AppPreferences&&(identical(other.isLoaded, isLoaded) || other.isLoaded == isLoaded)&&(identical(other.onboardingCompleted, onboardingCompleted) || other.onboardingCompleted == onboardingCompleted)&&(identical(other.awakeStartMinutes, awakeStartMinutes) || other.awakeStartMinutes == awakeStartMinutes)&&(identical(other.awakeEndMinutes, awakeEndMinutes) || other.awakeEndMinutes == awakeEndMinutes));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AppPreferences&&(identical(other.isLoaded, isLoaded) || other.isLoaded == isLoaded)&&(identical(other.introCompleted, introCompleted) || other.introCompleted == introCompleted)&&(identical(other.onboardingCompleted, onboardingCompleted) || other.onboardingCompleted == onboardingCompleted)&&(identical(other.awakeStartMinutes, awakeStartMinutes) || other.awakeStartMinutes == awakeStartMinutes)&&(identical(other.awakeEndMinutes, awakeEndMinutes) || other.awakeEndMinutes == awakeEndMinutes)&&(identical(other.localeCode, localeCode) || other.localeCode == localeCode));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,isLoaded,onboardingCompleted,awakeStartMinutes,awakeEndMinutes);
+int get hashCode => Object.hash(runtimeType,isLoaded,introCompleted,onboardingCompleted,awakeStartMinutes,awakeEndMinutes,localeCode);
 
 @override
 String toString() {
-  return 'AppPreferences(isLoaded: $isLoaded, onboardingCompleted: $onboardingCompleted, awakeStartMinutes: $awakeStartMinutes, awakeEndMinutes: $awakeEndMinutes)';
+  return 'AppPreferences(isLoaded: $isLoaded, introCompleted: $introCompleted, onboardingCompleted: $onboardingCompleted, awakeStartMinutes: $awakeStartMinutes, awakeEndMinutes: $awakeEndMinutes, localeCode: $localeCode)';
 }
 
 
@@ -247,7 +251,7 @@ abstract mixin class _$AppPreferencesCopyWith<$Res> implements $AppPreferencesCo
   factory _$AppPreferencesCopyWith(_AppPreferences value, $Res Function(_AppPreferences) _then) = __$AppPreferencesCopyWithImpl;
 @override @useResult
 $Res call({
- bool isLoaded, bool onboardingCompleted, int awakeStartMinutes, int awakeEndMinutes
+ bool isLoaded, bool introCompleted, bool onboardingCompleted, int awakeStartMinutes, int awakeEndMinutes, String localeCode
 });
 
 
@@ -264,13 +268,15 @@ class __$AppPreferencesCopyWithImpl<$Res>
 
 /// Create a copy of AppPreferences
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? isLoaded = null,Object? onboardingCompleted = null,Object? awakeStartMinutes = null,Object? awakeEndMinutes = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? isLoaded = null,Object? introCompleted = null,Object? onboardingCompleted = null,Object? awakeStartMinutes = null,Object? awakeEndMinutes = null,Object? localeCode = null,}) {
   return _then(_AppPreferences(
 isLoaded: null == isLoaded ? _self.isLoaded : isLoaded // ignore: cast_nullable_to_non_nullable
+as bool,introCompleted: null == introCompleted ? _self.introCompleted : introCompleted // ignore: cast_nullable_to_non_nullable
 as bool,onboardingCompleted: null == onboardingCompleted ? _self.onboardingCompleted : onboardingCompleted // ignore: cast_nullable_to_non_nullable
 as bool,awakeStartMinutes: null == awakeStartMinutes ? _self.awakeStartMinutes : awakeStartMinutes // ignore: cast_nullable_to_non_nullable
 as int,awakeEndMinutes: null == awakeEndMinutes ? _self.awakeEndMinutes : awakeEndMinutes // ignore: cast_nullable_to_non_nullable
-as int,
+as int,localeCode: null == localeCode ? _self.localeCode : localeCode // ignore: cast_nullable_to_non_nullable
+as String,
   ));
 }
 

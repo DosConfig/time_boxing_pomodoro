@@ -11,6 +11,7 @@ abstract class AuthSession with _$AuthSession {
     @Default('') String userId,
     @Default('') String email,
     @Default('') String displayName,
+    @Default('') String providerId,
   }) = _AuthSession;
 
   bool get isSignedIn => userId.isNotEmpty;
