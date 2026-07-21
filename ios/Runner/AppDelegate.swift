@@ -4,28 +4,28 @@ import UIKit
 import UserNotifications
 
 @main
-@objc class AppDelegate: FlutterAppDelegate {
+@objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
   private let CHANNEL = "com.pomodoro/timer"
   private let CALENDAR_CHANNEL = "com.pomodoro/calendar"
   private var pomodoroTimer: PomodoroTimerManager?
   private let calendarExporter = AppleCalendarExportManager()
+  private let calendarAppLauncher = CalendarAppLauncher()
 
   override func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
-    GeneratedPluginRegistrant.register(with: self)
     UNUserNotificationCenter.current().delegate = self
+    return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+  }
 
-    // Setup Method Channel
-    guard let controller = window?.rootViewController as? FlutterViewController else {
-      NSLog("[Pomodoro] ⚠️ rootViewController is not FlutterViewController; timer channel skipped")
-      return super.application(application, didFinishLaunchingWithOptions: launchOptions)
-    }
+  func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
+    GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
+    let messenger = engineBridge.applicationRegistrar.messenger()
 
-    let timerChannel = FlutterMethodChannel(name: CHANNEL, binaryMessenger: controller.binaryMessenger)
+    let timerChannel = FlutterMethodChannel(name: CHANNEL, binaryMessenger: messenger)
     pomodoroTimer = PomodoroTimerManager(channel: timerChannel)
-    let calendarChannel = FlutterMethodChannel(name: CALENDAR_CHANNEL, binaryMessenger: controller.binaryMessenger)
+    let calendarChannel = FlutterMethodChannel(name: CALENDAR_CHANNEL, binaryMessenger: messenger)
 
     timerChannel.setMethodCallHandler { [weak self] (call: FlutterMethodCall, result: @escaping FlutterResult) in
       guard let self = self else { return }
@@ -108,12 +108,13 @@ import UserNotifications
       switch call.method {
       case "exportEvents":
         self.calendarExporter.exportEvents(arguments: call.arguments, result: result)
+      case "openCalendar":
+        self.calendarAppLauncher.open(arguments: call.arguments, result: result)
       default:
         result(FlutterMethodNotImplemented)
       }
     }
 
-    return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 
   override func userNotificationCenter(
@@ -125,6 +126,49 @@ import UserNotifications
       completionHandler([.banner, .list, .sound, .badge])
     } else {
       completionHandler([.alert, .sound, .badge])
+    }
+  }
+}
+
+class CalendarAppLauncher {
+  func open(arguments: Any?, result: @escaping FlutterResult) {
+    guard let args = arguments as? [String: Any],
+          let provider = args["provider"] as? String else {
+      result(["status": "failed"])
+      return
+    }
+
+    switch provider {
+    case "apple":
+      let timestamp = Date().timeIntervalSinceReferenceDate
+      open(URL(string: "calshow:\(timestamp)"), successStatus: "opened", result: result)
+    case "google":
+      let googleCalendar = URL(string: "comgooglecalendar://")
+      if let googleCalendar, UIApplication.shared.canOpenURL(googleCalendar) {
+        open(googleCalendar, successStatus: "opened", result: result)
+        return
+      }
+      open(
+        URL(string: "itms-apps://itunes.apple.com/app/id909319292"),
+        successStatus: "storeOpened",
+        result: result
+      )
+    default:
+      result(["status": "unavailable"])
+    }
+  }
+
+  private func open(
+    _ url: URL?,
+    successStatus: String,
+    result: @escaping FlutterResult
+  ) {
+    guard let url else {
+      result(["status": "failed"])
+      return
+    }
+    UIApplication.shared.open(url, options: [:]) { opened in
+      result(["status": opened ? successStatus : "unavailable"])
     }
   }
 }
@@ -213,7 +257,11 @@ class AppleCalendarExportManager {
       }
     } catch {
       DispatchQueue.main.async {
-        result(["status": "failed", "message": error.localizedDescription])
+        result([
+          "status": "failed",
+          "message": error.localizedDescription,
+          "events": exportedEvents,
+        ])
       }
     }
   }

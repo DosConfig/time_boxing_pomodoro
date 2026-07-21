@@ -146,7 +146,7 @@ struct LockScreenLiveActivityView: View {
                 .tint(.white)
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 10)
+        .padding(.vertical, 12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .activityBackgroundTint(Color.black)
         .activitySystemActionForegroundColor(.white)

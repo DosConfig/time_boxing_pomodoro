@@ -492,8 +492,16 @@ class PomodoroTimerManager: NSObject {
 
     private func scheduleOngoingNotification(duration: Int) {
         let content = UNMutableNotificationContent()
-        content.title = localizedCopy.inProgressTitle(for: currentPhase)
-        content.body = localizedCopy.remainingBody(time: formatTime(seconds: duration))
+        let taskTitle = currentTimeBoxTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+        content.title = taskTitle.isEmpty ? localizedCopy.inProgressTitle(for: currentPhase) : taskTitle
+        content.body = [
+            localizedCopy.inProgressTitle(for: currentPhase),
+            currentTimeBoxTimeRange,
+            localizedCopy.remainingBody(time: formatTime(seconds: duration))
+        ]
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .joined(separator: " · ")
         content.sound = nil
         content.categoryIdentifier = "POMODORO_RUNNING"
 
@@ -731,11 +739,16 @@ class PomodoroTimerManager: NSObject {
     }
 
     private var notificationBody: String {
+        let completionBody: String
         switch currentPhase {
         case "shortBreak", "longBreak":
-            return localizedCopy.breakCompleteBody
+            completionBody = localizedCopy.breakCompleteBody
         default:
-            return localizedCopy.focusCompleteBody
+            completionBody = localizedCopy.focusCompleteBody
         }
+        return [currentTimeBoxTitle, currentTimeBoxTimeRange, completionBody]
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .joined(separator: " · ")
     }
 }
