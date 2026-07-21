@@ -1,0 +1,97 @@
+workflows:
+  ios-testflight:
+    name: iOS TestFlight
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: timebox_mark_app_store_connect
+    environment:
+      flutter: stable
+      xcode: latest
+      groups:
+        - timebox_mark_ios_release
+      vars:
+        APP_IDENTIFIER: com.seongwoo.focusmark
+        XCODE_WORKSPACE: ios/Runner.xcworkspace
+        XCODE_SCHEME: Runner
+    cache:
+      cache_paths:
+        - ~/.pub-cache
+    triggering:
+      events:
+        - tag
+      tag_patterns:
+        - pattern: ios-*
+          include: true
+    scripts:
+      - name: Restore ignored Firebase config
+        script: |
+          bash scripts/ci/restore_firebase_config.sh
+      - name: Install Flutter dependencies
+        script: |
+          flutter pub get
+          dart run melos run codegen
+      - name: Release guardrails
+        script: |
+          dart run melos run guard
+      - name: Set up iOS code signing
+        script: |
+          xcode-project use-profiles
+      - name: Build signed IPA
+        script: |
+          flutter build ipa --release \
+            --build-number=$BUILD_NUMBER \
+            --export-options-plist=ios/ExportOptions.app-store.plist
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - flutter_drive.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        submit_to_app_store: false
+
+  ios-shorebird-patch:
+    name: iOS Shorebird Patch
+    max_build_duration: 45
+    instance_type: mac_mini_m2
+    environment:
+      flutter: stable
+      xcode: latest
+      groups:
+        - timebox_mark_ios_release
+      vars:
+        APP_IDENTIFIER: com.seongwoo.focusmark
+    scripts:
+      - name: Guard Shorebird use
+        script: |
+          test -f shorebird.yaml || {
+            echo "shorebird.yaml is missing. Run shorebird init after App Store/TestFlight setup."
+            exit 1
+          }
+          test -n "$SHOREBIRD_TOKEN" || {
+            echo "SHOREBIRD_TOKEN is required."
+            exit 1
+          }
+          test -n "$SHOREBIRD_RELEASE_VERSION" || {
+            echo "SHOREBIRD_RELEASE_VERSION is required."
+            exit 1
+          }
+      - name: Restore ignored Firebase config
+        script: |
+          bash scripts/ci/restore_firebase_config.sh
+      - name: Install Flutter dependencies
+        script: |
+          flutter pub get
+          dart run melos run codegen
+      - name: Install Shorebird
+        script: |
+          curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/shorebirdtech/install/main/install.sh | bash
+          echo "PATH=$HOME/.shorebird/bin:$PATH" >> "$CM_ENV"
+      - name: Verify patch guardrails
+        script: |
+          dart run melos run guard
+      - name: Publish Shorebird iOS patch
+        script: |
+          shorebird patch ios --release-version="$SHOREBIRD_RELEASE_VERSION"

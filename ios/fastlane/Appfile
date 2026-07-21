@@ -1,0 +1,4 @@
+app_identifier(ENV.fetch("APP_IDENTIFIER", "com.seongwoo.focusmark"))
+apple_id(ENV["APPLE_ID"]) if ENV["APPLE_ID"].to_s.length.positive?
+team_id(ENV.fetch("APPLE_TEAM_ID", "HC9DTZBGLT"))
+itc_team_id(ENV["APP_STORE_CONNECT_TEAM_ID"]) if ENV["APP_STORE_CONNECT_TEAM_ID"].to_s.length.positive?

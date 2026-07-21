@@ -1,0 +1,16 @@
+# Provider-specific exports share orchestration but invoke different SDK boundaries.
+4c840d82fac5
+# Date/format helpers are intentionally private to their feature boundary.
+1df3beff154b
+487ca62aa25e
+dabcba6cb5ea
+# Similar widget/snackbar shapes have different semantics and ownership.
+03688be8f0f9
+8aab29faa7e2
+# Paired domain operations are explicit commands, not interchangeable abstractions.
+0940f7c86192
+a256fd0b2ff1
+97eca8811d18
+434a43656f28
+d3b11e26479d
+e0da7d6794fa
