@@ -1,10 +1,12 @@
 # Watch, Firebase, and Billing Plan
 
-## Product Rule
+## Product Direction
 
-The app should stay useful without an account.
+The current app requires an account after onboarding so daily plans can be
+restored across devices. A local cache remains the immediate editing store and
+offline fallback.
 
-Free local mode:
+Planned free tier:
 
 - local Today plan,
 - local timer,
@@ -12,7 +14,7 @@ Free local mode:
 - local notifications,
 - local settings.
 
-Paid connected mode:
+Planned paid connected tier:
 
 - Apple Watch companion,
 - Wear OS / Galaxy Watch companion,
@@ -28,15 +30,17 @@ This creates a clean value boundary: local-only stays free; anything that needs 
 
 Wear OS should come after the Android phone app, because the phone must remain the source of truth.
 
-Recommended Android phone timer implementation:
+Implemented:
 
-- Add a native foreground service for active focus and break sessions.
-- Store one absolute `endTime`, plus phase, active time box, status, pause state, and updated timestamp.
-- Use the service notification as a control surface, not as a per-second render loop.
-- Use `setWhen`, `setUsesChronometer`, and `setChronometerCountdown` so Android renders the countdown from the end time.
-- Update the notification only on meaningful state changes: start, pause, resume, skip, complete, active box change, or settings change.
+- Native Kotlin foreground service for focus and break sessions.
+- Absolute `endTime` timer restoration and pause state persistence.
+- OS-rendered countdown through notification Chronometer fields.
+- Notification updates only on semantic state changes.
+
+Pending:
+
 - Evaluate Android 16 Live Updates with `Notification.ProgressStyle` for progress-centric promoted notifications.
-- Avoid claiming second-perfect external display. Android notification rendering can be rate-limited or delayed by OS and OEM behavior, so correctness must come from restoring `remaining = endTime - now`.
+- Add Wear OS synchronization after the phone foundation is release-tested.
 
 This matches the iOS design: iOS Live Activity uses `Text(timerInterval:)`, Android should use Chronometer or ProgressStyle, and both platforms share the same absolute-time model.
 
@@ -94,12 +98,15 @@ Wear OS Data Layer sync works between Android phones and Wear OS watches. It is 
 
 ## Firebase Architecture
 
-Recommended Firebase modules:
+Implemented Firebase modules:
 
 - Firebase Core,
 - Firebase Auth,
-- Cloud Firestore,
-- Cloud Functions,
+- Cloud Firestore.
+
+Pending modules:
+
+- Cloud Functions for trusted entitlement and invite-code operations,
 - Firebase Analytics,
 - Firebase Crashlytics.
 
@@ -113,7 +120,7 @@ Auth policy:
 - iOS: Sign in with Apple is primary.
 - Android: Google sign-in is primary.
 - Link providers under one Firebase user when possible.
-- Anonymous local use should remain possible until the user turns on sync.
+- The current onboarding flow requires sign-in before entering the app shell.
 
 Firestore shape:
 
@@ -129,20 +136,16 @@ users/{uid}/settings/app
   soundEnabled
   defaultBlockMinutes
 
-users/{uid}/days/{yyyyMMdd}
-  date
-  brainDump
-  topPriorities
+users/{uid}/days/{yyyy-MM-dd}
+  dateKey
+  plan
+    brainDump
+    reminders
+    topPriorities
+    timeBoxes
+    timer/settings snapshot
+  clientUpdatedAt
   updatedAt
-
-users/{uid}/days/{yyyyMMdd}/timeBoxes/{timeBoxId}
-  title
-  startAt
-  endAt
-  status
-  source
-  calendarProvider
-  calendarEventId
 
 users/{uid}/devices/{deviceId}
   platform
@@ -219,17 +222,16 @@ Invite codes:
 
 ## Implementation Order
 
-1. Add entitlement model and local feature gate.
-2. Add Firebase project and Auth.
-3. Add local-to-cloud repository boundary.
-4. Add Firestore sync for Today plan.
-5. Add StoreKit / Play Billing product IDs and entitlement restore.
-6. Add invite code redemption through Cloud Functions.
-7. Add Apple Watch companion app.
-8. Add Android phone foreground-service timer foundation.
-9. Add Android notification Chronometer/Live Update surface.
-10. Add Wear OS companion.
-11. Add server calendar integrations.
+1. Done: Firebase project, Auth, local/cloud repository boundary, and daily
+   Firestore plan sync.
+2. Done: Android phone foreground service and Chronometer notification.
+3. Next: release smoke tests and production observability.
+4. Add StoreKit / Play Billing product IDs and entitlement restore.
+5. Add invite code redemption through Cloud Functions.
+6. Add Apple Watch companion app.
+7. Add Android 16 Live Update enhancement.
+8. Add Wear OS companion.
+9. Extend one-way calendar export into bidirectional provider sync.
 
 ## Human-Required Setup
 

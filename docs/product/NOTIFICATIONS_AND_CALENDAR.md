@@ -35,12 +35,12 @@ This keeps the app resilient when the OS throttles notification or widget render
 
 Android should not receive a fresh notification every second for a running timer.
 
-Recommended Android phone implementation:
+Implemented Android phone foundation:
 
-- Add a native foreground service as the source of timer execution.
-- Persist `endTime`, `phase`, `status`, `activeTimeBoxId`, and pause state.
-- Build an ongoing notification from that snapshot.
-- Use Android chronometer fields for countdown display instead of reposting the notification every second.
+- A native foreground service executes and restores active timer sessions.
+- Absolute `endTime`, phase, status, and pause state are persisted natively.
+- The ongoing notification uses Android chronometer fields instead of being
+  reposted every second.
 - Keep manual notification updates for meaningful state changes only: start, pause, resume, skip, complete, active box change, and permission changes.
 - Throttle any non-timer progress updates because Android has package-level notification update rate limiting.
 - For Android 16+, evaluate Live Updates with `Notification.ProgressStyle`, promoted notification permission, ongoing behavior, and status-chip constraints.
@@ -73,12 +73,41 @@ On iOS, custom notification sounds must be packaged with the app and referenced 
 
 Calendar should be optional, not mandatory.
 
-The best product model is:
+The current product model is:
 
-- local planning works without sign in,
+- onboarding is followed by mandatory Firebase sign-in,
+- local persistence keeps editing responsive and provides an offline cache,
+- Firestore restores each signed-in user's daily plans across devices,
 - Apple Calendar export works with on-device permission,
-- Google Calendar sync requires Firebase Auth plus Google OAuth,
+- Google Calendar export requires Firebase Auth plus Google OAuth,
 - users can choose which time boxes become calendar events.
+
+Both calendar providers currently implement one-way export. Existing event-id
+mappings prevent duplicate creation on retry. Google also uses a deterministic
+event ID derived from the date and TimeBox ID, preventing another device from
+creating the same event again. Apple keeps write-only permission and therefore
+uses local mapping de-duplication; cross-device Apple event lookup would require
+expanding to full calendar read access.
+
+## Calendar Import Normalization
+
+Calendar import must not create a fake precision the source event does not have.
+The proposed v1 rule is:
+
+1. Read events only after an explicit provider import action and permission.
+2. Intersect each event with the configured awake-time window.
+3. Project event coverage onto 30-minute slots.
+4. When several events cover one slot, choose one representative by largest
+   overlap, then accepted-calendar priority, then earliest start time.
+5. Merge adjacent slots represented by the same event into one TimeBox.
+6. Preserve an existing local TimeBox and report the imported event as skipped
+   instead of silently replacing or deleting the local plan.
+7. Store the source provider/event ID so a later import updates the same card.
+
+Apple import requires full EventKit event access rather than the current
+write-only permission. Google import requires calendar read authorization and
+OAuth consent/review copy that accurately describes imported data. No import UI
+should be shown as connected until those permissions and repository paths exist.
 
 ## Apple Calendar
 

@@ -12,16 +12,18 @@ The product direction is inspired by explicit timeboxing: brain dump, top three 
 - Native iOS timer source of truth through `MethodChannel`
 - ActivityKit Live Activity for Lock Screen and Dynamic Island
 - Top priorities and current time box metadata in Live Activity
-- Local notifications for focus and break completion
+- Native start/progress and completion notifications with current task metadata
 - Session presets: `25/5`, `50/10`, and `15/3`
 - Auto-start options for breaks and next focus sessions
 - Local alert and sound preferences
 - Cold-launch restoration using persisted native `endTime`
 - Local Today Plan persistence and seven-day daily history
 - Apple Calendar export through EventKit
-- Google Calendar export MVP through Google Sign-In calendar scope
-- Firebase Auth integration shell with Sign in with Apple
-- Android timer notification strategy for a future phone app
+- Google Calendar export through Google Sign-In and a Dio REST client
+- Firebase Auth gate with Apple and Google sign-in and account deletion
+- Android foreground timer with OS-rendered countdown notifications
+- Melos workspace scripts for codegen, testing, guardrails, and release checks
+- Mockito repository/data-source tests and a Patrol first-launch smoke test
 - Monotone visual system and custom SVG-based app icon
 - Notebook capture and multi-calendar sync roadmap for later expansion
 
@@ -42,7 +44,7 @@ Swift PomodoroTimerManager
 
 The native timer owns the authoritative `endTime`. Flutter receives tick updates for the in-app display, while Live Activity renders from the same absolute timestamp. When the app process is killed and reopened, Flutter asks native code to restore the active session instead of resetting to `25:00`.
 
-The same architecture is intended for Android: keep one absolute `endTime` as the source of truth, then let the platform render the visible countdown. Android should use a foreground service plus chronometer-style notification fields, and Android 16+ can use progress-centric Live Updates where available. The app should not repost a notification every second just to move a timer.
+Android now follows the same architecture: one absolute `endTime` is the source of truth, while a Kotlin foreground service delegates the visible countdown to notification Chronometer fields. The app does not repost a notification every second just to move the timer. Android 16 progress-centric Live Updates remain a separate enhancement.
 
 ## Product Decisions
 
@@ -52,7 +54,8 @@ The feature set is intentionally small and portfolio-friendly:
 - `50/10` supports deeper work blocks.
 - `15/3` supports quick starts when motivation is low.
 - Auto-start breaks are enabled by default to protect recovery time.
-- Auto-start next focus is off by default so the next work block remains intentional.
+- Auto-start scheduled focus is off by default; when enabled, the current and
+  following time boxes start from their clock-aligned remaining time.
 - Local alerts can be disabled independently from Live Activity.
 - Alert sound can be disabled while keeping visual notifications.
 - Notification permission is requested contextually when the user starts a timer, not on first launch.
@@ -61,12 +64,20 @@ The feature set is intentionally small and portfolio-friendly:
 ## Product Roadmap
 
 - [Product TODO](docs/product/TODO.md)
+- [Current maintenance status](docs/maintenance/PROJECT_STATUS.md)
 - [Menu structure](docs/product/MENU_STRUCTURE.md)
 - [Naming direction](docs/product/NAMING.md)
 - [Timeboxing strategy](docs/product/TIMEBOXING_STRATEGY.md)
 - [Notifications and calendar plan](docs/product/NOTIFICATIONS_AND_CALENDAR.md)
 - [Android timer notification strategy](docs/product/ANDROID_TIMER_NOTIFICATION_STRATEGY.md)
+- [Tech stack usage](docs/product/TECH_STACK_USAGE.md)
 - [App Store review preparation](docs/release/APP_STORE_REVIEW_PREP.md)
+- [Account ownership migration](docs/release/ACCOUNT_OWNERSHIP_MIGRATION.md)
+- [App Store, Shorebird, and Codemagic setup](docs/release/APPSTORE_SHOREBIRD_CODEMAGIC_SETUP.md)
+- [Release automation](docs/release/RELEASE_AUTOMATION.md)
+- [Testing automation](docs/release/TESTING_AUTOMATION.md)
+- [Shorebird policy](docs/release/SHOREBIRD_POLICY.md)
+- [Environment strategy](docs/release/ENVIRONMENT_STRATEGY.md)
 - [Privacy policy draft](docs/legal/PRIVACY_POLICY_DRAFT.md)
 - [Terms draft](docs/legal/TERMS_DRAFT.md)
 
@@ -141,16 +152,16 @@ Live Activity uses SwiftUI `Text(timerInterval:countsDown:)`. On the Lock Screen
 
 ## Android Timer Notes
 
-Android has a parallel constraint: notification updates can be rate-limited or delayed by the system, and OEM battery management can affect persistent notification freshness. A future Android app should avoid per-second notification reposts. Instead, it should pass the end time into a foreground-service notification and let Android render time through `setWhen`, `setUsesChronometer`, and `setChronometerCountdown`; Android 16 Live Updates can use `Notification.ProgressStyle` for supported progress-centric surfaces.
+Android has a parallel constraint: notification updates can be rate-limited or delayed by the system, and OEM battery management can affect persistent notification freshness. The implemented Kotlin foreground service passes the end time into an ongoing notification and lets Android render time through `setWhen`, `setUsesChronometer`, and `setChronometerCountDown`. Android 16 Live Updates can later add `Notification.ProgressStyle` for supported progress-centric surfaces.
 
 ## Local Setup
 
 ```bash
 flutter pub get
-flutter gen-l10n
-dart run build_runner build
-flutter analyze
-flutter test
+dart run melos run codegen
+dart run melos run analyze
+dart run melos run test
+dart run melos run guard
 flutter build ios --simulator
 ```
 
@@ -158,16 +169,54 @@ The app target currently requires iOS 15.0+ because Firebase Auth/Core Swift Pac
 
 ## Firebase And Calendar Setup
 
-These files and console settings are intentionally not committed because they are project/account-specific:
+Firebase config files are intentionally local-only for the public repository.
+Run `flutterfire configure` with your own Firebase project before building auth
+or cloud sync features.
 
-1. Create a Firebase project and add the iOS app `com.seongwoo.focusmark`.
-2. Download `GoogleService-Info.plist`, place it in `ios/Runner/`, and add it to the Runner target in Xcode.
-3. Enable Firebase Authentication providers for Apple and, when ready, Google.
-4. Enable Sign in with Apple for the Apple Developer App ID and keep `Runner/Runner.entitlements` attached to the Runner target.
-5. Add the `REVERSED_CLIENT_ID` from `GoogleService-Info.plist` as an iOS URL scheme in `ios/Runner/Info.plist`.
-6. Enable Google Calendar API in the Google Cloud project and configure the OAuth consent screen for Calendar event write access.
+Completed:
+
+1. Firebase project created locally
+2. iOS Firebase app registered locally for the app bundle
+3. `ios/Runner/GoogleService-Info.plist` generated locally and ignored by git
+4. `lib/firebase_options.dart` generated locally and ignored by git
+5. Identity Toolkit API enabled for Firebase Auth
+6. Google Calendar API enabled
+7. Apple and Google Firebase Authentication providers enabled
+8. Google Sign-In URL scheme is read from local `ios/Flutter/Firebase.local.xcconfig`
+9. Settings account UI supports Apple and Google Firebase sign-in
+10. Firestore sync stores each signed-in user's Today Plan at `users/{uid}/days/{yyyy-MM-dd}`
+11. Local Today Plan records upload to Firestore after sign-in when no cloud record exists
+12. Daily history merges local summaries with Firestore summaries for the signed-in user
+13. Account deletion returns immediately to the auth gate and clears local plan data after the Firebase account is deleted
+
+Still required in Firebase, Google Cloud, and Apple Developer consoles:
+
+1. Enable Sign in with Apple for the Apple Developer App ID and keep `Runner/Runner.entitlements` attached to the Runner target.
+2. Create ignored `ios/Flutter/Firebase.local.xcconfig` and set `GOOGLE_REVERSED_CLIENT_ID` from your Firebase iOS app.
+3. Configure the OAuth consent screen for Calendar event write access.
+4. Add release/test users while the OAuth consent screen is in testing mode.
+
+Firestore rules in this repo restrict plan records to the authenticated owner:
+
+```text
+users/{uid}/days/{yyyy-MM-dd}
+```
 
 ## Deployment Checklist
+
+Public release URLs:
+
+- Privacy Policy: https://timebox-mark-prod.web.app/privacy/
+- Support: https://timebox-mark-prod.web.app/support/
+- Terms: https://timebox-mark-prod.web.app/terms/
+
+Release automation:
+
+- Fastlane: `ios/fastlane`
+- Codemagic: `codemagic.yaml`
+- CircleCI: `.circleci/config.yml`
+- Public-repo guardrails: `scripts/ci/verify_release_guardrails.sh`
+- Shorebird: documented only, not initialized for the first submitted binary
 
 1. Open `ios/Runner.xcworkspace` in Xcode.
 2. Set a valid Apple Developer Team for `Runner` and `PomodoroWidgetExtensionExtension`.
@@ -193,6 +242,12 @@ dart run build_runner build
 flutter analyze
 flutter test
 flutter build ios --simulator
+./gradlew :app:assembleDebug
 ```
 
+The Bridle quick gate also passed secret scanning across the worktree and Git
+history, duplicate implementation detection, analysis, and 36 Flutter tests.
+
 The iOS release archive requires local Apple signing credentials, so final App Store/TestFlight export should be performed on the developer account that owns the bundle ID.
+
+See `docs/release/TESTFLIGHT_UPLOAD.md` for the exact TestFlight upload runbook.

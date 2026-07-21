@@ -18,16 +18,24 @@ Android notifications can be rate-limited when an app updates them too often. No
 
 That means Android has the same design pressure as iOS Live Activity: use a stable absolute timestamp and delegate time rendering to the system.
 
-## Proposed Android Phone Implementation
+## Implemented Android Phone Foundation
 
-- Add a native foreground service for active timer sessions.
-- Persist `endTime`, `phase`, `status`, `activeTimeBoxId`, `remainingWhenPaused`, and `updatedAt`.
-- Show an ongoing notification for the active focus or break block.
-- Use `Notification.Builder#setWhen(endTimeMillis)`.
-- Use `Notification.Builder#setUsesChronometer(true)`.
-- Use `Notification.Builder#setChronometerCountdown(true)` for countdown behavior.
-- Update the notification only when semantic state changes.
-- Recompute remaining time as `endTime - now` when the service or app restarts.
+- `PomodoroTimerService` runs active sessions as a foreground service.
+- `PomodoroTimerState` persists the absolute `endTime`, phase, status, pause
+  state, settings, and localized notification copy.
+- The ongoing notification uses `setWhen`, `setUsesChronometer`, and
+  `setChronometerCountDown`; it is not reposted every second.
+- The MethodChannel supports start, pause, resume, stop, restore, and settings
+  updates from the shared Flutter domain layer.
+- Android 13 notification permission and foreground-service manifest entries
+  are configured.
+- Kotlin unit tests cover running, paused, and completed timer restoration.
+
+Still pending:
+
+- Android 16 `Notification.ProgressStyle` promoted Live Updates.
+- Release upload-key and Play App Signing setup.
+- Wear OS companion UI and Data Layer synchronization.
 
 ## Android 16 Live Updates
 

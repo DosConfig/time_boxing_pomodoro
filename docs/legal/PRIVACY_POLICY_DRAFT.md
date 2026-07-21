@@ -1,49 +1,78 @@
 # Privacy Policy Draft
 
-This is a product draft for review before public release. It is not legal advice.
+This is a product draft for review before public release. It is not legal
+advice.
 
 ## Timebox Mark Privacy Policy
 
 Effective date: TBD
 
-Timebox Mark helps you plan focus blocks and manage Pomodoro-style timers.
+Timebox Mark helps you plan daily time boxes, run focus timers, receive local
+alerts, and optionally export your plan to your calendar.
 
 ## Data We Store
 
-The current app stores timer state and notification preferences on your device.
+Timebox Mark stores your daily planning data so the app can restore and sync
+your work across sessions.
 
 This may include:
 
-- current timer phase,
-- remaining timer state,
-- completed session count,
+- brain dump items,
+- reminders,
+- top priorities,
+- timebox titles and time ranges,
+- completed timebox count,
 - notification preference,
 - sound preference.
 
+When you are signed in, this data may be stored in Firebase Firestore under your
+account so your current daily plan and recent progress can sync. When Firebase
+is unavailable, the app keeps the data on your device.
+
+## Account Data
+
+If you sign in with Apple or Google, Timebox Mark receives basic account
+information such as a user identifier, email address, and display name when the
+provider supplies it. This is used only for authentication, syncing your plan,
+and connecting calendar providers.
+
 ## Notifications
 
-Timebox Mark uses local notifications to alert you when a focus block or break ends. Local notifications are scheduled on your device.
+Timebox Mark uses local notifications to alert you when a focus block or break
+ends. These notifications are scheduled on your device. The current build does
+not use a remote push notification server.
 
 ## Live Activity
 
-Timebox Mark uses iOS Live Activity to display the active timer on the Lock Screen and Dynamic Island.
-
-## Accounts
-
-The current version does not require an account.
-
-If Firebase Auth or calendar sync is added, this policy must be updated before release.
+Timebox Mark uses iOS Live Activity to display the active timer, visible top
+priorities, and current timebox on the Lock Screen and Dynamic Island.
 
 ## Calendar Access
 
-The current version does not access your calendar.
+Calendar export is optional.
 
-If calendar export or sync is added, Timebox Mark will request permission before creating or reading calendar events.
+For Apple Calendar, Timebox Mark requests calendar permission only when you
+choose to export time boxes. On supported iOS versions, the app requests
+write-only access so it can create calendar events without reading your existing
+calendar data.
 
-## Remote Push
+For Google Calendar, Timebox Mark requests permission to create calendar events
+in your Google Calendar. Google Calendar data is used only to create the events
+you choose to export. It is not sold, used for advertising, or shared with
+unrelated third parties.
 
-The current version does not send remote push notifications.
+## Google User Data
+
+Timebox Mark's use of Google user data is limited to providing sign-in and
+calendar export functionality. The app's use and transfer of information
+received from Google APIs will adhere to the Google API Services User Data
+Policy, including the Limited Use requirements.
+
+## Data We Do Not Collect
+
+Timebox Mark does not collect location, contacts, photos, browsing history, or
+advertising identifiers, and it does not track you across apps or websites.
 
 ## Contact
 
-Support contact: TBD
+Support contact: seongwoo@10xkeleton.com
