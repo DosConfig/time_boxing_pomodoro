@@ -1,4 +1,4 @@
-name: pomodoro_method_channel
+name: time_boxing_pomodoro
 description: "A minimal Pomodoro timer with native iOS Live Activity and notification support."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -20,6 +20,8 @@ version: 1.0.0+1
 
 environment:
   sdk: ^3.9.2
+
+workspace: []
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -45,9 +47,9 @@ dependencies:
   firebase_core: ^4.12.1
   firebase_auth: ^6.5.6
   google_sign_in: ^7.2.0
-  googleapis: ^16.0.0
-  http: ^1.6.0
-
+  cloud_firestore: ^6.7.1
+  url_launcher: ^6.3.2
+  dio: ^5.10.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -62,6 +64,9 @@ dev_dependencies:
   build_runner: ^2.15.1
   freezed: ^3.2.6-dev.1
   json_serializable: ^6.14.0
+  mockito: ^5.6.4
+  patrol: ^4.7.1
+  melos: ^8.2.2
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -74,6 +79,9 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  assets:
+    - assets/auth/google_g_logo.png
 
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
@@ -94,3 +102,36 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+patrol:
+  test_directory: integration_test
+  ios:
+    bundle_id: com.seongwoo.focusmark
+    app_name: Timebox Mark
+
+melos:
+  useRootAsPackage: true
+  scripts:
+    bootstrap:
+      run: flutter pub get
+      description: Install Flutter package dependencies.
+    codegen:
+      run: |
+        flutter gen-l10n
+        dart run build_runner build
+      description: Regenerate Riverpod, Freezed, JSON, l10n, and Mockito outputs.
+    analyze:
+      run: flutter analyze
+      description: Run Flutter static analysis.
+    test:
+      run: flutter test
+      description: Run unit and widget tests.
+    guard:
+      run: bash scripts/ci/verify_release_guardrails.sh
+      description: Run public-repo, legal-link, analyzer, and test guardrails.
+    patrol:smoke:
+      run: bash scripts/test/run_patrol_smoke.sh
+      description: Run the Patrol first-launch smoke test on a selected device.
+    release:ios:verify:
+      run: cd ios && bundle exec fastlane ios verify
+      description: Run the iOS Fastlane verification lane.
