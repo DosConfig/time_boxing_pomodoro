@@ -1,4 +1,0 @@
-Target dependency graph (2 targets)
-Target 'Runner' in project 'Runner'
-➜ Explicit dependency on target 'PomodoroWidgetExtensionExtension' in project 'Runner'
-Target 'PomodoroWidgetExtensionExtension' in project 'Runner' (no dependencies)

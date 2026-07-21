@@ -28,6 +28,38 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 /build/
+ios/build/
+**/build/
+vendor/bundle/
+.bundle/
+.firebase/
+e2e_run.mp4
+
+# Local environment and credentials
+.env
+.env.*
+!.env.example
+fastlane/.env
+ios/fastlane/.env
+ios/fastlane/report.xml
+codemagic-secrets.json
+*.pem
+*.p8
+*.p12
+*.key
+*.cer
+*.mobileprovision
+*.provisionprofile
+*.jks
+*.keystore
+key.properties
+
+# Local Firebase project config for public repositories
+.firebaserc
+ios/Flutter/Firebase.local.xcconfig
+lib/firebase_options.dart
+ios/Runner/GoogleService-Info.plist
+android/app/google-services.json
 
 # Symbolication related
 app.*.symbols
@@ -79,3 +111,5 @@ blog_posts/
 blog_sql/
 BLOG_SERIES_STRUCTURE.md
 LIVE_ACTIVITY_UI_GUIDE.md
+.bridle/
+integration_test/test_bundle.dart
