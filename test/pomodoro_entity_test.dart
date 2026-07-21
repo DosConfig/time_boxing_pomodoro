@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pomodoro_method_channel/features/focus/data/dtos/today_plan_dto.dart';
-import 'package:pomodoro_method_channel/features/focus/domain/entities/pomodoro.dart';
+import 'package:time_boxing_pomodoro/features/focus/data/dtos/today_plan_dto.dart';
+import 'package:time_boxing_pomodoro/features/focus/domain/entities/pomodoro.dart';
 
 void main() {
   group('Pomodoro presets', () {
@@ -14,10 +14,9 @@ void main() {
       expect(pomodoro.notificationsEnabled, isTrue);
       expect(pomodoro.soundEnabled, isTrue);
       expect(pomodoro.brainDump, isEmpty);
-      expect(pomodoro.timeBoxes, isNotEmpty);
-      expect(pomodoro.activeTimeBox?.title, 'Top priority');
-      expect(pomodoro.activeTimeBox?.timeRange, '09:00-09:30');
-      expect(pomodoro.activeTimeBox?.durationSeconds, 30 * 60);
+      expect(pomodoro.timeBoxes, isEmpty);
+      expect(pomodoro.activeTimeBox, isNull);
+      expect(pomodoro.canStartFocus, isFalse);
     });
 
     test('deep work preset resets the active segment', () {
@@ -77,13 +76,26 @@ void main() {
     });
 
     test('live activity context falls back to active time box', () {
-      final pomodoro = Pomodoro.initial();
+      final pomodoro = Pomodoro.initial().copyWith(
+        timeBoxes: TimeBox.defaultDay,
+        activeTimeBoxId: 'box-0900',
+        currentTimeBoxTimeRange: '09:00-09:30',
+      );
 
       expect(pomodoro.liveActivityTimeBoxTitle, 'Top priority');
       expect(pomodoro.liveActivityTimeBoxRange, '09:00-09:30');
     });
 
-    test('time boxes parse fixed 30 minute slot ranges', () {
+    test('active time box does not fall back when the id is empty', () {
+      final pomodoro = Pomodoro.initial().copyWith(activeTimeBoxId: '');
+
+      expect(pomodoro.activeTimeBox, isNull);
+      expect(pomodoro.canStartFocus, isFalse);
+      expect(pomodoro.liveActivityTimeBoxTitle, isEmpty);
+      expect(pomodoro.liveActivityTimeBoxRange, isEmpty);
+    });
+
+    test('time boxes parse 30 minute grid ranges', () {
       const box = TimeBox(
         id: 'box-test',
         title: 'Slot',
@@ -95,6 +107,19 @@ void main() {
       expect(box.endMinutes, 14 * 60);
       expect(box.rangeDurationSeconds, 30 * 60);
     });
+
+    test('time boxes support longer ranges on the 30 minute grid', () {
+      const box = TimeBox(
+        id: 'box-long',
+        title: 'Deep work',
+        timeRange: '13:30-15:00',
+        durationSeconds: 90 * 60,
+      );
+
+      expect(box.startMinutes, (13 * 60) + 30);
+      expect(box.endMinutes, 15 * 60);
+      expect(box.rangeDurationSeconds, 90 * 60);
+    });
   });
 
   group('Today plan persistence', () {
@@ -103,6 +128,7 @@ void main() {
         brainDump: ['Client meeting', 'Draft launch plan'],
         reminders: ['Send recap'],
         topPriorities: ['Ship MVP', 'Calendar export', ''],
+        timeBoxes: TimeBox.defaultDay,
         completedSessions: 2,
         activeTimeBoxId: 'box-1000',
         status: PomodoroStatus.running,
@@ -145,6 +171,18 @@ void main() {
 
       expect(restored.activeTimeBoxId, 'box-custom');
       expect(restored.activeTimeBox?.title, 'Custom');
+    });
+
+    test('restores an intentionally empty day without sample boxes', () {
+      const dto = TodayPlanDto(dateKey: '2026-07-16');
+
+      final restored = dto.toEntity(Pomodoro.initial());
+
+      expect(restored.timeBoxes, isEmpty);
+      expect(restored.activeTimeBoxId, isEmpty);
+      expect(restored.activeTimeBox, isNull);
+      expect(restored.remainingTime, 0);
+      expect(restored.canStartFocus, isFalse);
     });
   });
 }
