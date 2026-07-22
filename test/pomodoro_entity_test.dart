@@ -17,6 +17,7 @@ void main() {
       expect(pomodoro.timeBoxes, isEmpty);
       expect(pomodoro.activeTimeBox, isNull);
       expect(pomodoro.canStartFocus, isFalse);
+      expect(pomodoro.remainingTime, 0);
     });
 
     test('deep work preset resets the active segment', () {

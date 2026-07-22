@@ -70,6 +70,8 @@ class PomodoroController extends _$PomodoroController
   StreamSubscription? _timerSubscription;
   Timer? _clockSyncTimer;
   Future<void>? _localRestoreFuture;
+  bool _hasRestoredLocalPlan = false;
+  bool _initialRestoreCompleted = false;
   final _nativeRestore = _SingleFlight();
   final _dayRollover = _SingleFlight();
   final _scheduledAutoStart = _SingleFlight();
@@ -80,7 +82,6 @@ class PomodoroController extends _$PomodoroController
   Pomodoro build() {
     _activeDateKey = _dateKey(_now());
     WidgetsBinding.instance.addObserver(this);
-    _startClockSyncTimer();
     ref.onDispose(() {
       WidgetsBinding.instance.removeObserver(this);
       _timerSubscription?.cancel();
@@ -88,17 +89,29 @@ class PomodoroController extends _$PomodoroController
     });
     Future.microtask(() async {
       await _restoreFromLocalPlan();
-      // 프로세스 재시작 대비: 네이티브에 이전 상태 질의 후 복원
       await _restoreFromNative();
-      syncDayBoundaryAndFocus();
+      _completeInitialRestore();
     });
     return Pomodoro.initial();
   }
 
   Future<void> syncTodayPlanWithDatabase() async {
     await _restoreFromLocalPlan(force: true);
-    syncFocusWithClock();
+    _completeInitialRestore();
     ref.invalidate(dailyPlanHistoryProvider);
+  }
+
+  Future<void> flushPendingPlanWrites() => repository.flushPendingWrites();
+
+  Future<void> clearLocalPlanForSignOut() async {
+    await _timerSubscription?.cancel();
+    _timerSubscription = null;
+    await repository.clearLocalPlanData();
+  }
+
+  Future<void> persistCurrentPlan() async {
+    repository.updatePomodoro(state);
+    await repository.flushPendingWrites();
   }
 
   void updateNativeCopy(NativeTimerCopy nativeCopy) {
@@ -107,14 +120,18 @@ class PomodoroController extends _$PomodoroController
 
   Future<void> _restoreFromLocalPlan({bool force = false}) async {
     final pendingRestore = _localRestoreFuture;
-    if (!force && pendingRestore != null) {
+    if (pendingRestore != null) {
       return pendingRestore;
+    }
+    if (!force && _hasRestoredLocalPlan) {
+      return;
     }
 
     late final Future<void> restoreFuture;
     restoreFuture = _doRestoreFromLocalPlan().whenComplete(() {
       if (identical(_localRestoreFuture, restoreFuture)) {
-        _localRestoreFuture = Future.value();
+        _hasRestoredLocalPlan = true;
+        _localRestoreFuture = null;
       }
     });
     _localRestoreFuture = restoreFuture;
@@ -125,6 +142,14 @@ class PomodoroController extends _$PomodoroController
     state = await restoreTodayPlanUseCase(state);
   }
 
+  void _completeInitialRestore() {
+    if (!_initialRestoreCompleted) {
+      _initialRestoreCompleted = true;
+      _startClockSyncTimer();
+    }
+    syncDayBoundaryAndFocus();
+  }
+
   Future<void> _restoreFromNative() => _nativeRestore.run(_doRestoreFromNative);
 
   Future<void> _doRestoreFromNative() async {
@@ -132,9 +157,6 @@ class PomodoroController extends _$PomodoroController
     state = state.copyWith(
       notificationsEnabled: restored.notificationsEnabled,
       soundEnabled: restored.soundEnabled,
-      topPriorities: restored.topPriorities,
-      currentTimeBoxTitle: restored.currentTimeBoxTitle,
-      currentTimeBoxTimeRange: restored.currentTimeBoxTimeRange,
     );
 
     switch (restored.status) {
@@ -145,6 +167,13 @@ class PomodoroController extends _$PomodoroController
           completedSessions: restored.sessionCount,
           sessionsUntilLongBreak: restored.sessionGoal,
           phase: restored.phase,
+          currentTimeBoxTitle: restored.currentTimeBoxTitle.trim().isEmpty
+              ? state.currentTimeBoxTitle
+              : restored.currentTimeBoxTitle,
+          currentTimeBoxTimeRange:
+              restored.currentTimeBoxTimeRange.trim().isEmpty
+              ? state.currentTimeBoxTimeRange
+              : restored.currentTimeBoxTimeRange,
         );
         repository.updatePomodoro(state);
         _subscribeTicks(); // 네이티브 타이머는 이미 재가동됨 — tick 구독만
@@ -156,6 +185,13 @@ class PomodoroController extends _$PomodoroController
           completedSessions: restored.sessionCount,
           sessionsUntilLongBreak: restored.sessionGoal,
           phase: restored.phase,
+          currentTimeBoxTitle: restored.currentTimeBoxTitle.trim().isEmpty
+              ? state.currentTimeBoxTitle
+              : restored.currentTimeBoxTitle,
+          currentTimeBoxTimeRange:
+              restored.currentTimeBoxTimeRange.trim().isEmpty
+              ? state.currentTimeBoxTimeRange
+              : restored.currentTimeBoxTimeRange,
         );
         repository.updatePomodoro(state);
         _subscribeTicks(); // 재개 시 같은 통로로 tick 수신
@@ -196,6 +232,9 @@ class PomodoroController extends _$PomodoroController
   }
 
   void syncDayBoundaryAndFocus() {
+    if (!_initialRestoreCompleted) {
+      return;
+    }
     final nextDateKey = _dateKey(_now());
     if (nextDateKey != _activeDateKey) {
       _activeDateKey = nextDateKey;
@@ -548,17 +587,23 @@ class PomodoroController extends _$PomodoroController
     int startMinutes, {
     String title = 'New time box',
     int durationSeconds = _slotDurationSeconds,
+    int durationStepMinutes = _slotDurationSeconds ~/ 60,
     List<int> repeatWeekdays = const [],
   }) {
     return _commitAddedTimeBox(
       startMinutes: startMinutes,
       title: title,
       durationSeconds: durationSeconds,
+      durationStepMinutes: durationStepMinutes,
       repeatWeekdays: repeatWeekdays,
     );
   }
 
-  TimeBox? scheduleBrainDumpItemAtStart(int index, int startMinutes) {
+  TimeBox? scheduleBrainDumpItemAtStart(
+    int index,
+    int startMinutes, {
+    int durationMinutes = _slotDurationSeconds ~/ 60,
+  }) {
     if (index < 0 || index >= state.brainDump.length) {
       return null;
     }
@@ -568,11 +613,17 @@ class PomodoroController extends _$PomodoroController
     return _commitAddedTimeBox(
       startMinutes: startMinutes,
       title: title,
+      durationSeconds: durationMinutes * 60,
+      durationStepMinutes: durationMinutes,
       brainDump: brainDump,
     );
   }
 
-  TimeBox? scheduleTopPriorityAtStart(int index, int startMinutes) {
+  TimeBox? scheduleTopPriorityAtStart(
+    int index,
+    int startMinutes, {
+    int durationMinutes = _slotDurationSeconds ~/ 60,
+  }) {
     if (index < 0 || index >= 3 || index >= state.topPriorities.length) {
       return null;
     }
@@ -582,10 +633,19 @@ class PomodoroController extends _$PomodoroController
       return null;
     }
 
-    return _commitAddedTimeBox(startMinutes: startMinutes, title: title);
+    return _commitAddedTimeBox(
+      startMinutes: startMinutes,
+      title: title,
+      durationSeconds: durationMinutes * 60,
+      durationStepMinutes: durationMinutes,
+    );
   }
 
-  TimeBox? scheduleReminderAtStart(int index, int startMinutes) {
+  TimeBox? scheduleReminderAtStart(
+    int index,
+    int startMinutes, {
+    int durationMinutes = _slotDurationSeconds ~/ 60,
+  }) {
     if (index < 0 || index >= state.reminders.length) {
       return null;
     }
@@ -595,6 +655,8 @@ class PomodoroController extends _$PomodoroController
     return _commitAddedTimeBox(
       startMinutes: startMinutes,
       title: title,
+      durationSeconds: durationMinutes * 60,
+      durationStepMinutes: durationMinutes,
       reminders: reminders,
     );
   }
@@ -733,12 +795,16 @@ class PomodoroController extends _$PomodoroController
     required int startMinutes,
     required String title,
     int durationSeconds = _slotDurationSeconds,
+    int durationStepMinutes = _slotDurationSeconds ~/ 60,
     List<String>? brainDump,
     List<String>? reminders,
     List<int> repeatWeekdays = const [],
   }) {
     final boxes = List<TimeBox>.from(state.timeBoxes);
-    final normalizedDuration = _normalizedDurationSeconds(durationSeconds);
+    final normalizedDuration = _normalizedDurationSeconds(
+      durationSeconds,
+      stepMinutes: durationStepMinutes,
+    );
     final nextBox = TimeBox(
       id: 'box-${DateTime.now().microsecondsSinceEpoch}',
       title: title.trim().isEmpty ? 'New time box' : title.trim(),
@@ -946,7 +1012,12 @@ class PomodoroController extends _$PomodoroController
     repository.updatePomodoro(state);
   }
 
-  void resizeTimeBoxEnd(String id, int endMinutes, {int? maxEndMinutes}) {
+  void resizeTimeBoxEnd(
+    String id,
+    int endMinutes, {
+    int? maxEndMinutes,
+    int stepMinutes = _slotDurationSeconds ~/ 60,
+  }) {
     final boxes = List<TimeBox>.from(state.timeBoxes);
     final index = boxes.indexWhere((box) => box.id == id);
     if (index == -1) {
@@ -955,11 +1026,18 @@ class PomodoroController extends _$PomodoroController
 
     final box = boxes[index];
     final start = box.startMinutes;
-    if (start == null) {
+    final currentEnd = box.endMinutes;
+    if (start == null || currentEnd == null) {
       return;
     }
 
-    final minEnd = start + (_slotDurationSeconds ~/ 60);
+    final normalizedStepMinutes = _normalizedDurationStepMinutes(stepMinutes);
+    final currentDurationMinutes = currentEnd - start;
+    final minimumDurationMinutes =
+        currentDurationMinutes < normalizedStepMinutes
+        ? currentDurationMinutes
+        : normalizedStepMinutes;
+    final minEnd = start + minimumDurationMinutes;
     final nextStart = _nextStartAfter(boxes, id, start);
     final upperBound = [maxEndMinutes, nextStart, 24 * 60]
         .whereType<int>()
@@ -968,13 +1046,16 @@ class PomodoroController extends _$PomodoroController
           24 * 60,
           (current, value) => value < current ? value : current,
         );
-    final cappedEnd = endMinutes.clamp(minEnd, upperBound).toInt();
-    final snappedEnd = _snapEndMinutes(
-      start,
-      cappedEnd,
-    ).clamp(minEnd, upperBound).toInt();
-    final duration = (snappedEnd - start) * 60;
-    final nextDuration = _normalizedDurationSeconds(duration);
+    if (upperBound < minEnd) {
+      return;
+    }
+    final requestedStepCount =
+        ((endMinutes - currentEnd) / normalizedStepMinutes).round();
+    final snappedEnd =
+        currentEnd + (requestedStepCount * normalizedStepMinutes);
+    final cappedEnd = snappedEnd.clamp(minEnd, upperBound).toInt();
+    final nextDurationMinutes = cappedEnd - start;
+    final nextDuration = nextDurationMinutes * 60;
 
     if (nextDuration == _durationForTimeBox(box)) {
       return;
@@ -1003,7 +1084,12 @@ class PomodoroController extends _$PomodoroController
     repository.updatePomodoro(state);
   }
 
-  void resizeTimeBoxStart(String id, int startMinutes, {int? minStartMinutes}) {
+  void resizeTimeBoxStart(
+    String id,
+    int startMinutes, {
+    int? minStartMinutes,
+    int stepMinutes = _slotDurationSeconds ~/ 60,
+  }) {
     final boxes = List<TimeBox>.from(state.timeBoxes);
     final index = boxes.indexWhere((box) => box.id == id);
     if (index == -1) {
@@ -1021,17 +1107,26 @@ class PomodoroController extends _$PomodoroController
     final lowerBound = [minStartMinutes, previousEnd, 0]
         .whereType<int>()
         .fold<int>(0, (current, value) => value > current ? value : current);
-    final maxStart = end - (_slotDurationSeconds ~/ 60);
-    final cappedStart = startMinutes.clamp(lowerBound, maxStart).toInt();
-    final slotMinutes = _slotDurationSeconds ~/ 60;
-    final snappedStart = ((cappedStart / slotMinutes).round() * slotMinutes)
-        .clamp(lowerBound, maxStart)
-        .toInt();
+    final normalizedStepMinutes = _normalizedDurationStepMinutes(stepMinutes);
+    final currentDurationMinutes = end - currentStart;
+    final minimumDurationMinutes =
+        currentDurationMinutes < normalizedStepMinutes
+        ? currentDurationMinutes
+        : normalizedStepMinutes;
+    final maxStart = end - minimumDurationMinutes;
+    if (lowerBound > maxStart) {
+      return;
+    }
+    final requestedStepCount =
+        ((startMinutes - currentStart) / normalizedStepMinutes).round();
+    final requestedStart =
+        currentStart + (requestedStepCount * normalizedStepMinutes);
+    final snappedStart = requestedStart.clamp(lowerBound, maxStart).toInt();
     if (snappedStart == currentStart) {
       return;
     }
 
-    final nextDuration = _normalizedDurationSeconds((end - snappedStart) * 60);
+    final nextDuration = (end - snappedStart) * 60;
     final nextBox = box.copyWith(
       timeRange: _formatTimeRange(snappedStart, nextDuration),
       durationSeconds: nextDuration,
@@ -1185,6 +1280,9 @@ class PomodoroController extends _$PomodoroController
   }
 
   void syncFocusWithClock() {
+    if (!_initialRestoreCompleted) {
+      return;
+    }
     if (state.status != PomodoroStatus.idle ||
         state.phase != PomodoroPhase.focus) {
       return;
@@ -1304,29 +1402,30 @@ class PomodoroController extends _$PomodoroController
   int _durationForTimeBox(TimeBox box) {
     final rangeDuration = box.rangeDurationSeconds;
     if (rangeDuration != null && rangeDuration > 0) {
-      return _normalizedDurationSeconds(rangeDuration);
+      return rangeDuration.clamp(60, 24 * 60 * 60);
     }
-    return _normalizedDurationSeconds(box.durationSeconds);
+    return box.durationSeconds.clamp(60, 24 * 60 * 60);
   }
 
-  int _normalizedDurationSeconds(int durationSeconds) {
-    final slotCount = (durationSeconds / _slotDurationSeconds)
+  int _normalizedDurationSeconds(
+    int durationSeconds, {
+    int stepMinutes = _slotDurationSeconds ~/ 60,
+  }) {
+    final normalizedStepMinutes = _normalizedDurationStepMinutes(stepMinutes);
+    final stepSeconds = normalizedStepMinutes * 60;
+    final maximumSlotCount = (24 * 60) ~/ normalizedStepMinutes;
+    final slotCount = (durationSeconds / stepSeconds)
         .round()
-        .clamp(1, 48)
+        .clamp(1, maximumSlotCount)
         .toInt();
-    return slotCount * _slotDurationSeconds;
+    return slotCount * stepSeconds;
   }
 
-  int _snapEndMinutes(int startMinutes, int endMinutes) {
-    final slotMinutes = _slotDurationSeconds ~/ 60;
-    final durationMinutes = (endMinutes - startMinutes)
-        .clamp(slotMinutes, 24 * 60)
-        .toInt();
-    final slotCount = (durationMinutes / slotMinutes)
-        .round()
-        .clamp(1, 48)
-        .toInt();
-    return startMinutes + (slotCount * slotMinutes);
+  int _normalizedDurationStepMinutes(int stepMinutes) {
+    return switch (stepMinutes) {
+      15 || 30 || 60 => stepMinutes,
+      _ => _slotDurationSeconds ~/ 60,
+    };
   }
 
   void _sortTimeBoxes(List<TimeBox> boxes) {

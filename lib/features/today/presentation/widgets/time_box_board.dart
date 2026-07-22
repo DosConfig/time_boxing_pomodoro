@@ -19,6 +19,7 @@ sealed class TimeBoxBoardDragPayload {
 
 class ScheduledTimeBoxDragPayload extends TimeBoxBoardDragPayload {
   final String id;
+  final int slotMinutes;
   @override
   final int durationSeconds;
   int grabOffsetSlots;
@@ -26,11 +27,15 @@ class ScheduledTimeBoxDragPayload extends TimeBoxBoardDragPayload {
   ScheduledTimeBoxDragPayload({
     required this.id,
     required this.durationSeconds,
+    required this.slotMinutes,
     this.grabOffsetSlots = 0,
   });
 
   void updateGrabOffset(double localDy, double cardHeight) {
-    final slotCount = (durationSeconds / (30 * 60)).round().clamp(1, 48);
+    final slotCount = (durationSeconds / (slotMinutes * 60)).ceil().clamp(
+      1,
+      96,
+    );
     final normalizedPosition = cardHeight <= 0
         ? 0.0
         : (localDy / cardHeight).clamp(0.0, 0.9999);
@@ -59,6 +64,7 @@ class TimeBoxBoard extends ConsumerWidget {
   final DateTime now;
   final int awakeStartMinutes;
   final int awakeEndMinutes;
+  final int slotMinutes;
   final VoidCallback onDragStarted;
   final ValueChanged<DragUpdateDetails> onDragUpdate;
   final VoidCallback onDragEnd;
@@ -70,21 +76,38 @@ class TimeBoxBoard extends ConsumerWidget {
     required this.now,
     required this.awakeStartMinutes,
     required this.awakeEndMinutes,
+    required this.slotMinutes,
     required this.onDragStarted,
     required this.onDragUpdate,
     required this.onDragEnd,
   });
 
-  static const _slotMinutes = 30;
-  static const _slotHeight = 70.0;
-  static const _resizeStepDragDistance = 70.0;
   static const _timelineWidth = 58.0;
+
+  double get _slotHeight {
+    final baseHeight = slotMinutes == 15 ? 44.0 : 70.0;
+    final scheduledDurations = pomodoro.timeBoxes
+        .map((box) => box.rangeDurationSeconds ?? box.durationSeconds)
+        .where((duration) => duration > 0)
+        .map((duration) => duration / 60);
+    if (scheduledDurations.isEmpty) {
+      return baseHeight;
+    }
+
+    final shortestDurationMinutes = scheduledDurations.reduce(
+      (shortest, duration) => duration < shortest ? duration : shortest,
+    );
+    final minimumReadableHeight = 44 * (slotMinutes / shortestDurationMinutes);
+    return minimumReadableHeight > baseHeight
+        ? minimumReadableHeight
+        : baseHeight;
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final dayStart = _dayStartMinutes();
     final dayEnd = _dayEndMinutes(dayStart);
-    final slotCount = ((dayEnd - dayStart) / _slotMinutes).ceil();
+    final slotCount = ((dayEnd - dayStart) / slotMinutes).ceil();
     final boardHeight = slotCount * _slotHeight;
     final nowMinutes = _nowMinutes();
     final actionTimeBoxId = ref.watch(todayTimeBoxActionControllerProvider);
@@ -97,6 +120,7 @@ class TimeBoxBoard extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
+            key: const ValueKey('timebox_board_title'),
             context.l10n.timeBoxesTitle,
             style: TextStyle(
               color: Color(0xFFF6F3EC),
@@ -131,11 +155,11 @@ class TimeBoxBoard extends ConsumerWidget {
                 clipBehavior: Clip.none,
                 children: [
                   ...List.generate(slotCount, (index) {
-                    final slotStart = dayStart + (index * _slotMinutes);
+                    final slotStart = dayStart + (index * slotMinutes);
                     final isCurrentSlot =
                         nowMinutes >= slotStart &&
-                        nowMinutes < slotStart + _slotMinutes;
-                    final occupied = _slotBlocked(slotStart);
+                        nowMinutes < slotStart + slotMinutes;
+                    final occupied = !_slotCanFit(slotStart, slotMinutes * 60);
 
                     return Positioned(
                       top: index * _slotHeight,
@@ -145,7 +169,7 @@ class TimeBoxBoard extends ConsumerWidget {
                       child: DragTarget<TimeBoxBoardDragPayload>(
                         onWillAcceptWithDetails: (details) => _slotCanFit(
                           _dropStartMinutes(details.data, slotStart),
-                          details.data.durationSeconds,
+                          _effectiveDurationSeconds(details.data),
                           movingBoxId:
                               details.data is ScheduledTimeBoxDragPayload
                               ? (details.data as ScheduledTimeBoxDragPayload).id
@@ -237,6 +261,8 @@ class TimeBoxBoard extends ConsumerWidget {
                       activeTimeBoxId: pomodoro.activeTimeBox?.id,
                       dayStart: dayStart,
                       dayEnd: dayEnd,
+                      slotMinutes: slotMinutes,
+                      slotHeight: _slotHeight,
                       current: _containsNow(box),
                       actionsActive: actionTimeBoxId == box.id,
                       onDragStarted: onDragStarted,
@@ -249,20 +275,21 @@ class TimeBoxBoard extends ConsumerWidget {
                             box.id,
                             startMinutes,
                             minStartMinutes: dayStart,
+                            stepMinutes: slotMinutes,
                           ),
                       onResizeEndMinutes: (endMinutes) =>
                           notifier.resizeTimeBoxEnd(
                             box.id,
                             endMinutes,
                             maxEndMinutes: dayEnd,
+                            stepMinutes: slotMinutes,
                           ),
                     ),
                   ),
                   if (nowMinutes >= dayStart && nowMinutes <= dayEnd)
                     Positioned(
                       top:
-                          ((nowMinutes - dayStart) / _slotMinutes) *
-                          _slotHeight,
+                          ((nowMinutes - dayStart) / slotMinutes) * _slotHeight,
                       left: _timelineWidth - 4,
                       right: 0,
                       child: const _NowTimelineIndicator(),
@@ -289,7 +316,8 @@ class TimeBoxBoard extends ConsumerWidget {
         return _TimeBoxEditorSheet(
           notifier: notifier,
           startMinutes: slotStart,
-          timeRange: _formatTimeRange(slotStart),
+          slotMinutes: slotMinutes,
+          timeRange: _formatTimeRange(slotStart, slotMinutes),
           fallbackTitle: context.l10n.newTimeBoxDefaultTitle,
         );
       },
@@ -317,16 +345,16 @@ class TimeBoxBoard extends ConsumerWidget {
   }
 
   int _dayStartMinutes() {
-    return (awakeStartMinutes ~/ _slotMinutes) * _slotMinutes;
+    return (awakeStartMinutes ~/ slotMinutes) * slotMinutes;
   }
 
   int _dayEndMinutes(int dayStart) {
     final end =
-        ((awakeEndMinutes + _slotMinutes - 1) ~/ _slotMinutes) * _slotMinutes;
+        ((awakeEndMinutes + slotMinutes - 1) ~/ slotMinutes) * slotMinutes;
     if (end <= dayStart) {
       return dayStart + (4 * 60);
     }
-    return end.clamp(dayStart + _slotMinutes, 24 * 60);
+    return end.clamp(dayStart + slotMinutes, 24 * 60);
   }
 
   int _nowMinutes() => (now.hour * 60) + now.minute;
@@ -352,8 +380,8 @@ class TimeBoxBoard extends ConsumerWidget {
     return '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
   }
 
-  String _formatTimeRange(int startMinutes) {
-    return '${_formatClock(startMinutes)}-${_formatClock(startMinutes + _slotMinutes)}';
+  String _formatTimeRange(int startMinutes, int durationMinutes) {
+    return '${_formatClock(startMinutes)}-${_formatClock(startMinutes + durationMinutes)}';
   }
 
   void _acceptDragPayload(TimeBoxBoardDragPayload payload, int startMinutes) {
@@ -363,18 +391,30 @@ class TimeBoxBoard extends ConsumerWidget {
       case DraftTimeBoxDragPayload(:final source, :final index):
         switch (source) {
           case DailyPlanItemCategory.brainDump:
-            notifier.scheduleBrainDumpItemAtStart(index, startMinutes);
+            notifier.scheduleBrainDumpItemAtStart(
+              index,
+              startMinutes,
+              durationMinutes: slotMinutes,
+            );
           case DailyPlanItemCategory.topPriority:
-            notifier.scheduleTopPriorityAtStart(index, startMinutes);
+            notifier.scheduleTopPriorityAtStart(
+              index,
+              startMinutes,
+              durationMinutes: slotMinutes,
+            );
           case DailyPlanItemCategory.reminder:
-            notifier.scheduleReminderAtStart(index, startMinutes);
+            notifier.scheduleReminderAtStart(
+              index,
+              startMinutes,
+              durationMinutes: slotMinutes,
+            );
         }
     }
   }
 
   int _dropStartMinutes(TimeBoxBoardDragPayload payload, int hoveredSlotStart) {
     if (payload case ScheduledTimeBoxDragPayload(:final grabOffsetSlots)) {
-      return hoveredSlotStart - (grabOffsetSlots * _slotMinutes);
+      return hoveredSlotStart - (grabOffsetSlots * slotMinutes);
     }
     return hoveredSlotStart;
   }
@@ -389,20 +429,6 @@ class TimeBoxBoard extends ConsumerWidget {
   void _clearTimeBoxInteraction(WidgetRef ref) {
     ref.read(todayTimeBoxActionControllerProvider.notifier).clear();
     ref.read(todayTimeBoxResizeModeControllerProvider.notifier).clear();
-  }
-
-  bool _slotBlocked(int slotStart, {String? movingBoxId}) {
-    return pomodoro.timeBoxes.any((box) {
-      if (box.id == movingBoxId) {
-        return false;
-      }
-      final start = box.startMinutes;
-      final end = box.endMinutes;
-      if (start == null || end == null) {
-        return false;
-      }
-      return slotStart >= start && slotStart < end;
-    });
   }
 
   bool _slotCanFit(int slotStart, int durationSeconds, {String? movingBoxId}) {
@@ -425,6 +451,12 @@ class TimeBoxBoard extends ConsumerWidget {
       }
       return slotStart < end && slotEnd > start;
     });
+  }
+
+  int _effectiveDurationSeconds(TimeBoxBoardDragPayload payload) {
+    return payload is DraftTimeBoxDragPayload
+        ? slotMinutes * 60
+        : payload.durationSeconds;
   }
 }
 
@@ -484,6 +516,8 @@ class _PositionedTimeBox extends StatelessWidget {
   final String? activeTimeBoxId;
   final int dayStart;
   final int dayEnd;
+  final int slotMinutes;
+  final double slotHeight;
   final bool current;
   final bool actionsActive;
   final VoidCallback onDragStarted;
@@ -501,6 +535,8 @@ class _PositionedTimeBox extends StatelessWidget {
     required this.activeTimeBoxId,
     required this.dayStart,
     required this.dayEnd,
+    required this.slotMinutes,
+    required this.slotHeight,
     required this.current,
     required this.actionsActive,
     required this.onDragStarted,
@@ -522,15 +558,13 @@ class _PositionedTimeBox extends StatelessWidget {
 
     final visibleStart = start < dayStart ? dayStart : start;
     final visibleEnd = end > dayEnd ? dayEnd : end;
-    final top =
-        ((visibleStart - dayStart) / TimeBoxBoard._slotMinutes) *
-            TimeBoxBoard._slotHeight +
-        4;
-    final rawHeight =
-        ((visibleEnd - visibleStart) / TimeBoxBoard._slotMinutes) *
-            TimeBoxBoard._slotHeight -
-        8;
-    final height = rawHeight < 58 ? 58.0 : rawHeight;
+    final minuteHeight = slotHeight / slotMinutes;
+    final occupiedHeight = (visibleEnd - visibleStart) * minuteHeight;
+    final edgeInset = occupiedHeight < 44 ? 1.0 : 4.0;
+    final top = ((visibleStart - dayStart) * minuteHeight) + edgeInset;
+    final height = (occupiedHeight - (edgeInset * 2))
+        .clamp(24.0, double.infinity)
+        .toDouble();
 
     return Positioned(
       top: top,
@@ -544,6 +578,8 @@ class _PositionedTimeBox extends StatelessWidget {
         selected: box.id == activeTimeBoxId,
         current: current,
         actionsActive: actionsActive,
+        slotMinutes: slotMinutes,
+        resizeStepDragDistance: slotHeight,
         onDragStarted: onDragStarted,
         onDragUpdate: onDragUpdate,
         onDragEnd: onDragEnd,
@@ -563,6 +599,8 @@ class _TimeBoxBoardCard extends ConsumerWidget {
   final bool selected;
   final bool current;
   final bool actionsActive;
+  final int slotMinutes;
+  final double resizeStepDragDistance;
   final VoidCallback onDragStarted;
   final ValueChanged<DragUpdateDetails> onDragUpdate;
   final VoidCallback onDragEnd;
@@ -578,6 +616,8 @@ class _TimeBoxBoardCard extends ConsumerWidget {
     required this.selected,
     required this.current,
     required this.actionsActive,
+    required this.slotMinutes,
+    required this.resizeStepDragDistance,
     required this.onDragStarted,
     required this.onDragUpdate,
     required this.onDragEnd,
@@ -594,6 +634,7 @@ class _TimeBoxBoardCard extends ConsumerWidget {
     final dragPayload = ScheduledTimeBoxDragPayload(
       id: box.id,
       durationSeconds: box.rangeDurationSeconds ?? box.durationSeconds,
+      slotMinutes: slotMinutes,
     );
     final surface = _TimeBoxBoardCardSurface(
       title: title,
@@ -621,7 +662,7 @@ class _TimeBoxBoardCard extends ConsumerWidget {
         ),
         if (actionsActive && !resizeModeActive)
           Positioned(
-            top: 6,
+            top: cardHeight < 44 ? 1 : 6,
             right: 6,
             child: _TimeBoxCardActionOverlay(
               selected: selected,
@@ -697,11 +738,7 @@ class _TimeBoxBoardCard extends ConsumerWidget {
   void _handleResizeUpdate(WidgetRef ref, double deltaDy, _ResizeEdge edge) {
     final slotDelta = ref
         .read(todayTimeBoxResizeDragControllerProvider.notifier)
-        .consumeSlotDelta(
-          box.id,
-          deltaDy,
-          TimeBoxBoard._resizeStepDragDistance,
-        );
+        .consumeSlotDelta(box.id, deltaDy, resizeStepDragDistance);
     if (slotDelta == 0) {
       return;
     }
@@ -712,13 +749,13 @@ class _TimeBoxBoardCard extends ConsumerWidget {
         if (start == null) {
           return;
         }
-        onResizeStartMinutes(start + (slotDelta * TimeBoxBoard._slotMinutes));
+        onResizeStartMinutes(start + (slotDelta * slotMinutes));
       case _ResizeEdge.end:
         final end = box.endMinutes;
         if (end == null) {
           return;
         }
-        onResizeEndMinutes(end + (slotDelta * TimeBoxBoard._slotMinutes));
+        onResizeEndMinutes(end + (slotDelta * slotMinutes));
     }
     HapticFeedback.selectionClick();
   }
@@ -859,12 +896,12 @@ class _TimeBoxBoardCardSurface extends StatelessWidget {
           final bottomInset = !reserveResizeHandle
               ? 8.0
               : compact
-              ? 13.0
+              ? 10.0
               : 16.0;
           final topInset = !reserveResizeHandle
               ? (compact ? 7.0 : 10.0)
               : compact
-              ? 13.0
+              ? 10.0
               : 16.0;
           const rightInset = 12.0;
 
@@ -1079,6 +1116,7 @@ class _TimeBoxEditorSheet extends StatefulWidget {
   final TimeBox? box;
   final PomodoroController notifier;
   final int? startMinutes;
+  final int slotMinutes;
   final String timeRange;
   final String fallbackTitle;
 
@@ -1086,6 +1124,7 @@ class _TimeBoxEditorSheet extends StatefulWidget {
     this.box,
     required this.notifier,
     this.startMinutes,
+    this.slotMinutes = 30,
     required this.timeRange,
     required this.fallbackTitle,
   });
@@ -1207,6 +1246,8 @@ class _TimeBoxEditorSheetState extends State<_TimeBoxEditorSheet> {
       if (startMinutes != null) {
         widget.notifier.addTimeBoxAtStart(
           startMinutes,
+          durationSeconds: widget.slotMinutes * 60,
+          durationStepMinutes: widget.slotMinutes,
           title: _titleController.text.trim().isEmpty
               ? widget.fallbackTitle
               : _titleController.text,

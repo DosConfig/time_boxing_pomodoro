@@ -13,6 +13,98 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('PomodoroController time box editing', () {
+    test('creates boxes with 15-minute and 1-hour intervals', () async {
+      final repository = _MemoryPomodoroRepository(Pomodoro.initial());
+      final container = ProviderContainer(
+        overrides: [pomodoroRepositoryProvider.overrideWithValue(repository)],
+      );
+      addTearDown(container.dispose);
+
+      final controller = container.read(pomodoroControllerProvider.notifier);
+      await _settleControllerRestore();
+
+      final shortBox = controller.addTimeBoxAtStart(
+        (9 * 60) + 15,
+        title: 'Quick review',
+        durationSeconds: 15 * 60,
+        durationStepMinutes: 15,
+      );
+      final longBox = controller.addTimeBoxAtStart(
+        11 * 60,
+        title: 'Deep work',
+        durationSeconds: 60 * 60,
+        durationStepMinutes: 60,
+      );
+
+      expect(shortBox.timeRange, '09:15-09:30');
+      expect(shortBox.durationSeconds, 15 * 60);
+      expect(longBox.timeRange, '11:00-12:00');
+      expect(longBox.durationSeconds, 60 * 60);
+    });
+
+    test('resizes both edges using the selected interval', () async {
+      final repository = _MemoryPomodoroRepository(
+        Pomodoro.initial().copyWith(
+          timeBoxes: const [
+            TimeBox(
+              id: 'target',
+              title: 'Build',
+              timeRange: '09:00-11:00',
+              durationSeconds: 120 * 60,
+            ),
+          ],
+        ),
+      );
+      final container = ProviderContainer(
+        overrides: [pomodoroRepositoryProvider.overrideWithValue(repository)],
+      );
+      addTearDown(container.dispose);
+
+      final controller = container.read(pomodoroControllerProvider.notifier);
+      await _settleControllerRestore();
+
+      controller.resizeTimeBoxStart('target', (9 * 60) + 15, stepMinutes: 15);
+      controller.resizeTimeBoxEnd('target', 12 * 60, stepMinutes: 60);
+
+      final box = container.read(pomodoroControllerProvider).timeBoxes.single;
+      expect(box.timeRange, '09:15-12:00');
+      expect(box.durationSeconds, 165 * 60);
+    });
+
+    test(
+      'does not persist an empty state while cloud restore is pending',
+      () async {
+        final restoreCompleter = Completer<Pomodoro>();
+        final cloudPlan = Pomodoro.initial().copyWith(
+          topPriorities: const ['Keep the cloud plan', '', ''],
+        );
+        final repository = _MemoryPomodoroRepository(
+          Pomodoro.initial(),
+          restoreCompleter: restoreCompleter,
+        );
+        final container = ProviderContainer(
+          overrides: [pomodoroRepositoryProvider.overrideWithValue(repository)],
+        );
+        addTearDown(container.dispose);
+
+        final controller = container.read(pomodoroControllerProvider.notifier);
+        await Future<void>.delayed(Duration.zero);
+
+        controller.syncDayBoundaryAndFocus();
+
+        expect(repository.updates, isEmpty);
+
+        restoreCompleter.complete(cloudPlan);
+        await _settleControllerRestore();
+
+        expect(
+          container.read(pomodoroControllerProvider).topPriorities,
+          cloudPlan.topPriorities,
+        );
+        expect(repository.updates, isEmpty);
+      },
+    );
+
     test(
       'keeps existing boxes when another card is dropped into them',
       () async {
@@ -252,6 +344,76 @@ void main() {
       expect(state.remainingTime, 45 * 60);
       expect(repository.startTimerCalls, 1);
     });
+
+    test('native restore preserves every synced daily-plan field', () async {
+      final repository = _MemoryPomodoroRepository(
+        Pomodoro.initial().copyWith(
+          brainDump: const ['Capture the regression'],
+          reminders: const ['Do not erase this'],
+          topPriorities: const [
+            'Ship a stable beta',
+            'Verify Live Activity',
+            'Review calendar sync',
+          ],
+          timeBoxes: const [
+            TimeBox(
+              id: 'box-regression',
+              title: 'Protect saved plans',
+              timeRange: '09:00-09:30',
+              durationSeconds: 30 * 60,
+            ),
+          ],
+        ),
+        nativeSnapshot: const TimerSnapshot(
+          status: 'running',
+          remainingTime: 20 * 60,
+          topPriorities: ['', '', ''],
+        ),
+      );
+      final container = ProviderContainer(
+        overrides: [pomodoroRepositoryProvider.overrideWithValue(repository)],
+      );
+      addTearDown(container.dispose);
+
+      container.read(pomodoroControllerProvider);
+      await _settleControllerRestore();
+
+      final state = container.read(pomodoroControllerProvider);
+      expect(state.topPriorities, [
+        'Ship a stable beta',
+        'Verify Live Activity',
+        'Review calendar sync',
+      ]);
+      expect(state.brainDump, ['Capture the regression']);
+      expect(state.reminders, ['Do not erase this']);
+      expect(state.timeBoxes.single.title, 'Protect saved plans');
+    });
+
+    test(
+      'account transition flushes, clears, and can restore local data',
+      () async {
+        final savedPlan = Pomodoro.initial().copyWith(
+          brainDump: const ['Keep after failed deletion'],
+        );
+        final repository = _MemoryPomodoroRepository(savedPlan);
+        final container = ProviderContainer(
+          overrides: [pomodoroRepositoryProvider.overrideWithValue(repository)],
+        );
+        addTearDown(container.dispose);
+
+        final controller = container.read(pomodoroControllerProvider.notifier);
+        await _settleControllerRestore();
+        await controller.flushPendingPlanWrites();
+        await controller.clearLocalPlanForSignOut();
+
+        expect(repository.flushCallCount, 1);
+        expect(repository.clearCallCount, 1);
+
+        await controller.persistCurrentPlan();
+        expect(repository.updates.last.brainDump, savedPlan.brainDump);
+        expect(repository.flushCallCount, 2);
+      },
+    );
   });
 }
 
@@ -264,10 +426,19 @@ class _MemoryPomodoroRepository implements PomodoroRepository {
   Pomodoro pomodoro;
   final updates = <Pomodoro>[];
   final Pomodoro Function(Pomodoro fallback, int restoreCallCount)? onRestore;
+  final Completer<Pomodoro>? restoreCompleter;
+  final TimerSnapshot nativeSnapshot;
   int restoreCallCount = 0;
   int startTimerCalls = 0;
+  int flushCallCount = 0;
+  int clearCallCount = 0;
 
-  _MemoryPomodoroRepository(this.pomodoro, {this.onRestore});
+  _MemoryPomodoroRepository(
+    this.pomodoro, {
+    this.onRestore,
+    this.restoreCompleter,
+    this.nativeSnapshot = const TimerSnapshot(status: 'idle'),
+  });
 
   @override
   Pomodoro getPomodoro() => pomodoro;
@@ -279,12 +450,17 @@ class _MemoryPomodoroRepository implements PomodoroRepository {
   }
 
   @override
-  Future<void> flushPendingWrites() async {}
+  Future<void> flushPendingWrites() async {
+    flushCallCount += 1;
+  }
 
   @override
   Future<Pomodoro> restoreTodayPlan(Pomodoro fallback) async {
     restoreCallCount += 1;
-    pomodoro = onRestore?.call(fallback, restoreCallCount) ?? pomodoro;
+    final pendingRestore = restoreCompleter;
+    pomodoro = pendingRestore == null
+        ? onRestore?.call(fallback, restoreCallCount) ?? pomodoro
+        : await pendingRestore.future;
     return pomodoro;
   }
 
@@ -324,7 +500,7 @@ class _MemoryPomodoroRepository implements PomodoroRepository {
 
   @override
   Future<TimerSnapshot> restoreState(Pomodoro fallback) async {
-    return const TimerSnapshot(status: 'idle');
+    return nativeSnapshot;
   }
 
   @override
@@ -334,5 +510,7 @@ class _MemoryPomodoroRepository implements PomodoroRepository {
   }) async {}
 
   @override
-  Future<void> clearLocalPlanData() async {}
+  Future<void> clearLocalPlanData() async {
+    clearCallCount += 1;
+  }
 }

@@ -101,6 +101,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                           now: now,
                           awakeStartMinutes: preferences.awakeStartMinutes,
                           awakeEndMinutes: preferences.awakeEndMinutes,
+                          slotMinutes: preferences.timeSlotInterval.minutes,
                           onDragStarted: _beginTimeBoxDrag,
                           onDragUpdate: _handleTimeBoxDragUpdate,
                           onDragEnd: _endTimeBoxDrag,

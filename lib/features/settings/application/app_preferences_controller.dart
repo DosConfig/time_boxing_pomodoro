@@ -11,6 +11,7 @@ class AppPreferencesController extends _$AppPreferencesController {
   static const _onboardingCompletedKey = 'app.onboardingCompleted';
   static const _awakeStartKey = 'app.awakeStartMinutes';
   static const _awakeEndKey = 'app.awakeEndMinutes';
+  static const _timeSlotIntervalKey = 'app.timeSlotIntervalMinutes';
   static const _localeCodeKey = 'app.localeCode';
   static const minimumAwakeWindowMinutes = 4 * 60;
   static const supportedLocaleCodes = <String>{
@@ -42,6 +43,9 @@ class AppPreferencesController extends _$AppPreferencesController {
           preferences.getInt(_awakeStartKey) ?? initial.awakeStartMinutes,
       awakeEndMinutes:
           preferences.getInt(_awakeEndKey) ?? initial.awakeEndMinutes,
+      timeSlotInterval: TimeSlotInterval.fromMinutes(
+        preferences.getInt(_timeSlotIntervalKey),
+      ),
       localeCode: _normalizedLocaleCode(
         preferences.getString(_localeCodeKey) ?? initial.localeCode,
       ),
@@ -66,6 +70,13 @@ class AppPreferencesController extends _$AppPreferencesController {
     final preferences = await SharedPreferences.getInstance();
     await preferences.setInt(_awakeStartKey, normalized.$1);
     await preferences.setInt(_awakeEndKey, normalized.$2);
+  }
+
+  Future<void> setTimeSlotInterval(TimeSlotInterval interval) async {
+    state = state.copyWith(timeSlotInterval: interval);
+
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setInt(_timeSlotIntervalKey, interval.minutes);
   }
 
   Future<void> completeIntro() async {

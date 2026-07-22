@@ -22,6 +22,7 @@ class SettingsScreen extends ConsumerWidget {
     final l10n = context.l10n;
     final pomodoro = ref.watch(pomodoroControllerProvider);
     final authSession = ref.watch(authControllerProvider);
+    final authActionLoading = ref.watch(authActionControllerProvider);
     final preferences = ref.watch(appPreferencesControllerProvider);
     final notifier = ref.read(pomodoroControllerProvider.notifier);
 
@@ -90,6 +91,15 @@ class SettingsScreen extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: 14),
+                    _TimeSlotIntervalSectionCard(
+                      interval: preferences.timeSlotInterval,
+                      onChanged: (interval) {
+                        ref
+                            .read(appPreferencesControllerProvider.notifier)
+                            .setTimeSlotInterval(interval);
+                      },
+                    ),
+                    const SizedBox(height: 14),
                     _LanguageSectionCard(
                       localeCode: preferences.localeCode,
                       onChanged: (localeCode) {
@@ -154,6 +164,7 @@ class SettingsScreen extends ConsumerWidget {
                     const SizedBox(height: 14),
                     _AccountSectionCard(
                       authSession: authSession,
+                      authActionLoading: authActionLoading,
                       onSignInWithApple: () async {
                         final session = await ref
                             .read(authControllerProvider.notifier)
@@ -193,6 +204,8 @@ class SettingsScreen extends ConsumerWidget {
                         }
                       },
                       onSignOut: () async {
+                        await notifier.flushPendingPlanWrites();
+                        await notifier.clearLocalPlanForSignOut();
                         await ref
                             .read(authControllerProvider.notifier)
                             .signOut();
@@ -208,9 +221,14 @@ class SettingsScreen extends ConsumerWidget {
                           return;
                         }
 
+                        await notifier.flushPendingPlanWrites();
+                        await notifier.clearLocalPlanForSignOut();
                         final deleted = await ref
                             .read(authControllerProvider.notifier)
                             .deleteAccount();
+                        if (!deleted) {
+                          await notifier.persistCurrentPlan();
+                        }
                         if (!context.mounted) {
                           return;
                         }
@@ -363,6 +381,7 @@ void _showSettingsSnack(BuildContext context, String message) {
 
 class _AccountSectionCard extends StatelessWidget {
   final AsyncValue<AuthSession> authSession;
+  final bool authActionLoading;
   final Future<void> Function() onSignInWithApple;
   final Future<void> Function() onSignInWithGoogle;
   final Future<void> Function() onSignOut;
@@ -370,6 +389,7 @@ class _AccountSectionCard extends StatelessWidget {
 
   const _AccountSectionCard({
     required this.authSession,
+    required this.authActionLoading,
     required this.onSignInWithApple,
     required this.onSignInWithGoogle,
     required this.onSignOut,
@@ -378,7 +398,7 @@ class _AccountSectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final loading = authSession.isLoading;
+    final loading = authSession.isLoading || authActionLoading;
     final session = authSession.asData?.value;
 
     return _SectionCard(
@@ -543,6 +563,88 @@ class _SignedInAccount extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _TimeSlotIntervalSectionCard extends StatelessWidget {
+  final TimeSlotInterval interval;
+  final ValueChanged<TimeSlotInterval> onChanged;
+
+  const _TimeSlotIntervalSectionCard({
+    required this.interval,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return _SectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            context.l10n.timeSlotIntervalTitle,
+            style: const TextStyle(
+              color: Color(0xFFF6F3EC),
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            context.l10n.timeSlotIntervalDescription,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.56),
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 12),
+          SegmentedButton<TimeSlotInterval>(
+            segments: [
+              ButtonSegment(
+                value: TimeSlotInterval.fifteenMinutes,
+                label: Text(context.l10n.timeSlot15Minutes),
+              ),
+              ButtonSegment(
+                value: TimeSlotInterval.thirtyMinutes,
+                label: Text(context.l10n.timeSlot30Minutes),
+              ),
+              ButtonSegment(
+                value: TimeSlotInterval.oneHour,
+                label: Text(context.l10n.timeSlot1Hour),
+              ),
+            ],
+            selected: {interval},
+            showSelectedIcon: false,
+            onSelectionChanged: (selection) {
+              if (selection.isNotEmpty) {
+                onChanged(selection.first);
+              }
+            },
+            style: ButtonStyle(
+              foregroundColor: WidgetStateProperty.resolveWith((states) {
+                return states.contains(WidgetState.selected)
+                    ? const Color(0xFF080808)
+                    : const Color(0xFFF6F3EC);
+              }),
+              backgroundColor: WidgetStateProperty.resolveWith((states) {
+                return states.contains(WidgetState.selected)
+                    ? const Color(0xFFF6F3EC)
+                    : Colors.transparent;
+              }),
+              side: WidgetStatePropertyAll(
+                BorderSide(color: Colors.white.withValues(alpha: 0.18)),
+              ),
+              textStyle: const WidgetStatePropertyAll(
+                TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+              ),
+              visualDensity: VisualDensity.compact,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

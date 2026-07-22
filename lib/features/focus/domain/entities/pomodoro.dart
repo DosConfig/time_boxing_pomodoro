@@ -152,7 +152,7 @@ abstract class Pomodoro with _$Pomodoro {
     @Default('') String activeTimeBoxId,
   }) = _Pomodoro;
 
-  factory Pomodoro.initial() => const Pomodoro();
+  factory Pomodoro.initial() => const Pomodoro(remainingTime: 0);
 
   int get minutes => remainingTime ~/ 60;
 
