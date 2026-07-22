@@ -19,7 +19,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get introBrandBody =>
-      'Convierte ideas sueltas en prioridades, bloques de 30 minutos, Focus, avisos y planes listos para calendario.';
+      'Convierte ideas sueltas en prioridades, bloques flexibles, Focus, avisos y planes listos para calendario.';
 
   @override
   String get introBrainDumpTitle => 'Vacía la mente';
@@ -36,11 +36,11 @@ class AppLocalizationsEs extends AppLocalizations {
       'Fija tres prioridades visibles antes de que el día te arrastre.';
 
   @override
-  String get introTimeBoxTitle => 'Bloques de 30 minutos';
+  String get introTimeBoxTitle => 'Bloques de tiempo flexibles';
 
   @override
   String get introTimeBoxBody =>
-      'Toca un hueco y planifica el día en bloques de 30 minutos.';
+      'Toca un hueco y planifica el día con el intervalo que prefieras.';
 
   @override
   String get introFocusTitle => 'Focus sigue el reloj';
@@ -162,6 +162,22 @@ class AppLocalizationsEs extends AppLocalizations {
   String get awakeWindowTitle => 'Horas activas';
 
   @override
+  String get timeSlotIntervalTitle => 'Intervalo de ajuste';
+
+  @override
+  String get timeSlotIntervalDescription =>
+      'Define el paso para añadir, mover o cambiar el tamaño de los bloques.';
+
+  @override
+  String get timeSlot15Minutes => '15 min';
+
+  @override
+  String get timeSlot30Minutes => '30 min';
+
+  @override
+  String get timeSlot1Hour => '1 h';
+
+  @override
   String get editAction => 'Editar';
 
   @override
@@ -189,7 +205,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get soundDescription =>
-      'Usa el sonido predeterminado de iOS al completar.';
+      'Usa el sonido predeterminado del dispositivo al completar.';
 
   @override
   String get saveAction => 'Guardar';
@@ -430,7 +446,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get noCurrentTimeBoxBody =>
-      'Agrega un bloque al tramo actual de 30 minutos desde Hoy.';
+      'Agrega un bloque al tramo actual desde Hoy.';
 
   @override
   String get planCurrentSlotAction => 'Planificar tramo actual';
@@ -608,6 +624,37 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get signInWithGoogleAction => 'Iniciar con Google';
+
+  @override
+  String get signInWithEmailAction => 'Iniciar sesión con correo';
+
+  @override
+  String get emailSignInTitle => 'Inicio de sesión por correo';
+
+  @override
+  String get emailLabel => 'Correo electrónico';
+
+  @override
+  String get passwordLabel => 'Contraseña';
+
+  @override
+  String get showPasswordAction => 'Mostrar contraseña';
+
+  @override
+  String get hidePasswordAction => 'Ocultar contraseña';
+
+  @override
+  String get emailSignInValidation => 'Introduce un correo electrónico válido.';
+
+  @override
+  String get passwordSignInValidation => 'Introduce tu contraseña.';
+
+  @override
+  String get emailSignInFailed =>
+      'Comprueba el correo y la contraseña e inténtalo de nuevo.';
+
+  @override
+  String get signInAction => 'Iniciar sesión';
 
   @override
   String signedInAs(String label) {

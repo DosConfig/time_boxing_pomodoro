@@ -6,6 +6,7 @@ import '../domain/repositories/auth_repository.dart';
 import '../domain/usecases/delete_account.dart';
 import '../domain/usecases/get_auth_session.dart';
 import '../domain/usecases/sign_in_with_apple.dart';
+import '../domain/usecases/sign_in_with_email.dart';
 import '../domain/usecases/sign_in_with_google.dart';
 import '../domain/usecases/sign_out.dart';
 
@@ -34,6 +35,11 @@ SignInWithAppleUseCase signInWithAppleUseCase(Ref ref) {
 @Riverpod(keepAlive: true)
 SignInWithGoogleUseCase signInWithGoogleUseCase(Ref ref) {
   return SignInWithGoogleUseCase(ref.watch(authRepositoryProvider));
+}
+
+@Riverpod(keepAlive: true)
+SignInWithEmailUseCase signInWithEmailUseCase(Ref ref) {
+  return SignInWithEmailUseCase(ref.watch(authRepositoryProvider));
 }
 
 @Riverpod(keepAlive: true)

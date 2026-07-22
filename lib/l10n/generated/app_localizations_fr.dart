@@ -19,7 +19,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get introBrandBody =>
-      'Transformez les notes en priorités, blocs de 30 minutes, Focus, alertes et plans prêts pour le calendrier.';
+      'Transformez les notes en priorités, blocs flexibles, Focus, alertes et plans prêts pour le calendrier.';
 
   @override
   String get introBrainDumpTitle => 'Vider l\'esprit';
@@ -36,11 +36,11 @@ class AppLocalizationsFr extends AppLocalizations {
       'Fixez trois priorités visibles avant que la journée vous emporte.';
 
   @override
-  String get introTimeBoxTitle => 'Blocs de 30 minutes';
+  String get introTimeBoxTitle => 'Blocs de temps flexibles';
 
   @override
   String get introTimeBoxBody =>
-      'Touchez un créneau et planifiez la journée en blocs de 30 minutes.';
+      'Touchez un créneau et planifiez la journée avec l’intervalle qui vous convient.';
 
   @override
   String get introFocusTitle => 'Focus suit l\'heure';
@@ -162,6 +162,22 @@ class AppLocalizationsFr extends AppLocalizations {
   String get awakeWindowTitle => 'Plage active';
 
   @override
+  String get timeSlotIntervalTitle => 'Intervalle d’ajustement';
+
+  @override
+  String get timeSlotIntervalDescription =>
+      'Définit le pas pour ajouter, déplacer ou redimensionner les blocs.';
+
+  @override
+  String get timeSlot15Minutes => '15 min';
+
+  @override
+  String get timeSlot30Minutes => '30 min';
+
+  @override
+  String get timeSlot1Hour => '1 h';
+
+  @override
   String get editAction => 'Modifier';
 
   @override
@@ -187,7 +203,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get soundLabel => 'Son';
 
   @override
-  String get soundDescription => 'Utilise le son iOS par défaut à la fin.';
+  String get soundDescription =>
+      'Utilise le son par défaut de l\'appareil à la fin.';
 
   @override
   String get saveAction => 'Enregistrer';
@@ -428,7 +445,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get noCurrentTimeBoxBody =>
-      'Ajoutez un bloc au créneau actuel de 30 minutes depuis Aujourd’hui.';
+      'Ajoutez un bloc au créneau actuel depuis Aujourd’hui.';
 
   @override
   String get planCurrentSlotAction => 'Planifier le créneau actuel';
@@ -606,6 +623,37 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get signInWithGoogleAction => 'Se connecter avec Google';
+
+  @override
+  String get signInWithEmailAction => 'Se connecter par e-mail';
+
+  @override
+  String get emailSignInTitle => 'Connexion par e-mail';
+
+  @override
+  String get emailLabel => 'E-mail';
+
+  @override
+  String get passwordLabel => 'Mot de passe';
+
+  @override
+  String get showPasswordAction => 'Afficher le mot de passe';
+
+  @override
+  String get hidePasswordAction => 'Masquer le mot de passe';
+
+  @override
+  String get emailSignInValidation => 'Saisissez une adresse e-mail valide.';
+
+  @override
+  String get passwordSignInValidation => 'Saisissez votre mot de passe.';
+
+  @override
+  String get emailSignInFailed =>
+      'Vérifiez l’e-mail et le mot de passe, puis réessayez.';
+
+  @override
+  String get signInAction => 'Se connecter';
 
   @override
   String signedInAs(String label) {

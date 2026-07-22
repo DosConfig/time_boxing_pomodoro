@@ -19,7 +19,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get introBrandBody =>
-      'Turn brain dumps into priorities, 30-minute blocks, Focus, alerts, and calendar-ready plans.';
+      'Turn brain dumps into priorities, flexible time blocks, Focus, alerts, and calendar-ready plans.';
 
   @override
   String get introBrainDumpTitle => 'Empty your head';
@@ -36,11 +36,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Turn the noisy list into three visible priorities before the day pulls you around.';
 
   @override
-  String get introTimeBoxTitle => 'Place 30-minute blocks';
+  String get introTimeBoxTitle => 'Place flexible time blocks';
 
   @override
   String get introTimeBoxBody =>
-      'Tap a slot, add a box, and plan the day in 30-minute blocks with less typing.';
+      'Tap a slot, add a box, and plan the day in the interval that fits you.';
 
   @override
   String get introFocusTitle => 'Focus follows the clock';
@@ -161,6 +161,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get awakeWindowTitle => 'Awake window';
 
   @override
+  String get timeSlotIntervalTitle => 'Time adjustment interval';
+
+  @override
+  String get timeSlotIntervalDescription =>
+      'Sets the step used when adding, moving, or resizing time boxes.';
+
+  @override
+  String get timeSlot15Minutes => '15 min';
+
+  @override
+  String get timeSlot30Minutes => '30 min';
+
+  @override
+  String get timeSlot1Hour => '1 hr';
+
+  @override
   String get editAction => 'Edit';
 
   @override
@@ -187,7 +203,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get soundDescription =>
-      'Uses the iOS default sound for completion alerts.';
+      'Uses your device\'s default sound for completion alerts.';
 
   @override
   String get saveAction => 'Save';
@@ -425,7 +441,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noCurrentTimeBoxBody =>
-      'Add a box to the current 30-minute slot from Today.';
+      'Add a box to the current time slot from Today.';
 
   @override
   String get planCurrentSlotAction => 'Plan current slot';
@@ -602,6 +618,36 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get signInWithGoogleAction => 'Sign in with Google';
+
+  @override
+  String get signInWithEmailAction => 'Sign in with email';
+
+  @override
+  String get emailSignInTitle => 'Email sign-in';
+
+  @override
+  String get emailLabel => 'Email';
+
+  @override
+  String get passwordLabel => 'Password';
+
+  @override
+  String get showPasswordAction => 'Show password';
+
+  @override
+  String get hidePasswordAction => 'Hide password';
+
+  @override
+  String get emailSignInValidation => 'Enter a valid email address.';
+
+  @override
+  String get passwordSignInValidation => 'Enter your password.';
+
+  @override
+  String get emailSignInFailed => 'Check the email and password and try again.';
+
+  @override
+  String get signInAction => 'Sign in';
 
   @override
   String signedInAs(String label) {

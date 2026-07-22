@@ -129,7 +129,7 @@ abstract class AppLocalizations {
   /// No description provided for @introBrandBody.
   ///
   /// In en, this message translates to:
-  /// **'Turn brain dumps into priorities, 30-minute blocks, Focus, alerts, and calendar-ready plans.'**
+  /// **'Turn brain dumps into priorities, flexible time blocks, Focus, alerts, and calendar-ready plans.'**
   String get introBrandBody;
 
   /// No description provided for @introBrainDumpTitle.
@@ -159,13 +159,13 @@ abstract class AppLocalizations {
   /// No description provided for @introTimeBoxTitle.
   ///
   /// In en, this message translates to:
-  /// **'Place 30-minute blocks'**
+  /// **'Place flexible time blocks'**
   String get introTimeBoxTitle;
 
   /// No description provided for @introTimeBoxBody.
   ///
   /// In en, this message translates to:
-  /// **'Tap a slot, add a box, and plan the day in 30-minute blocks with less typing.'**
+  /// **'Tap a slot, add a box, and plan the day in the interval that fits you.'**
   String get introTimeBoxBody;
 
   /// No description provided for @introFocusTitle.
@@ -396,6 +396,36 @@ abstract class AppLocalizations {
   /// **'Awake window'**
   String get awakeWindowTitle;
 
+  /// No description provided for @timeSlotIntervalTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Time adjustment interval'**
+  String get timeSlotIntervalTitle;
+
+  /// No description provided for @timeSlotIntervalDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Sets the step used when adding, moving, or resizing time boxes.'**
+  String get timeSlotIntervalDescription;
+
+  /// No description provided for @timeSlot15Minutes.
+  ///
+  /// In en, this message translates to:
+  /// **'15 min'**
+  String get timeSlot15Minutes;
+
+  /// No description provided for @timeSlot30Minutes.
+  ///
+  /// In en, this message translates to:
+  /// **'30 min'**
+  String get timeSlot30Minutes;
+
+  /// No description provided for @timeSlot1Hour.
+  ///
+  /// In en, this message translates to:
+  /// **'1 hr'**
+  String get timeSlot1Hour;
+
   /// No description provided for @editAction.
   ///
   /// In en, this message translates to:
@@ -447,7 +477,7 @@ abstract class AppLocalizations {
   /// No description provided for @soundDescription.
   ///
   /// In en, this message translates to:
-  /// **'Uses the iOS default sound for completion alerts.'**
+  /// **'Uses your device\'s default sound for completion alerts.'**
   String get soundDescription;
 
   /// No description provided for @saveAction.
@@ -867,7 +897,7 @@ abstract class AppLocalizations {
   /// No description provided for @noCurrentTimeBoxBody.
   ///
   /// In en, this message translates to:
-  /// **'Add a box to the current 30-minute slot from Today.'**
+  /// **'Add a box to the current time slot from Today.'**
   String get noCurrentTimeBoxBody;
 
   /// No description provided for @planCurrentSlotAction.
@@ -1205,6 +1235,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sign in with Google'**
   String get signInWithGoogleAction;
+
+  /// No description provided for @signInWithEmailAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with email'**
+  String get signInWithEmailAction;
+
+  /// No description provided for @emailSignInTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Email sign-in'**
+  String get emailSignInTitle;
+
+  /// No description provided for @emailLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get emailLabel;
+
+  /// No description provided for @passwordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get passwordLabel;
+
+  /// No description provided for @showPasswordAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Show password'**
+  String get showPasswordAction;
+
+  /// No description provided for @hidePasswordAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide password'**
+  String get hidePasswordAction;
+
+  /// No description provided for @emailSignInValidation.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid email address.'**
+  String get emailSignInValidation;
+
+  /// No description provided for @passwordSignInValidation.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your password.'**
+  String get passwordSignInValidation;
+
+  /// No description provided for @emailSignInFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Check the email and password and try again.'**
+  String get emailSignInFailed;
+
+  /// No description provided for @signInAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in'**
+  String get signInAction;
 
   /// No description provided for @signedInAs.
   ///

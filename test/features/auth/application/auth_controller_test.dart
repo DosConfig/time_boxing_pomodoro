@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:time_boxing_pomodoro/features/auth/application/auth_controller.dart';
@@ -57,13 +59,114 @@ void main() {
       signedInSession,
     );
   });
+
+  test('publishes the session returned by email sign-in', () async {
+    final repository = _FakeAuthRepository(
+      session: const AuthSession(isConfigured: true),
+      emailSession: signedInSession,
+      deleteResult: false,
+    );
+    final container = ProviderContainer(
+      overrides: [authRepositoryProvider.overrideWithValue(repository)],
+    );
+    addTearDown(container.dispose);
+
+    await container.read(authControllerProvider.future);
+    final session = await container
+        .read(authControllerProvider.notifier)
+        .signInWithEmail(email: 'review@example.com', password: 'password');
+
+    expect(session, signedInSession);
+    expect(
+      container.read(authControllerProvider).requireValue,
+      signedInSession,
+    );
+  });
+
+  test('leaves loading state when Google sign-in throws', () async {
+    final repository = _FakeAuthRepository(
+      session: const AuthSession(isConfigured: true),
+      deleteResult: false,
+      googleSignInError: StateError('native sign-in failed'),
+    );
+    final container = ProviderContainer(
+      overrides: [authRepositoryProvider.overrideWithValue(repository)],
+    );
+    addTearDown(container.dispose);
+
+    await container.read(authControllerProvider.future);
+    final session = await container
+        .read(authControllerProvider.notifier)
+        .signInWithGoogle();
+
+    expect(session.isSignedIn, isFalse);
+    expect(container.read(authControllerProvider).isLoading, isFalse);
+    expect(
+      container.read(authControllerProvider).requireValue,
+      const AuthSession(isConfigured: true),
+    );
+  });
+
+  test('keeps the signed-out session visible during Google sign-in', () async {
+    final googleSignInCompleter = Completer<AuthSession>();
+    final repository = _FakeAuthRepository(
+      session: const AuthSession(isConfigured: true),
+      deleteResult: false,
+      googleSignInFuture: googleSignInCompleter.future,
+    );
+    final container = ProviderContainer(
+      overrides: [authRepositoryProvider.overrideWithValue(repository)],
+    );
+    addTearDown(container.dispose);
+    final authSubscription = container.listen(
+      authControllerProvider,
+      (_, _) {},
+      fireImmediately: true,
+    );
+    final actionSubscription = container.listen(
+      authActionControllerProvider,
+      (_, _) {},
+      fireImmediately: true,
+    );
+    addTearDown(authSubscription.close);
+    addTearDown(actionSubscription.close);
+
+    await container.read(authControllerProvider.future);
+    final pendingSignIn = container
+        .read(authControllerProvider.notifier)
+        .signInWithGoogle();
+    await Future<void>.delayed(Duration.zero);
+
+    final pendingState = container.read(authControllerProvider);
+    expect(pendingState.isLoading, isFalse);
+    expect(pendingState.hasValue, isTrue);
+    expect(pendingState.value?.isSignedIn, isFalse);
+    expect(container.read(authActionControllerProvider), isTrue);
+
+    googleSignInCompleter.complete(signedInSession);
+    expect(await pendingSignIn, signedInSession);
+    expect(
+      container.read(authControllerProvider).requireValue,
+      signedInSession,
+    );
+    expect(container.read(authActionControllerProvider), isFalse);
+  });
 }
 
 class _FakeAuthRepository implements AuthRepository {
   AuthSession session;
+  final AuthSession? emailSession;
   final bool deleteResult;
+  final Object? googleSignInError;
+  final Future<AuthSession>? googleSignInFuture;
 
-  _FakeAuthRepository({required this.session, required this.deleteResult});
+  _FakeAuthRepository({
+    required this.session,
+    this.emailSession,
+    required this.deleteResult,
+    this.googleSignInError,
+    this.googleSignInFuture,
+  });
 
   @override
   Future<AuthSession> currentSession() async => session;
@@ -80,7 +183,22 @@ class _FakeAuthRepository implements AuthRepository {
   Future<AuthSession> signInWithApple() async => session;
 
   @override
-  Future<AuthSession> signInWithGoogle() async => session;
+  Future<AuthSession> signInWithGoogle() async {
+    final error = googleSignInError;
+    if (error != null) throw error;
+    final future = googleSignInFuture;
+    if (future != null) return future;
+    return session;
+  }
+
+  @override
+  Future<AuthSession> signInWithEmail({
+    required String email,
+    required String password,
+  }) async {
+    session = emailSession ?? session;
+    return session;
+  }
 
   @override
   Future<void> signOut() async {

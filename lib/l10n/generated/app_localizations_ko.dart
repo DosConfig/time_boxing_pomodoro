@@ -19,7 +19,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get introBrandBody =>
-      '브레인 덤프를 우선순위, 30분 블록, 집중, 알림, 캘린더 계획으로 빠르게 바꿉니다.';
+      '브레인 덤프를 우선순위, 유연한 타임박스, 집중, 알림, 캘린더 계획으로 빠르게 바꿉니다.';
 
   @override
   String get introBrainDumpTitle => '머릿속을 비우기';
@@ -34,10 +34,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get introPrioritiesBody => '하루가 끌고 가기 전에, 오늘 볼 최우선 항목 세 개를 먼저 고정합니다.';
 
   @override
-  String get introTimeBoxTitle => '30분 블록 배치';
+  String get introTimeBoxTitle => '내게 맞는 타임박스 배치';
 
   @override
-  String get introTimeBoxBody => '빈 슬롯을 탭해 30분 박스를 만들고, 적은 입력으로 하루를 배치하세요.';
+  String get introTimeBoxBody => '빈 슬롯을 탭하고 원하는 시간 단위로 하루를 빠르게 배치하세요.';
 
   @override
   String get introFocusTitle => '집중은 시간에 맞춰';
@@ -157,6 +157,22 @@ class AppLocalizationsKo extends AppLocalizations {
   String get awakeWindowTitle => '깨어있는 시간';
 
   @override
+  String get timeSlotIntervalTitle => '시간 조절 단위';
+
+  @override
+  String get timeSlotIntervalDescription =>
+      '타임박스를 추가하거나 이동하고 길이를 조절할 때 사용할 간격입니다.';
+
+  @override
+  String get timeSlot15Minutes => '15분';
+
+  @override
+  String get timeSlot30Minutes => '30분';
+
+  @override
+  String get timeSlot1Hour => '1시간';
+
+  @override
   String get editAction => '수정';
 
   @override
@@ -182,7 +198,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get soundLabel => '사운드';
 
   @override
-  String get soundDescription => '완료 알림에 iOS 기본 알림음을 사용합니다.';
+  String get soundDescription => '완료 알림에 기기의 기본 알림음을 사용합니다.';
 
   @override
   String get saveAction => '저장';
@@ -413,7 +429,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get noCurrentTimeBoxTitle => '지금은 비어있는 슬롯';
 
   @override
-  String get noCurrentTimeBoxBody => '오늘 탭에서 현재 30분 슬롯에 타임박스를 추가하세요.';
+  String get noCurrentTimeBoxBody => '오늘 탭에서 현재 시간 슬롯에 타임박스를 추가하세요.';
 
   @override
   String get planCurrentSlotAction => '현재 슬롯 계획';
@@ -587,6 +603,36 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get signInWithGoogleAction => 'Google로 로그인';
+
+  @override
+  String get signInWithEmailAction => '이메일로 로그인';
+
+  @override
+  String get emailSignInTitle => '이메일 로그인';
+
+  @override
+  String get emailLabel => '이메일';
+
+  @override
+  String get passwordLabel => '비밀번호';
+
+  @override
+  String get showPasswordAction => '비밀번호 보기';
+
+  @override
+  String get hidePasswordAction => '비밀번호 숨기기';
+
+  @override
+  String get emailSignInValidation => '올바른 이메일 주소를 입력하세요.';
+
+  @override
+  String get passwordSignInValidation => '비밀번호를 입력하세요.';
+
+  @override
+  String get emailSignInFailed => '이메일과 비밀번호를 확인한 뒤 다시 시도하세요.';
+
+  @override
+  String get signInAction => '로그인';
 
   @override
   String signedInAs(String label) {

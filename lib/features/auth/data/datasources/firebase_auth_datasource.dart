@@ -41,12 +41,12 @@ class FirebaseAuthDataSource {
       return const AuthSession();
     }
 
-    await GoogleSignInInitializer.ensureInitialized();
-    if (!GoogleSignIn.instance.supportsAuthenticate()) {
-      return const AuthSession(isConfigured: true);
-    }
-
     try {
+      await GoogleSignInInitializer.ensureInitialized();
+      if (!GoogleSignIn.instance.supportsAuthenticate()) {
+        return const AuthSession(isConfigured: true);
+      }
+
       final account = await GoogleSignIn.instance.authenticate();
       final idToken = account.authentication.idToken;
       if (idToken == null || idToken.isEmpty) {
@@ -63,6 +63,31 @@ class FirebaseAuthDataSource {
       return const AuthSession(isConfigured: true);
     } on FirebaseAuthException catch (error) {
       debugPrint('Google Firebase sign-in failed: $error');
+      return const AuthSession(isConfigured: true);
+    } catch (error, stackTrace) {
+      debugPrint('Unexpected Google sign-in failure: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      return const AuthSession(isConfigured: true);
+    }
+  }
+
+  Future<AuthSession> signInWithEmail({
+    required String email,
+    required String password,
+  }) async {
+    final configured = await _ensureConfigured();
+    if (!configured) {
+      return const AuthSession();
+    }
+
+    try {
+      final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email.trim(),
+        password: password,
+      );
+      return _sessionFromUser(credential.user);
+    } on FirebaseAuthException catch (error) {
+      debugPrint('Email Firebase sign-in failed: $error');
       return const AuthSession(isConfigured: true);
     }
   }

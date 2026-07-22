@@ -18,7 +18,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get introBrandTitle => '一日をタイムボックス化';
 
   @override
-  String get introBrandBody => 'ブレインダンプを優先事項、30分ブロック、Focus、通知、カレンダー計画に変えます。';
+  String get introBrandBody => 'ブレインダンプを優先事項、柔軟な時間ブロック、Focus、通知、カレンダー計画に変えます。';
 
   @override
   String get introBrainDumpTitle => '頭の中を空に';
@@ -33,10 +33,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get introPrioritiesBody => '一日に流される前に、見える優先事項を3つに絞ります。';
 
   @override
-  String get introTimeBoxTitle => '30分ブロックを配置';
+  String get introTimeBoxTitle => '柔軟な時間ブロックを配置';
 
   @override
-  String get introTimeBoxBody => '空き枠をタップし、30分ブロックで一日を組みます。';
+  String get introTimeBoxBody => '空き枠をタップし、自分に合う時間単位で一日を組みます。';
 
   @override
   String get introFocusTitle => 'Focusは時間に同期';
@@ -155,6 +155,21 @@ class AppLocalizationsJa extends AppLocalizations {
   String get awakeWindowTitle => '活動時間';
 
   @override
+  String get timeSlotIntervalTitle => '時間調整単位';
+
+  @override
+  String get timeSlotIntervalDescription => '時間枠の追加、移動、サイズ変更に使う間隔を設定します。';
+
+  @override
+  String get timeSlot15Minutes => '15分';
+
+  @override
+  String get timeSlot30Minutes => '30分';
+
+  @override
+  String get timeSlot1Hour => '1時間';
+
+  @override
   String get editAction => '編集';
 
   @override
@@ -179,7 +194,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get soundLabel => 'サウンド';
 
   @override
-  String get soundDescription => '完了通知にiOS標準音を使います。';
+  String get soundDescription => '完了通知に端末の標準音を使います。';
 
   @override
   String get saveAction => '保存';
@@ -410,7 +425,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get noCurrentTimeBoxTitle => '現在のブロックはありません';
 
   @override
-  String get noCurrentTimeBoxBody => '今日タブで現在の30分枠に時間枠を追加してください。';
+  String get noCurrentTimeBoxBody => '今日タブで現在の時間枠にタイムボックスを追加してください。';
 
   @override
   String get planCurrentSlotAction => '現在の枠を計画';
@@ -584,6 +599,36 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get signInWithGoogleAction => 'Googleでサインイン';
+
+  @override
+  String get signInWithEmailAction => 'メールでサインイン';
+
+  @override
+  String get emailSignInTitle => 'メールサインイン';
+
+  @override
+  String get emailLabel => 'メールアドレス';
+
+  @override
+  String get passwordLabel => 'パスワード';
+
+  @override
+  String get showPasswordAction => 'パスワードを表示';
+
+  @override
+  String get hidePasswordAction => 'パスワードを非表示';
+
+  @override
+  String get emailSignInValidation => '有効なメールアドレスを入力してください。';
+
+  @override
+  String get passwordSignInValidation => 'パスワードを入力してください。';
+
+  @override
+  String get emailSignInFailed => 'メールアドレスとパスワードを確認してください。';
+
+  @override
+  String get signInAction => 'サインイン';
 
   @override
   String signedInAs(String label) {

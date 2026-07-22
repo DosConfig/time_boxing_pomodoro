@@ -19,7 +19,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get introBrandBody =>
-      'Mache aus Notizen Prioritäten, 30-Minuten-Blöcke, Fokus, Alarme und kalenderfertige Pläne.';
+      'Mache aus Notizen Prioritäten, flexible Zeitblöcke, Fokus, Alarme und kalenderfertige Pläne.';
 
   @override
   String get introBrainDumpTitle => 'Kopf leeren';
@@ -36,11 +36,11 @@ class AppLocalizationsDe extends AppLocalizations {
       'Lege drei sichtbare Prioritäten fest, bevor der Tag dich zieht.';
 
   @override
-  String get introTimeBoxTitle => '30-Minuten-Blöcke setzen';
+  String get introTimeBoxTitle => 'Flexible Zeitblöcke setzen';
 
   @override
   String get introTimeBoxBody =>
-      'Tippe auf einen Slot und plane den Tag in 30-Minuten-Blöcken.';
+      'Tippe auf einen Slot und plane den Tag im passenden Zeitintervall.';
 
   @override
   String get introFocusTitle => 'Fokus folgt der Uhr';
@@ -162,6 +162,22 @@ class AppLocalizationsDe extends AppLocalizations {
   String get awakeWindowTitle => 'Aktive Zeit';
 
   @override
+  String get timeSlotIntervalTitle => 'Zeitintervall';
+
+  @override
+  String get timeSlotIntervalDescription =>
+      'Legt die Schritte zum Erstellen, Verschieben und Skalieren von Zeitblöcken fest.';
+
+  @override
+  String get timeSlot15Minutes => '15 Min.';
+
+  @override
+  String get timeSlot30Minutes => '30 Min.';
+
+  @override
+  String get timeSlot1Hour => '1 Std.';
+
+  @override
   String get editAction => 'Bearbeiten';
 
   @override
@@ -188,7 +204,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get soundDescription =>
-      'Nutzt den iOS-Standardton für Abschlussmeldungen.';
+      'Nutzt den Standardton des Geräts für Abschlussmeldungen.';
 
   @override
   String get saveAction => 'Speichern';
@@ -429,7 +445,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get noCurrentTimeBoxBody =>
-      'Füge im Heute-Tab einen Block zum aktuellen 30-Minuten-Slot hinzu.';
+      'Füge im Heute-Tab einen Block zum aktuellen Zeitfenster hinzu.';
 
   @override
   String get planCurrentSlotAction => 'Aktuellen Slot planen';
@@ -608,6 +624,37 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get signInWithGoogleAction => 'Mit Google anmelden';
+
+  @override
+  String get signInWithEmailAction => 'Mit E-Mail anmelden';
+
+  @override
+  String get emailSignInTitle => 'E-Mail-Anmeldung';
+
+  @override
+  String get emailLabel => 'E-Mail';
+
+  @override
+  String get passwordLabel => 'Passwort';
+
+  @override
+  String get showPasswordAction => 'Passwort anzeigen';
+
+  @override
+  String get hidePasswordAction => 'Passwort ausblenden';
+
+  @override
+  String get emailSignInValidation => 'Gib eine gültige E-Mail-Adresse ein.';
+
+  @override
+  String get passwordSignInValidation => 'Gib dein Passwort ein.';
+
+  @override
+  String get emailSignInFailed =>
+      'Prüfe E-Mail und Passwort und versuche es erneut.';
+
+  @override
+  String get signInAction => 'Anmelden';
 
   @override
   String signedInAs(String label) {

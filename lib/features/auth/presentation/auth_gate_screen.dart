@@ -7,13 +7,14 @@ import 'package:time_boxing_pomodoro/shared/presentation/widgets/focus_mark_moti
 import '../application/auth_controller.dart';
 import '../domain/entities/auth_session.dart';
 import 'widgets/auth_provider_buttons.dart';
+import 'widgets/email_sign_in_sheet.dart';
 
 class AuthGateScreen extends ConsumerWidget {
   const AuthGateScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final authSession = ref.watch(authControllerProvider);
+    final authActionLoading = ref.watch(authActionControllerProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFF080808),
@@ -41,7 +42,7 @@ class AuthGateScreen extends ConsumerWidget {
                       ),
                       SizedBox(height: compact ? 26 : 36),
                       _AuthActions(
-                        authSession: authSession,
+                        loading: authActionLoading,
                         onSignInWithApple: () async {
                           HapticFeedback.mediumImpact();
                           final session = await ref
@@ -59,6 +60,20 @@ class AuthGateScreen extends ConsumerWidget {
                           if (context.mounted) {
                             showAuthGateSnackIfNeeded(context, session);
                           }
+                        },
+                        onSignInWithEmail: () {
+                          showModalBottomSheet<void>(
+                            context: context,
+                            isScrollControlled: true,
+                            useSafeArea: true,
+                            backgroundColor: const Color(0xFF111111),
+                            shape: const RoundedRectangleBorder(
+                              borderRadius: BorderRadius.vertical(
+                                top: Radius.circular(8),
+                              ),
+                            ),
+                            builder: (context) => const EmailSignInSheet(),
+                          );
                         },
                       ),
                     ],
@@ -159,20 +174,20 @@ class _AuthBrandCopy extends StatelessWidget {
 }
 
 class _AuthActions extends StatelessWidget {
-  final AsyncValue<AuthSession> authSession;
+  final bool loading;
   final Future<void> Function() onSignInWithApple;
   final Future<void> Function() onSignInWithGoogle;
+  final VoidCallback onSignInWithEmail;
 
   const _AuthActions({
-    required this.authSession,
+    required this.loading,
     required this.onSignInWithApple,
     required this.onSignInWithGoogle,
+    required this.onSignInWithEmail,
   });
 
   @override
   Widget build(BuildContext context) {
-    final loading = authSession.isLoading;
-
     return Align(
       alignment: Alignment.center,
       child: ConstrainedBox(
@@ -191,6 +206,12 @@ class _AuthActions extends StatelessWidget {
               label: context.l10n.signInWithGoogleAction,
               enabled: !loading,
               onPressed: onSignInWithGoogle,
+            ),
+            const SizedBox(height: 8),
+            TextButton(
+              key: const ValueKey('emailSignInOpenButton'),
+              onPressed: loading ? null : onSignInWithEmail,
+              child: Text(context.l10n.signInWithEmailAction),
             ),
           ],
         ),

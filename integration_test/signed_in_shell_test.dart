@@ -33,6 +33,12 @@ class _FakeAuthRepository implements AuthRepository {
   Future<AuthSession> signInWithGoogle() async => _session;
 
   @override
+  Future<AuthSession> signInWithEmail({
+    required String email,
+    required String password,
+  }) async => _session;
+
+  @override
   Future<void> signOut() async {}
 
   @override
@@ -44,6 +50,7 @@ class _FakeCloudDataSource extends PomodoroCloudDataSource {
   Future<void> saveTodayPlan(
     Pomodoro pomodoro, {
     int? updatedAtEpochMs,
+    String? expectedUserId,
   }) async {}
 
   @override

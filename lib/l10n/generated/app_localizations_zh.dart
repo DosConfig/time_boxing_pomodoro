@@ -18,7 +18,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get introBrandTitle => '把一天装进时间块';
 
   @override
-  String get introBrandBody => '把脑中事项变成重点、30分钟区块、Focus、提醒和可同步的日历计划。';
+  String get introBrandBody => '把脑中事项变成重点、灵活时间块、Focus、提醒和可同步的日历计划。';
 
   @override
   String get introBrainDumpTitle => '清空脑中事项';
@@ -33,10 +33,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get introPrioritiesBody => '在一天被打散前，先固定三个可见重点。';
 
   @override
-  String get introTimeBoxTitle => '安排30分钟块';
+  String get introTimeBoxTitle => '安排灵活时间块';
 
   @override
-  String get introTimeBoxBody => '轻点空档，用30分钟时间块安排一天。';
+  String get introTimeBoxBody => '轻点空档，按适合你的时间间隔安排一天。';
 
   @override
   String get introFocusTitle => 'Focus跟随时间';
@@ -155,6 +155,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get awakeWindowTitle => '清醒时段';
 
   @override
+  String get timeSlotIntervalTitle => '时间调整间隔';
+
+  @override
+  String get timeSlotIntervalDescription => '设置添加、移动或调整时间块大小时使用的步长。';
+
+  @override
+  String get timeSlot15Minutes => '15分钟';
+
+  @override
+  String get timeSlot30Minutes => '30分钟';
+
+  @override
+  String get timeSlot1Hour => '1小时';
+
+  @override
   String get editAction => '编辑';
 
   @override
@@ -179,7 +194,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get soundLabel => '声音';
 
   @override
-  String get soundDescription => '完成提醒使用 iOS 默认提示音。';
+  String get soundDescription => '完成提醒使用设备默认提示音。';
 
   @override
   String get saveAction => '保存';
@@ -410,7 +425,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get noCurrentTimeBoxTitle => '当前没有时间盒';
 
   @override
-  String get noCurrentTimeBoxBody => '请在今天页为当前30分钟时段添加时间盒。';
+  String get noCurrentTimeBoxBody => '请在今天页为当前时段添加时间盒。';
 
   @override
   String get planCurrentSlotAction => '规划当前时段';
@@ -584,6 +599,36 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get signInWithGoogleAction => '使用 Google 登录';
+
+  @override
+  String get signInWithEmailAction => '使用电子邮件登录';
+
+  @override
+  String get emailSignInTitle => '电子邮件登录';
+
+  @override
+  String get emailLabel => '电子邮件';
+
+  @override
+  String get passwordLabel => '密码';
+
+  @override
+  String get showPasswordAction => '显示密码';
+
+  @override
+  String get hidePasswordAction => '隐藏密码';
+
+  @override
+  String get emailSignInValidation => '请输入有效的电子邮件地址。';
+
+  @override
+  String get passwordSignInValidation => '请输入密码。';
+
+  @override
+  String get emailSignInFailed => '请检查电子邮件和密码后重试。';
+
+  @override
+  String get signInAction => '登录';
 
   @override
   String signedInAs(String label) {
