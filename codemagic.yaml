@@ -36,12 +36,22 @@ workflows:
           dart run melos run guard
       - name: Set up iOS code signing
         script: |
+          keychain initialize
+          app-store-connect fetch-signing-files \
+            "$APP_IDENTIFIER" \
+            --type IOS_APP_STORE \
+            --create
+          app-store-connect fetch-signing-files \
+            "${APP_IDENTIFIER}.PomodoroWidgetExtension" \
+            --type IOS_APP_STORE \
+            --create
+          keychain add-certificates
           xcode-project use-profiles
       - name: Build signed IPA
         script: |
           flutter build ipa --release \
             --build-number=$BUILD_NUMBER \
-            --export-options-plist=ios/ExportOptions.app-store.plist
+            --export-options-plist="$CM_EXPORT_OPTIONS_PATH"
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log

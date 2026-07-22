@@ -1,5 +1,12 @@
 opt_out_usage
 
+require "dotenv"
+
+local_credentials = File.expand_path(
+  "~/.config/timebox-mark/app_store_connect.env"
+)
+Dotenv.load(local_credentials) if File.file?(local_credentials)
+
 default_platform(:ios)
 
 platform :ios do
