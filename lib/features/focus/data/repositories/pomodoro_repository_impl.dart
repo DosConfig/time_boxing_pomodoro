@@ -12,6 +12,7 @@ class PomodoroRepositoryImpl implements PomodoroRepository {
   Future<void> _cloudWriteQueue = Future.value();
   String? _lastContentSignature;
   int _lastUpdatedAtEpochMs = 0;
+  bool _restoreCompleted = false;
 
   PomodoroRepositoryImpl(this.localDataSource, this.cloudDataSource);
 
@@ -20,6 +21,10 @@ class PomodoroRepositoryImpl implements PomodoroRepository {
 
   @override
   void updatePomodoro(Pomodoro pomodoro) {
+    if (!_restoreCompleted) {
+      return;
+    }
+
     final dto = TodayPlanDto.fromEntity(
       pomodoro,
       dateKey: _dateKey(DateTime.now()),
@@ -36,7 +41,11 @@ class PomodoroRepositoryImpl implements PomodoroRepository {
       updatedAtEpochMs: _lastUpdatedAtEpochMs,
     );
     if (contentChanged) {
-      _enqueueCloudSave(pomodoro, _lastUpdatedAtEpochMs);
+      _enqueueCloudSave(
+        pomodoro,
+        _lastUpdatedAtEpochMs,
+        cloudDataSource.currentUserId,
+      );
     }
   }
 
@@ -57,9 +66,16 @@ class PomodoroRepositoryImpl implements PomodoroRepository {
 
   @override
   Future<Pomodoro> restoreTodayPlan(Pomodoro fallback) async {
+    final restored = await _restoreTodayPlan(fallback);
+    _restoreCompleted = true;
+    return restored;
+  }
+
+  Future<Pomodoro> _restoreTodayPlan(Pomodoro fallback) async {
     var localDto = await localDataSource.loadTodayPlanDto();
     final localPlan = localDto?.toEntity(fallback) ?? fallback;
-    final cloudDto = await cloudDataSource.loadTodayPlanDto();
+    final cloudResult = await cloudDataSource.loadTodayPlanResult();
+    final cloudDto = cloudResult.plan;
     final refreshedLocalDto = await localDataSource.loadTodayPlanDto();
     if (refreshedLocalDto != null &&
         (localDto == null ||
@@ -67,6 +83,18 @@ class PomodoroRepositoryImpl implements PomodoroRepository {
       localDto = refreshedLocalDto;
     }
     final resolvedLocalPlan = localDto?.toEntity(fallback) ?? localPlan;
+    if (cloudResult.status == CloudTodayPlanStatus.unauthenticated ||
+        cloudResult.status == CloudTodayPlanStatus.unavailable) {
+      if (localDto == null) {
+        return fallback;
+      }
+      await _persistResolvedPlan(
+        resolvedLocalPlan,
+        _normalizedUpdatedAt(localDto),
+      );
+      return resolvedLocalPlan;
+    }
+
     if (localDto == null && cloudDto == null) {
       final restoredPlan = await _planForNewDay(
         localPlan,
@@ -258,20 +286,30 @@ class PomodoroRepositoryImpl implements PomodoroRepository {
         await cloudDataSource.saveTodayPlan(
           plan,
           updatedAtEpochMs: updatedAtEpochMs,
+          expectedUserId: cloudDataSource.currentUserId,
         );
       } catch (_) {
-        _enqueueCloudSave(plan, updatedAtEpochMs);
+        _enqueueCloudSave(
+          plan,
+          updatedAtEpochMs,
+          cloudDataSource.currentUserId,
+        );
       }
     }
   }
 
-  void _enqueueCloudSave(Pomodoro plan, int updatedAtEpochMs) {
+  void _enqueueCloudSave(
+    Pomodoro plan,
+    int updatedAtEpochMs,
+    String? expectedUserId,
+  ) {
     _cloudWriteQueue = _cloudWriteQueue
         .catchError((Object _) {})
         .then(
           (_) => cloudDataSource.saveTodayPlan(
             plan,
             updatedAtEpochMs: updatedAtEpochMs,
+            expectedUserId: expectedUserId,
           ),
         )
         .catchError((Object _) {});

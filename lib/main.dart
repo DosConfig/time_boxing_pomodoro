@@ -28,6 +28,8 @@ class MyApp extends ConsumerWidget {
       }
 
       ref.invalidate(dailyPlanHistoryProvider);
+      ref.invalidate(pomodoroControllerProvider);
+      ref.invalidate(pomodoroRepositoryProvider);
       if (session.isSignedIn) {
         unawaited(
           ref
@@ -35,8 +37,7 @@ class MyApp extends ConsumerWidget {
               .syncTodayPlanWithDatabase(),
         );
       } else {
-        ref.invalidate(pomodoroControllerProvider);
-        unawaited(ref.read(clearLocalPlanDataUseCaseProvider).call());
+        return;
       }
     });
 

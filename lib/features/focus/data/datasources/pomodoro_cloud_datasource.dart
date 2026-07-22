@@ -10,6 +10,15 @@ import '../../domain/entities/daily_plan_summary.dart';
 import '../../domain/entities/pomodoro.dart';
 import '../dtos/today_plan_dto.dart';
 
+enum CloudTodayPlanStatus { available, missing, unavailable, unauthenticated }
+
+class CloudTodayPlanResult {
+  final CloudTodayPlanStatus status;
+  final TodayPlanDto? plan;
+
+  const CloudTodayPlanResult({required this.status, this.plan});
+}
+
 class PomodoroCloudDataSource {
   static const _usersCollection = 'users';
   static const _daysCollection = 'days';
@@ -17,14 +26,26 @@ class PomodoroCloudDataSource {
 
   String? _lastAttemptedPlanSignature;
 
-  Future<void> saveTodayPlan(Pomodoro pomodoro, {int? updatedAtEpochMs}) async {
+  String? get currentUserId {
+    if (Firebase.apps.isEmpty) {
+      return null;
+    }
+    return FirebaseAuth.instance.currentUser?.uid;
+  }
+
+  Future<void> saveTodayPlan(
+    Pomodoro pomodoro, {
+    int? updatedAtEpochMs,
+    String? expectedUserId,
+  }) async {
     final ready = await _ensureConfigured();
     if (!ready) {
       return;
     }
 
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
+    if (user == null ||
+        (expectedUserId != null && user.uid != expectedUserId)) {
       return;
     }
 
@@ -70,19 +91,27 @@ class PomodoroCloudDataSource {
   }
 
   Future<Pomodoro?> restoreTodayPlan(Pomodoro fallback) async {
-    final dto = await loadTodayPlanDto();
+    final dto = (await loadTodayPlanResult()).plan;
     return dto?.toEntity(fallback);
   }
 
   Future<TodayPlanDto?> loadTodayPlanDto() async {
+    return (await loadTodayPlanResult()).plan;
+  }
+
+  Future<CloudTodayPlanResult> loadTodayPlanResult() async {
     final ready = await _ensureConfigured();
     if (!ready) {
-      return null;
+      return const CloudTodayPlanResult(
+        status: CloudTodayPlanStatus.unavailable,
+      );
     }
 
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      return null;
+      return const CloudTodayPlanResult(
+        status: CloudTodayPlanStatus.unauthenticated,
+      );
     }
 
     final todayKey = _dateKey(DateTime.now());
@@ -91,12 +120,14 @@ class PomodoroCloudDataSource {
       final data = snapshot.data();
       final planData = _jsonMap(data?[_planField]);
       if (planData == null) {
-        return null;
+        return const CloudTodayPlanResult(status: CloudTodayPlanStatus.missing);
       }
 
       var dto = TodayPlanDto.fromJson(planData);
       if (dto.dateKey != todayKey) {
-        return null;
+        return const CloudTodayPlanResult(
+          status: CloudTodayPlanStatus.unavailable,
+        );
       }
 
       if (dto.updatedAtEpochMs <= 0) {
@@ -112,10 +143,15 @@ class PomodoroCloudDataSource {
         todayKey,
         jsonEncode(dto.toStorageJson()),
       );
-      return dto;
+      return CloudTodayPlanResult(
+        status: CloudTodayPlanStatus.available,
+        plan: dto,
+      );
     } catch (error) {
       debugPrint('Firestore today plan restore skipped: $error');
-      return null;
+      return const CloudTodayPlanResult(
+        status: CloudTodayPlanStatus.unavailable,
+      );
     }
   }
 

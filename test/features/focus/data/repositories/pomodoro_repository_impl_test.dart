@@ -10,6 +10,58 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('PomodoroRepositoryImpl', () {
+    test('rejects writes until the saved plan has been restored', () async {
+      final savedPlan = Pomodoro.initial().copyWith(
+        brainDump: const ['Keep the saved draft'],
+        reminders: const ['Keep the reminder'],
+        topPriorities: const ['Keep the priority', '', ''],
+      );
+      final localDataSource = _FakeLocalDataSource(
+        savedPlan,
+        updatedAtEpochMs: 20,
+      );
+      final repository = PomodoroRepositoryImpl(
+        localDataSource,
+        _FakeCloudDataSource(restoredPlan: savedPlan, updatedAtEpochMs: 20),
+      );
+
+      repository.updatePomodoro(Pomodoro.initial());
+      expect(localDataSource.updatedPlans, isEmpty);
+
+      final restored = await repository.restoreTodayPlan(Pomodoro.initial());
+
+      expect(restored.brainDump, savedPlan.brainDump);
+      expect(restored.reminders, savedPlan.reminders);
+      expect(restored.topPriorities, savedPlan.topPriorities);
+      expect(
+        localDataSource.updatedPlans.single.brainDump,
+        savedPlan.brainDump,
+      );
+    });
+
+    test('cloud writes carry the user id captured for the edit', () async {
+      final initialPlan = Pomodoro.initial().copyWith(
+        topPriorities: const ['Initial priority', '', ''],
+      );
+      final cloudDataSource = _FakeCloudDataSource(
+        restoredPlan: initialPlan,
+        updatedAtEpochMs: 20,
+      );
+      final repository = PomodoroRepositoryImpl(
+        _FakeLocalDataSource(initialPlan, updatedAtEpochMs: 20),
+        cloudDataSource,
+      );
+      await repository.restoreTodayPlan(Pomodoro.initial());
+
+      repository.updatePomodoro(
+        initialPlan.copyWith(topPriorities: const ['Updated priority', '', '']),
+      );
+      await repository.flushPendingWrites();
+
+      expect(cloudDataSource.savedExpectedUserIds, isNotEmpty);
+      expect(cloudDataSource.savedExpectedUserIds, everyElement('test-user'));
+    });
+
     test(
       'uploads local plan when cloud has no plan, even if local equals fallback',
       () async {
@@ -169,6 +221,30 @@ void main() {
       expect(localDataSource.updatedPlans, [restored]);
       expect(cloudDataSource.savedPlans, [restored]);
     });
+
+    test(
+      'does not create an empty plan when cloud cannot be checked',
+      () async {
+        final fallback = Pomodoro.initial();
+        final localDataSource = _FakeLocalDataSource(
+          fallback,
+          hasTodayPlan: false,
+        );
+        final cloudDataSource = _FakeCloudDataSource(
+          status: CloudTodayPlanStatus.unavailable,
+        );
+        final repository = PomodoroRepositoryImpl(
+          localDataSource,
+          cloudDataSource,
+        );
+
+        final restored = await repository.restoreTodayPlan(fallback);
+
+        expect(restored, fallback);
+        expect(localDataSource.updatedPlans, isEmpty);
+        expect(cloudDataSource.savedPlans, isEmpty);
+      },
+    );
   });
 }
 
@@ -218,20 +294,34 @@ class _FakeLocalDataSource extends PomodoroLocalDataSource {
 class _FakeCloudDataSource extends PomodoroCloudDataSource {
   final Pomodoro? restoredPlan;
   final int updatedAtEpochMs;
+  final CloudTodayPlanStatus? status;
   final List<Pomodoro> savedPlans = [];
-
-  _FakeCloudDataSource({this.restoredPlan, this.updatedAtEpochMs = 0});
+  final List<String?> savedExpectedUserIds = [];
 
   @override
-  Future<TodayPlanDto?> loadTodayPlanDto() async {
+  String? get currentUserId => 'test-user';
+
+  _FakeCloudDataSource({
+    this.restoredPlan,
+    this.updatedAtEpochMs = 0,
+    this.status,
+  });
+
+  @override
+  Future<CloudTodayPlanResult> loadTodayPlanResult() async {
     final plan = restoredPlan;
     if (plan == null) {
-      return null;
+      return CloudTodayPlanResult(
+        status: status ?? CloudTodayPlanStatus.missing,
+      );
     }
-    return TodayPlanDto.fromEntity(
-      plan,
-      dateKey: _todayKey(),
-      updatedAtEpochMs: updatedAtEpochMs,
+    return CloudTodayPlanResult(
+      status: status ?? CloudTodayPlanStatus.available,
+      plan: TodayPlanDto.fromEntity(
+        plan,
+        dateKey: _todayKey(),
+        updatedAtEpochMs: updatedAtEpochMs,
+      ),
     );
   }
 
@@ -239,8 +329,13 @@ class _FakeCloudDataSource extends PomodoroCloudDataSource {
   Future<Pomodoro?> loadPreviousPlan(Pomodoro fallback) async => null;
 
   @override
-  Future<void> saveTodayPlan(Pomodoro pomodoro, {int? updatedAtEpochMs}) async {
+  Future<void> saveTodayPlan(
+    Pomodoro pomodoro, {
+    int? updatedAtEpochMs,
+    String? expectedUserId,
+  }) async {
     savedPlans.add(pomodoro);
+    savedExpectedUserIds.add(expectedUserId);
   }
 
   @override

@@ -55,7 +55,7 @@ final class PomodoroLocalDataSourceProvider
 }
 
 String _$pomodoroLocalDataSourceHash() =>
-    r'973836b6147a08eede689ff2b3b22119b24ef28f';
+    r'520413af8c6d192e88ac1bad6170b04f29d5d2c3';
 
 @ProviderFor(pomodoroCloudDataSource)
 final pomodoroCloudDataSourceProvider = PomodoroCloudDataSourceProvider._();

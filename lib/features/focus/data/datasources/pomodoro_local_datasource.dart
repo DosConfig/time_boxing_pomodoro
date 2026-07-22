@@ -13,10 +13,12 @@ import 'pomodoro_platform_channel.dart';
 
 class PomodoroLocalDataSource {
   static const _todayPlanKeyPrefix = 'today.plan.';
-  static const _todayPlanKeysKey = 'today.plan.keys';
+  static const _legacyTodayPlanKeysKey = 'today.plan.keys';
 
+  final String Function() _storageScope;
   Pomodoro _currentPomodoro = Pomodoro.initial();
-  String? _lastPersistedPlanJson;
+  final Map<String, String> _lastPersistedPlanJsonByScope = {};
+  final Set<String> _migratedScopes = {};
   bool _lastRestoreFoundTodayPlan = false;
   Future<void> _persistQueue = Future.value();
 
@@ -24,7 +26,8 @@ class PomodoroLocalDataSource {
   final StreamController<int> _tickController =
       StreamController<int>.broadcast();
 
-  PomodoroLocalDataSource() {
+  PomodoroLocalDataSource({String Function()? storageScope})
+    : _storageScope = storageScope ?? _defaultStorageScope {
     PomodoroPlatformChannel.setMethodCallHandler(
       (remainingTime) {
         _currentPomodoro = _currentPomodoro.copyWith(
@@ -61,11 +64,13 @@ class PomodoroLocalDataSource {
 
   Future<TodayPlanDto?> loadTodayPlanDto() async {
     final todayKey = _dateKey(DateTime.now());
+    final scope = _scopeKey;
     final preferences = await SharedPreferences.getInstance();
-    final encoded = preferences.getString(_storageKey(todayKey));
+    await _migrateLegacyPlans(preferences, scope);
+    final encoded = preferences.getString(_storageKey(scope, todayKey));
     if (encoded == null || encoded.isEmpty) {
       _lastRestoreFoundTodayPlan = false;
-      _lastPersistedPlanJson = null;
+      _lastPersistedPlanJsonByScope.remove(scope);
       return null;
     }
 
@@ -73,14 +78,14 @@ class PomodoroLocalDataSource {
       final decoded = jsonDecode(encoded);
       if (decoded is! Map<String, dynamic>) {
         _lastRestoreFoundTodayPlan = false;
-        _lastPersistedPlanJson = null;
+        _lastPersistedPlanJsonByScope.remove(scope);
         return null;
       }
 
       var dto = TodayPlanDto.fromJson(decoded);
       if (dto.dateKey != todayKey) {
         _lastRestoreFoundTodayPlan = false;
-        _lastPersistedPlanJson = null;
+        _lastPersistedPlanJsonByScope.remove(scope);
         return null;
       }
 
@@ -93,23 +98,25 @@ class PomodoroLocalDataSource {
       }
 
       _lastRestoreFoundTodayPlan = true;
-      _lastPersistedPlanJson = encoded;
+      _lastPersistedPlanJsonByScope[scope] = encoded;
       return dto;
     } catch (_) {
       _lastRestoreFoundTodayPlan = false;
-      _lastPersistedPlanJson = null;
+      _lastPersistedPlanJsonByScope.remove(scope);
       return null;
     }
   }
 
   Future<List<DailyPlanSummary>> loadDailyPlanHistory({int days = 7}) async {
+    final scope = _scopeKey;
     final preferences = await SharedPreferences.getInstance();
-    final indexedKeys = preferences.getStringList(_todayPlanKeysKey) ?? [];
+    await _migrateLegacyPlans(preferences, scope);
+    final indexedKeys = preferences.getStringList(_dateIndexKey(scope)) ?? [];
     final requestedKeys = _recentDateKeys(DateTime.now(), days).toSet();
     final summaries = <DailyPlanSummary>[];
 
     for (final dateKey in indexedKeys.where(requestedKeys.contains)) {
-      final encoded = preferences.getString(_storageKey(dateKey));
+      final encoded = preferences.getString(_storageKey(scope, dateKey));
       if (encoded == null || encoded.isEmpty) {
         continue;
       }
@@ -129,15 +136,17 @@ class PomodoroLocalDataSource {
   }
 
   Future<Pomodoro?> loadPreviousPlan(Pomodoro fallback) async {
+    final scope = _scopeKey;
     final preferences = await SharedPreferences.getInstance();
+    await _migrateLegacyPlans(preferences, scope);
     final todayKey = _dateKey(DateTime.now());
-    final indexedKeys = preferences.getStringList(_todayPlanKeysKey) ?? [];
+    final indexedKeys = preferences.getStringList(_dateIndexKey(scope)) ?? [];
     final previousKeys =
         indexedKeys.where((dateKey) => dateKey.compareTo(todayKey) < 0).toList()
           ..sort((a, b) => b.compareTo(a));
 
     for (final dateKey in previousKeys) {
-      final encoded = preferences.getString(_storageKey(dateKey));
+      final encoded = preferences.getString(_storageKey(scope, dateKey));
       if (encoded == null || encoded.isEmpty) {
         continue;
       }
@@ -162,6 +171,7 @@ class PomodoroLocalDataSource {
 
   void updatePomodoro(Pomodoro pomodoro, {int? updatedAtEpochMs}) {
     _currentPomodoro = pomodoro;
+    final scope = _scopeKey;
     final todayKey = _dateKey(DateTime.now());
     final dto = TodayPlanDto.fromEntity(
       pomodoro,
@@ -169,22 +179,23 @@ class PomodoroLocalDataSource {
       updatedAtEpochMs:
           updatedAtEpochMs ?? DateTime.now().millisecondsSinceEpoch,
     );
-    _persistQueue = _persistQueue.then((_) => _persistTodayPlan(dto));
+    _persistQueue = _persistQueue.then((_) => _persistTodayPlan(dto, scope));
   }
 
   Future<void> flushPendingWrites() => _persistQueue;
 
   Future<void> clearPlanData() async {
     await _persistQueue;
+    final scope = _scopeKey;
     final preferences = await SharedPreferences.getInstance();
-    final indexedKeys = preferences.getStringList(_todayPlanKeysKey) ?? [];
+    final indexedKeys = preferences.getStringList(_dateIndexKey(scope)) ?? [];
     for (final dateKey in indexedKeys) {
-      await preferences.remove(_storageKey(dateKey));
+      await preferences.remove(_storageKey(scope, dateKey));
     }
-    await preferences.remove(_todayPlanKeysKey);
+    await preferences.remove(_dateIndexKey(scope));
 
     _currentPomodoro = Pomodoro.initial();
-    _lastPersistedPlanJson = null;
+    _lastPersistedPlanJsonByScope.remove(scope);
     _lastRestoreFoundTodayPlan = false;
     _persistQueue = Future.value();
   }
@@ -240,30 +251,75 @@ class PomodoroLocalDataSource {
     );
   }
 
-  Future<void> _persistTodayPlan(TodayPlanDto dto) async {
+  Future<void> _persistTodayPlan(TodayPlanDto dto, String scope) async {
     final encoded = jsonEncode(dto.toStorageJson());
-    if (encoded == _lastPersistedPlanJson) {
+    if (encoded == _lastPersistedPlanJsonByScope[scope]) {
       return;
     }
 
     final preferences = await SharedPreferences.getInstance();
-    await preferences.setString(_storageKey(dto.dateKey), encoded);
-    await _indexDateKey(preferences, dto.dateKey);
-    _lastPersistedPlanJson = encoded;
+    await _migrateLegacyPlans(preferences, scope);
+    await preferences.setString(_storageKey(scope, dto.dateKey), encoded);
+    await _indexDateKey(preferences, scope, dto.dateKey);
+    _lastPersistedPlanJsonByScope[scope] = encoded;
   }
 
-  String _storageKey(String dateKey) => '$_todayPlanKeyPrefix$dateKey';
+  String get _scopeKey => Uri.encodeComponent(_storageScope().trim());
+
+  String _dateIndexKey(String scope) => '$_legacyTodayPlanKeysKey.$scope';
+
+  String _storageKey(String scope, String dateKey) =>
+      '$_todayPlanKeyPrefix$scope.$dateKey';
+
+  String _legacyStorageKey(String dateKey) => '$_todayPlanKeyPrefix$dateKey';
+
+  Future<void> _migrateLegacyPlans(
+    SharedPreferences preferences,
+    String scope,
+  ) async {
+    if (_migratedScopes.contains(scope) || scope == 'signed-out') {
+      return;
+    }
+
+    final legacyDateKeys =
+        preferences.getStringList(_legacyTodayPlanKeysKey) ?? const <String>[];
+    if (legacyDateKeys.isEmpty) {
+      _migratedScopes.add(scope);
+      return;
+    }
+
+    final scopedDateKeys =
+        preferences.getStringList(_dateIndexKey(scope))?.toSet() ?? <String>{};
+    for (final dateKey in legacyDateKeys) {
+      final legacyPlan = preferences.getString(_legacyStorageKey(dateKey));
+      if (legacyPlan == null || legacyPlan.isEmpty) {
+        continue;
+      }
+      final scopedKey = _storageKey(scope, dateKey);
+      if (!preferences.containsKey(scopedKey)) {
+        await preferences.setString(scopedKey, legacyPlan);
+      }
+      scopedDateKeys.add(dateKey);
+      await preferences.remove(_legacyStorageKey(dateKey));
+    }
+
+    final sortedDateKeys = scopedDateKeys.toList()..sort();
+    await preferences.setStringList(_dateIndexKey(scope), sortedDateKeys);
+    await preferences.remove(_legacyTodayPlanKeysKey);
+    _migratedScopes.add(scope);
+  }
 
   Future<void> _indexDateKey(
     SharedPreferences preferences,
+    String scope,
     String dateKey,
   ) async {
-    final keys = preferences.getStringList(_todayPlanKeysKey) ?? [];
+    final keys = preferences.getStringList(_dateIndexKey(scope)) ?? [];
     final nextKeys = <String>{...keys, dateKey}.toList()..sort();
     if (nextKeys.length > 60) {
       nextKeys.removeRange(0, nextKeys.length - 60);
     }
-    await preferences.setStringList(_todayPlanKeysKey, nextKeys);
+    await preferences.setStringList(_dateIndexKey(scope), nextKeys);
   }
 
   List<String> _recentDateKeys(DateTime endDate, int days) {
@@ -284,4 +340,6 @@ class PomodoroLocalDataSource {
     final day = date.day.toString().padLeft(2, '0');
     return '$year-$month-$day';
   }
+
+  static String _defaultStorageScope() => 'default';
 }

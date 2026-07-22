@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../data/datasources/pomodoro_cloud_datasource.dart';
@@ -17,7 +18,12 @@ part 'focus_providers.g.dart';
 
 @Riverpod(keepAlive: true)
 PomodoroLocalDataSource pomodoroLocalDataSource(Ref ref) {
-  return PomodoroLocalDataSource();
+  return PomodoroLocalDataSource(
+    storageScope: () =>
+        FirebaseAuth.instance.currentUser?.uid.trim().isNotEmpty == true
+        ? FirebaseAuth.instance.currentUser!.uid
+        : 'signed-out',
+  );
 }
 
 @Riverpod(keepAlive: true)
