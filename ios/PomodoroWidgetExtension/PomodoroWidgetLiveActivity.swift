@@ -10,11 +10,11 @@ struct PomodoroWidgetLiveActivity: Widget {
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    Text(currentTimeBoxTitle(context))
-                        .font(.caption2.weight(.semibold))
+                    // 좁은 leading에는 페이즈 아이콘만 두고,
+                    // 제목은 폭이 넓은 bottom 영역에서 최대 2줄로 보여준다.
+                    Image(systemName: phaseIcon(context))
                         .foregroundStyle(.white)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
+                        .font(.caption.weight(.semibold))
                 }
 
                 DynamicIslandExpandedRegion(.trailing) {
@@ -30,6 +30,11 @@ struct PomodoroWidgetLiveActivity: Widget {
 
                 DynamicIslandExpandedRegion(.bottom) {
                     VStack(alignment: .leading, spacing: 4) {
+                        Text(currentTimeBoxTitle(context))
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.white)
+                            .lineLimit(2)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                         priorityText(context)
                         ProgressView(value: progressValue(context), total: Double(context.attributes.totalDuration))
                             .tint(.white)
@@ -130,17 +135,19 @@ struct LockScreenLiveActivityView: View {
     let context: ActivityViewContext<PomodoroActivityAttributes>
 
     var body: some View {
+        // 제목이 타이머와 폭을 다투지 않도록, 타이머는 우선순위 스트립과
+        // 한 줄을 쓰고 현재 타임박스 제목은 전체 폭에서 최대 2줄로 그린다.
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .center, spacing: 12) {
-                VStack(alignment: .leading, spacing: 4) {
-                    priorityStrip
-                    currentBlockRow
-                }
-                .layoutPriority(1)
+                priorityStrip
+                    .layoutPriority(1)
 
-                timerText(size: 28)
-                    .layoutPriority(2)
+                Spacer(minLength: 8)
+
+                timerText(size: 26)
             }
+
+            currentBlockRow
 
             ProgressView(value: progressValue, total: Double(context.attributes.totalDuration))
                 .tint(.white)
@@ -180,10 +187,10 @@ struct LockScreenLiveActivityView: View {
     private var currentBlockRow: some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
             Text(currentTimeBoxTitle)
-                .font(.caption.weight(.semibold))
+                .font(.footnote.weight(.semibold))
                 .foregroundStyle(.white)
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
+                .lineLimit(2)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .layoutPriority(1)
 
             if !context.state.currentTimeBoxTimeRange.isEmpty {
