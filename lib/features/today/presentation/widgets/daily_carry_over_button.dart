@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 
+/// 섹션이 비어 있을 때 노출되는 "이전 것 가져오기" 진입 버튼.
+///
+/// 탭하면 선택형 가져오기 시트(showCarryOverPickerSheet)가 열린다.
 class DailyCarryOverButton extends StatelessWidget {
   final String label;
-  final Future<bool> Function() onPressed;
-  final VoidCallback onMissing;
+  final VoidCallback onPressed;
 
   const DailyCarryOverButton({
     super.key,
     required this.label,
     required this.onPressed,
-    required this.onMissing,
   });
 
   @override
@@ -17,13 +18,7 @@ class DailyCarryOverButton extends StatelessWidget {
     return Align(
       alignment: Alignment.centerLeft,
       child: TextButton.icon(
-        onPressed: () async {
-          final carried = await onPressed();
-          if (!context.mounted || carried) {
-            return;
-          }
-          onMissing();
-        },
+        onPressed: onPressed,
         icon: const Icon(Icons.history_rounded, size: 16),
         label: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
         style: TextButton.styleFrom(

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:time_boxing_pomodoro/l10n/l10n.dart';
 
+import '../../../shared/presentation/app_snack.dart';
 import '../../focus/application/pomodoro_controller.dart';
 import '../../focus/domain/entities/daily_plan_summary.dart';
 import '../../focus/domain/entities/daily_plan_item_category.dart';
@@ -13,7 +14,11 @@ import '../../focus/presentation/native_timer_copy_l10n.dart';
 import '../../focus/presentation/time_box_title_display.dart';
 import '../../settings/application/app_preferences_controller.dart';
 import '../application/today_ui_controller.dart';
+import 'widgets/carry_over_picker_sheet.dart';
 import 'widgets/daily_carry_over_button.dart';
+import 'widgets/daily_plan_item_row.dart';
+import 'widgets/daily_plan_item_sheet.dart';
+import 'widgets/day_history_sheet.dart';
 import 'widgets/time_box_board.dart';
 import 'widgets/today_section_card.dart';
 
@@ -119,7 +124,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                             );
                             if (!syncedPomodoro.canStartFocus) {
                               if (context.mounted) {
-                                _showSnack(
+                                showAppSnack(
                                   context,
                                   context.l10n.currentTimeBoxRequired,
                                 );
@@ -426,19 +431,30 @@ class _BrainDumpPanel extends StatelessWidget {
                   padding: EdgeInsets.only(
                     bottom: index == pomodoro.brainDump.length - 1 ? 0 : 8,
                   ),
-                  child: _ScheduleSourceDraggable(
-                    payload: DraftTimeBoxDragPayload(
-                      source: DailyPlanItemCategory.brainDump,
-                      index: index,
-                      title: item,
-                    ),
-                    label: item,
-                    onDragStarted: onDragStarted,
-                    onDragUpdate: onDragUpdate,
-                    onDragEnd: onDragEnd,
-                    child: _BrainDumpRow(
-                      item: item,
-                      onTap: () => _showBrainDumpActions(context, index),
+                  child: DailyPlanReorderTarget(
+                    category: DailyPlanItemCategory.brainDump,
+                    rowIndex: index,
+                    notifier: notifier,
+                    child: _ScheduleSourceDraggable(
+                      payload: DraftTimeBoxDragPayload(
+                        source: DailyPlanItemCategory.brainDump,
+                        index: index,
+                        title: item,
+                      ),
+                      label: item,
+                      onDragStarted: onDragStarted,
+                      onDragUpdate: onDragUpdate,
+                      onDragEnd: onDragEnd,
+                      child: DailyPlanItemRow(
+                        text: item,
+                        onTap: () => showDailyPlanItemSheet(
+                          context,
+                          notifier: notifier,
+                          category: DailyPlanItemCategory.brainDump,
+                          index: index,
+                          value: item,
+                        ),
+                      ),
                     ),
                   ),
                 );
@@ -447,9 +463,11 @@ class _BrainDumpPanel extends StatelessWidget {
               const SizedBox(height: 8),
               DailyCarryOverButton(
                 label: context.l10n.carryOverPreviousBrainDump,
-                onPressed: notifier.carryOverPreviousBrainDump,
-                onMissing: () =>
-                    _showSnack(context, context.l10n.noPreviousDailyItems),
+                onPressed: () => showCarryOverPickerSheet(
+                  context,
+                  notifier: notifier,
+                  section: CarryOverSection.brainDump,
+                ),
               ),
             ],
           ],
@@ -459,120 +477,14 @@ class _BrainDumpPanel extends StatelessWidget {
   }
 
   void _openAddSheet(BuildContext context) {
-    _showTextEntrySheet(
+    showDailyPlanTextSheet(
       context,
       title: context.l10n.addBrainDumpTitle,
-      label: context.l10n.captureLabel,
+      fieldLabel: context.l10n.captureLabel,
       onSave: (value) {
         notifier.addBrainDumpItem(value);
         HapticFeedback.lightImpact();
       },
-    );
-  }
-
-  void _showBrainDumpActions(BuildContext context, int index) {
-    if (index < 0 || index >= pomodoro.brainDump.length) {
-      return;
-    }
-
-    final item = pomodoro.brainDump[index];
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: const Color(0xFF101010),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-      ),
-      builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  item,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Color(0xFFF6F3EC),
-                    fontSize: 17,
-                    fontWeight: FontWeight.w900,
-                    height: 1.15,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                _ActionSheetButton(
-                  icon: Icons.flag_rounded,
-                  label: context.l10n.makePriority,
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    notifier.promoteBrainDumpItem(index);
-                    Navigator.of(context).pop();
-                  },
-                ),
-                const SizedBox(height: 8),
-                _ActionSheetButton(
-                  icon: Icons.event_note_rounded,
-                  label: context.l10n.moveToReminder,
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    notifier.moveBrainDumpItemToReminder(index);
-                    Navigator.of(context).pop();
-                  },
-                ),
-                const SizedBox(height: 8),
-                _ActionSheetButton(
-                  icon: Icons.delete_outline_rounded,
-                  label: context.l10n.deleteAction,
-                  destructive: true,
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    notifier.removeBrainDumpItem(index);
-                    Navigator.of(context).pop();
-                  },
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _BrainDumpRow extends StatelessWidget {
-  final String item;
-  final VoidCallback onTap;
-
-  const _BrainDumpRow({required this.item, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white.withValues(alpha: 0.045),
-      shape: RoundedRectangleBorder(
-        side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 11, 12, 11),
-          child: Text(
-            item,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Color(0xFFF6F3EC),
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              height: 1.18,
-            ),
-          ),
-        ),
-      ),
     );
   }
 }
@@ -634,19 +546,30 @@ class _ReminderPanel extends StatelessWidget {
                   padding: EdgeInsets.only(
                     bottom: index == pomodoro.reminders.length - 1 ? 0 : 8,
                   ),
-                  child: _ScheduleSourceDraggable(
-                    payload: DraftTimeBoxDragPayload(
-                      source: DailyPlanItemCategory.reminder,
-                      index: index,
-                      title: item,
-                    ),
-                    label: item,
-                    onDragStarted: onDragStarted,
-                    onDragUpdate: onDragUpdate,
-                    onDragEnd: onDragEnd,
-                    child: _ReminderRow(
-                      item: item,
-                      onTap: () => _showReminderActions(context, index),
+                  child: DailyPlanReorderTarget(
+                    category: DailyPlanItemCategory.reminder,
+                    rowIndex: index,
+                    notifier: notifier,
+                    child: _ScheduleSourceDraggable(
+                      payload: DraftTimeBoxDragPayload(
+                        source: DailyPlanItemCategory.reminder,
+                        index: index,
+                        title: item,
+                      ),
+                      label: item,
+                      onDragStarted: onDragStarted,
+                      onDragUpdate: onDragUpdate,
+                      onDragEnd: onDragEnd,
+                      child: DailyPlanItemRow(
+                        text: item,
+                        onTap: () => showDailyPlanItemSheet(
+                          context,
+                          notifier: notifier,
+                          category: DailyPlanItemCategory.reminder,
+                          index: index,
+                          value: item,
+                        ),
+                      ),
                     ),
                   ),
                 );
@@ -655,9 +578,11 @@ class _ReminderPanel extends StatelessWidget {
               const SizedBox(height: 8),
               DailyCarryOverButton(
                 label: context.l10n.carryOverPreviousReminders,
-                onPressed: notifier.carryOverPreviousReminders,
-                onMissing: () =>
-                    _showSnack(context, context.l10n.noPreviousDailyItems),
+                onPressed: () => showCarryOverPickerSheet(
+                  context,
+                  notifier: notifier,
+                  section: CarryOverSection.reminder,
+                ),
               ),
             ],
           ],
@@ -667,100 +592,14 @@ class _ReminderPanel extends StatelessWidget {
   }
 
   void _openAddSheet(BuildContext context) {
-    _showTextEntrySheet(
+    showDailyPlanTextSheet(
       context,
       title: context.l10n.addReminderTitle,
-      label: context.l10n.reminderLabel,
+      fieldLabel: context.l10n.reminderLabel,
       onSave: (value) {
         notifier.addReminder(value);
         HapticFeedback.lightImpact();
       },
-    );
-  }
-
-  void _showReminderActions(BuildContext context, int index) {
-    if (index < 0 || index >= pomodoro.reminders.length) {
-      return;
-    }
-
-    final item = pomodoro.reminders[index];
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: const Color(0xFF101010),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-      ),
-      builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  item,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Color(0xFFF6F3EC),
-                    fontSize: 17,
-                    fontWeight: FontWeight.w900,
-                    height: 1.15,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                _ActionSheetButton(
-                  icon: Icons.delete_outline_rounded,
-                  label: context.l10n.deleteAction,
-                  destructive: true,
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    notifier.removeReminder(index);
-                    Navigator.of(context).pop();
-                  },
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _ReminderRow extends StatelessWidget {
-  final String item;
-  final VoidCallback onTap;
-
-  const _ReminderRow({required this.item, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white.withValues(alpha: 0.035),
-      shape: RoundedRectangleBorder(
-        side: BorderSide(color: Colors.white.withValues(alpha: 0.09)),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 11, 12, 11),
-          child: Text(
-            item,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.78),
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              height: 1.18,
-            ),
-          ),
-        ),
-      ),
     );
   }
 }
@@ -853,10 +692,16 @@ class _DailyPlanDropTarget extends StatelessWidget {
         HapticFeedback.mediumImpact();
       },
       builder: (context, candidates, rejected) {
+        // 같은 카테고리 안의 재정렬 드래그는 행 단위 타겟이 처리하므로,
+        // 패널 레벨에서는 거부 표시(빨간 오버레이)를 그리지 않는다.
+        final visibleRejected = rejected.where((payload) {
+          return !(payload is DraftTimeBoxDragPayload &&
+              payload.source == category);
+        }).toList();
         return Stack(
           children: [
             child,
-            if (candidates.isNotEmpty || rejected.isNotEmpty)
+            if (candidates.isNotEmpty || visibleRejected.isNotEmpty)
               Positioned.fill(
                 child: IgnorePointer(
                   child: AnimatedContainer(
@@ -917,254 +762,6 @@ class _ScheduleDragFeedback extends StatelessWidget {
   }
 }
 
-class _ActionSheetButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  final bool destructive;
-
-  const _ActionSheetButton({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.destructive = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final foreground = destructive
-        ? const Color(0xFFFF8D8D)
-        : const Color(0xFFF6F3EC);
-
-    return Material(
-      color: Colors.white.withValues(alpha: 0.055),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-          child: Row(
-            children: [
-              Icon(icon, color: foreground, size: 20),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: foreground,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-void _showTextEntrySheet(
-  BuildContext context, {
-  required String title,
-  required String label,
-  required ValueChanged<String> onSave,
-  String initialValue = '',
-  String? clearLabel,
-  VoidCallback? onClear,
-}) {
-  showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: const Color(0xFF101010),
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-    ),
-    builder: (context) {
-      return _TextEntrySheet(
-        title: title,
-        label: label,
-        initialValue: initialValue,
-        clearLabel: clearLabel,
-        onClear: onClear,
-        onSave: onSave,
-      );
-    },
-  );
-}
-
-void _showSnack(BuildContext context, String message) {
-  final messenger = ScaffoldMessenger.of(context);
-  messenger.hideCurrentSnackBar();
-  messenger.showSnackBar(
-    SnackBar(
-      content: Text(message),
-      behavior: SnackBarBehavior.floating,
-      duration: const Duration(milliseconds: 1600),
-    ),
-  );
-}
-
-class _TextEntrySheet extends StatefulWidget {
-  final String title;
-  final String label;
-  final String initialValue;
-  final String? clearLabel;
-  final VoidCallback? onClear;
-  final ValueChanged<String> onSave;
-
-  const _TextEntrySheet({
-    required this.title,
-    required this.label,
-    required this.initialValue,
-    required this.onSave,
-    this.clearLabel,
-    this.onClear,
-  });
-
-  @override
-  State<_TextEntrySheet> createState() => _TextEntrySheetState();
-}
-
-class _TextEntrySheetState extends State<_TextEntrySheet> {
-  late final TextEditingController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController(text: widget.initialValue);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
-
-    return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(20, 18, 20, bottomInset + 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    widget.title,
-                    style: const TextStyle(
-                      color: Color(0xFFF6F3EC),
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.close_rounded),
-                  color: const Color(0xFFF6F3EC),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _controller,
-              autofocus: true,
-              cursorColor: const Color(0xFFF6F3EC),
-              textInputAction: TextInputAction.done,
-              onSubmitted: (_) => _save(),
-              maxLines: 1,
-              style: const TextStyle(
-                color: Color(0xFFF6F3EC),
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-              ),
-              decoration: InputDecoration(
-                isDense: true,
-                labelText: widget.label,
-                labelStyle: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.46),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 14,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(
-                    color: Colors.white.withValues(alpha: 0.14),
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Color(0xFFF6F3EC)),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            FilledButton.icon(
-              onPressed: _save,
-              icon: const Icon(Icons.check_rounded),
-              label: Text(
-                context.l10n.saveAction,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFFF6F3EC),
-                foregroundColor: const Color(0xFF080808),
-                minimumSize: const Size.fromHeight(50),
-                textStyle: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-            ),
-            if (widget.onClear != null && widget.clearLabel != null) ...[
-              const SizedBox(height: 8),
-              TextButton(
-                onPressed: () {
-                  widget.onClear?.call();
-                  Navigator.of(context).pop();
-                },
-                child: Text(
-                  widget.clearLabel!,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _save() {
-    final value = _controller.text.trim();
-    if (value.isEmpty) {
-      _showSnack(context, context.l10n.enterSomethingFirst);
-      return;
-    }
-
-    widget.onSave(value);
-    Navigator.of(context).pop();
-  }
-}
 
 class _TodaySummaryPanel extends StatelessWidget {
   final Pomodoro pomodoro;
@@ -1372,6 +969,10 @@ class _WeekHistoryStrip extends StatelessWidget {
                 selected:
                     _TodayHistoryDateKey.format(days[index]) ==
                     todaySummary.dateKey,
+                onTap: () => showDayHistorySheet(
+                  context,
+                  dateKey: _TodayHistoryDateKey.format(days[index]),
+                ),
               ),
             ),
           ),
@@ -1384,30 +985,37 @@ class _HistoryCell extends StatelessWidget {
   final String label;
   final double fill;
   final bool selected;
+  final VoidCallback onTap;
 
   const _HistoryCell({
     required this.label,
     required this.fill,
     required this.selected,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 220),
-      curve: Curves.easeOutCubic,
-      height: 44,
-      padding: const EdgeInsets.all(5),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: selected ? 0.08 : 0.035),
-        border: Border.all(
-          color: selected
-              ? const Color(0xFFF6F3EC)
-              : Colors.white.withValues(alpha: 0.08),
-        ),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          height: 44,
+          padding: const EdgeInsets.all(5),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: selected ? 0.08 : 0.035),
+            border: Border.all(
+              color: selected
+                  ? const Color(0xFFF6F3EC)
+                  : Colors.white.withValues(alpha: 0.08),
+            ),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Column(
         children: [
           Expanded(
             child: Align(
@@ -1439,7 +1047,9 @@ class _HistoryCell extends StatelessWidget {
               fontWeight: FontWeight.w900,
             ),
           ),
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -1809,8 +1419,70 @@ class _TodayReviewTimeline extends StatelessWidget {
             box: boxes[index],
             active: boxes[index].id == activeBox?.id,
             first: index == 0,
-            last: index == boxes.length - 1,
+            // 아래 종료 마커까지 연결선을 이어 그린다.
+            last: false,
           ),
+        // 마지막 박스의 종료 시각을 축에 명시적으로 찍는다.
+        _TodayReviewTimelineEndMarker(box: boxes.last),
+      ],
+    );
+  }
+}
+
+class _TodayReviewTimelineEndMarker extends StatelessWidget {
+  final TimeBox box;
+
+  const _TodayReviewTimelineEndMarker({required this.box});
+
+  @override
+  Widget build(BuildContext context) {
+    final parts = box.timeRange.split('-');
+    final endLabel = parts.length > 1 ? parts.last.trim() : '';
+    if (endLabel.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        SizedBox(
+          width: 54,
+          child: Text(
+            endLabel,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.44),
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ),
+        SizedBox(
+          width: 24,
+          child: Column(
+            children: [
+              Container(
+                width: 2,
+                height: 10,
+                color: Colors.white.withValues(alpha: 0.14),
+              ),
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: Colors.transparent,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.42),
+                    width: 2,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const Expanded(child: SizedBox.shrink()),
       ],
     );
   }
@@ -2039,9 +1711,11 @@ class _TopPrioritiesPanel extends StatelessWidget {
               const SizedBox(height: 4),
               DailyCarryOverButton(
                 label: context.l10n.carryOverPreviousPriorities,
-                onPressed: notifier.carryOverPreviousTopPriorities,
-                onMissing: () =>
-                    _showSnack(context, context.l10n.noPreviousDailyItems),
+                onPressed: () => showCarryOverPickerSheet(
+                  context,
+                  notifier: notifier,
+                  section: CarryOverSection.topPriority,
+                ),
               ),
             ] else ...[
               const SizedBox(height: 12),
@@ -2050,23 +1724,30 @@ class _TopPrioritiesPanel extends StatelessWidget {
                   padding: EdgeInsets.only(
                     bottom: priority == filledPriorities.last ? 0 : 8,
                   ),
-                  child: _ScheduleSourceDraggable(
-                    payload: DraftTimeBoxDragPayload(
-                      source: DailyPlanItemCategory.topPriority,
-                      index: priority.index,
-                      title: priority.value,
-                    ),
-                    label: priority.value,
-                    onDragStarted: onDragStarted,
-                    onDragUpdate: onDragUpdate,
-                    onDragEnd: onDragEnd,
-                    child: _PriorityRow(
-                      index: priority.index,
-                      value: priority.value,
-                      onTap: () => _openEditPriority(
-                        context,
-                        priority.index,
-                        priority.value,
+                  child: DailyPlanReorderTarget(
+                    category: DailyPlanItemCategory.topPriority,
+                    rowIndex: priority.index,
+                    notifier: notifier,
+                    child: _ScheduleSourceDraggable(
+                      payload: DraftTimeBoxDragPayload(
+                        source: DailyPlanItemCategory.topPriority,
+                        index: priority.index,
+                        title: priority.value,
+                      ),
+                      label: priority.value,
+                      onDragStarted: onDragStarted,
+                      onDragUpdate: onDragUpdate,
+                      onDragEnd: onDragEnd,
+                      child: DailyPlanItemRow(
+                        text: priority.value,
+                        leadingIndex: priority.index,
+                        onTap: () => showDailyPlanItemSheet(
+                          context,
+                          notifier: notifier,
+                          category: DailyPlanItemCategory.topPriority,
+                          index: priority.index,
+                          value: priority.value,
+                        ),
                       ),
                     ),
                   ),
@@ -2084,97 +1765,18 @@ class _TopPrioritiesPanel extends StatelessWidget {
       (priority) => priority.trim().isEmpty,
     );
     if (nextIndex == -1 || nextIndex >= 3) {
-      _showSnack(context, context.l10n.threePrioritiesAlreadySet);
+      showAppSnack(context, context.l10n.threePrioritiesAlreadySet);
       return;
     }
 
-    _showTextEntrySheet(
+    showDailyPlanTextSheet(
       context,
       title: context.l10n.addPriorityTitle,
-      label: context.l10n.priorityLabel(nextIndex + 1),
+      fieldLabel: context.l10n.priorityLabel(nextIndex + 1),
       onSave: (value) {
         notifier.setTopPriority(nextIndex, value);
         HapticFeedback.lightImpact();
       },
-    );
-  }
-
-  void _openEditPriority(BuildContext context, int index, String value) {
-    _showTextEntrySheet(
-      context,
-      title: context.l10n.editPriorityTitle,
-      label: context.l10n.priorityLabel(index + 1),
-      initialValue: value,
-      clearLabel: context.l10n.clearPriority,
-      onClear: () {
-        notifier.setTopPriority(index, '');
-        HapticFeedback.lightImpact();
-      },
-      onSave: (nextValue) {
-        notifier.setTopPriority(index, nextValue);
-        HapticFeedback.lightImpact();
-      },
-    );
-  }
-}
-
-class _PriorityRow extends StatelessWidget {
-  final int index;
-  final String value;
-  final VoidCallback onTap;
-
-  const _PriorityRow({
-    required this.index,
-    required this.value,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white.withValues(alpha: 0.045),
-      shape: RoundedRectangleBorder(
-        side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 11, 12, 11),
-          child: Row(
-            children: [
-              Text(
-                '${index + 1}',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.46),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  value,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Color(0xFFF6F3EC),
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                    height: 1.15,
-                  ),
-                ),
-              ),
-              Icon(
-                Icons.edit_rounded,
-                size: 17,
-                color: Colors.white.withValues(alpha: 0.42),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

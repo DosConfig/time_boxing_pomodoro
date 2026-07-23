@@ -7,9 +7,21 @@ import '../../../focus/application/pomodoro_controller.dart';
 import '../../../focus/domain/entities/daily_plan_item_category.dart';
 import '../../../focus/domain/entities/pomodoro.dart';
 import '../../../focus/presentation/time_box_title_display.dart';
+import '../../../settings/application/app_preferences_controller.dart';
 import '../../application/today_ui_controller.dart';
+import 'carry_over_picker_sheet.dart';
 import 'daily_carry_over_button.dart';
 import 'today_section_card.dart';
+
+/// 자정 넘김 창(dayEnd > 24:00)에서 이른 새벽 시각을 창 기준 선형 분으로
+/// 보정한다. 예: 창이 09:00~26:00일 때 01:00(60분)은 25:00(1500분)이 된다.
+int wrapMinutesForWindow(int minutes, int dayEnd) {
+  const dayLength = 24 * 60;
+  if (dayEnd > dayLength && minutes < dayEnd - dayLength) {
+    return minutes + dayLength;
+  }
+  return minutes;
+}
 
 sealed class TimeBoxBoardDragPayload {
   const TimeBoxBoardDragPayload();
@@ -109,7 +121,7 @@ class TimeBoxBoard extends ConsumerWidget {
     final dayEnd = _dayEndMinutes(dayStart);
     final slotCount = ((dayEnd - dayStart) / slotMinutes).ceil();
     final boardHeight = slotCount * _slotHeight;
-    final nowMinutes = _nowMinutes();
+    final nowMinutes = wrapMinutesForWindow(_nowMinutes(), dayEnd);
     final actionTimeBoxId = ref.watch(todayTimeBoxActionControllerProvider);
     final resizeTimeBoxId = ref.watch(todayTimeBoxResizeModeControllerProvider);
     final interactionActive =
@@ -141,9 +153,11 @@ class TimeBoxBoard extends ConsumerWidget {
             const SizedBox(height: 4),
             DailyCarryOverButton(
               label: context.l10n.carryOverPreviousSchedule,
-              onPressed: notifier.carryOverPreviousTimeBoxes,
-              onMissing: () =>
-                  _showSnack(context, context.l10n.noPreviousDailyItems),
+              onPressed: () => showCarryOverPickerSheet(
+                context,
+                notifier: notifier,
+                section: CarryOverSection.timeBox,
+              ),
             ),
           ],
           const SizedBox(height: 14),
@@ -273,14 +287,14 @@ class TimeBoxBoard extends ConsumerWidget {
                       onResizeStartMinutes: (startMinutes) =>
                           notifier.resizeTimeBoxStart(
                             box.id,
-                            startMinutes,
+                            wrapMinutesForWindow(startMinutes, dayEnd),
                             minStartMinutes: dayStart,
                             stepMinutes: slotMinutes,
                           ),
                       onResizeEndMinutes: (endMinutes) =>
                           notifier.resizeTimeBoxEnd(
                             box.id,
-                            endMinutes,
+                            wrapMinutesForWindow(endMinutes, dayEnd),
                             maxEndMinutes: dayEnd,
                             stepMinutes: slotMinutes,
                           ),
@@ -354,7 +368,11 @@ class TimeBoxBoard extends ConsumerWidget {
     if (end <= dayStart) {
       return dayStart + (4 * 60);
     }
-    return end.clamp(dayStart + slotMinutes, 24 * 60);
+    // 자정 넘김 창(예: 09:00~다음날 01:00)을 지원한다.
+    return end.clamp(
+      dayStart + slotMinutes,
+      AppPreferencesController.maximumAwakeEndMinutes,
+    );
   }
 
   int _nowMinutes() => (now.hour * 60) + now.minute;
@@ -435,20 +453,22 @@ class TimeBoxBoard extends ConsumerWidget {
     if (slotStart < _dayStartMinutes()) {
       return false;
     }
+    final dayEnd = _dayEndMinutes(_dayStartMinutes());
     final durationMinutes = (durationSeconds / 60).round();
     final slotEnd = slotStart + durationMinutes;
-    if (slotEnd > _dayEndMinutes(_dayStartMinutes())) {
+    if (slotEnd > dayEnd) {
       return false;
     }
     return !pomodoro.timeBoxes.any((box) {
       if (box.id == movingBoxId) {
         return false;
       }
-      final start = box.startMinutes;
-      final end = box.endMinutes;
-      if (start == null || end == null) {
+      final rawStart = box.startMinutes;
+      if (rawStart == null || box.endMinutes == null) {
         return false;
       }
+      final start = wrapMinutesForWindow(rawStart, dayEnd);
+      final end = start + (box.endMinutes! - rawStart);
       return slotStart < end && slotEnd > start;
     });
   }
@@ -550,9 +570,15 @@ class _PositionedTimeBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final start = box.startMinutes;
-    final end = box.endMinutes;
-    if (start == null || end == null || end <= dayStart || start >= dayEnd) {
+    final rawStart = box.startMinutes;
+    final rawEnd = box.endMinutes;
+    if (rawStart == null || rawEnd == null) {
+      return const SizedBox.shrink();
+    }
+    // 자정 넘김 창에서 새벽 시각(예: 01:00)을 창 기준 선형 분으로 보정한다.
+    final start = wrapMinutesForWindow(rawStart, dayEnd);
+    final end = start + (rawEnd - rawStart);
+    if (end <= dayStart || start >= dayEnd) {
       return const SizedBox.shrink();
     }
 
@@ -1425,18 +1451,6 @@ class _RepeatWeekdayChip extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     );
   }
-}
-
-void _showSnack(BuildContext context, String message) {
-  final messenger = ScaffoldMessenger.of(context);
-  messenger.hideCurrentSnackBar();
-  messenger.showSnackBar(
-    SnackBar(
-      content: Text(message),
-      behavior: SnackBarBehavior.floating,
-      duration: const Duration(milliseconds: 1600),
-    ),
-  );
 }
 
 class _TimeBoxTextField extends StatelessWidget {
