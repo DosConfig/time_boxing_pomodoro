@@ -14,16 +14,20 @@ The product direction is inspired by explicit timeboxing: brain dump, top three 
 - Top priorities and current time box metadata in Live Activity
 - Native start/progress and completion notifications with current task metadata
 - Session presets: `25/5`, `50/10`, and `15/3`
+- Configurable time box planning intervals: 15, 30, or 60 minutes
 - Auto-start options for breaks and next focus sessions
 - Local alert and sound preferences
 - Cold-launch restoration using persisted native `endTime`
 - Local Today Plan persistence and seven-day daily history
+- UID-scoped plan storage that preserves daily plans across sign-in changes
 - Apple Calendar export through EventKit
 - Google Calendar export through Google Sign-In and a Dio REST client
-- Firebase Auth gate with Apple and Google sign-in and account deletion
+- Firebase Auth gate with Apple, Google, and email sign-in and account deletion
 - Android foreground timer with OS-rendered countdown notifications
 - Melos workspace scripts for codegen, testing, guardrails, and release checks
 - Mockito repository/data-source tests and a Patrol first-launch smoke test
+- Signed Codemagic and Fastlane store pipelines with store screenshot automation
+- Branded public support and legal site served from `public/` on Firebase Hosting
 - Monotone visual system and custom SVG-based app icon
 - Notebook capture and multi-calendar sync roadmap for later expansion
 
@@ -56,6 +60,10 @@ The feature set is intentionally small and portfolio-friendly:
 - Auto-start breaks are enabled by default to protect recovery time.
 - Auto-start scheduled focus is off by default; when enabled, the current and
   following time boxes start from their clock-aligned remaining time.
+- The time box grid interval is a setting (`15`, `30`, or `60` minutes, default
+  `30`) so plans can match how granular the user actually schedules.
+- Email/password sign-in exists alongside Apple and Google so store reviewers
+  can reach the full experience without a third-party account.
 - Local alerts can be disabled independently from Live Activity.
 - Alert sound can be disabled while keeping visual notifications.
 - Notification permission is requested contextually when the user starts a timer, not on first launch.
@@ -71,6 +79,7 @@ The feature set is intentionally small and portfolio-friendly:
 - [Notifications and calendar plan](docs/product/NOTIFICATIONS_AND_CALENDAR.md)
 - [Android timer notification strategy](docs/product/ANDROID_TIMER_NOTIFICATION_STRATEGY.md)
 - [Tech stack usage](docs/product/TECH_STACK_USAGE.md)
+- [Daily plan data lifecycle](docs/architecture/DATA_LIFECYCLE.md)
 - [App Store review preparation](docs/release/APP_STORE_REVIEW_PREP.md)
 - [Account ownership migration](docs/release/ACCOUNT_OWNERSHIP_MIGRATION.md)
 - [App Store, Shorebird, and Codemagic setup](docs/release/APPSTORE_SHOREBIRD_CODEMAGIC_SETUP.md)
@@ -78,6 +87,8 @@ The feature set is intentionally small and portfolio-friendly:
 - [Testing automation](docs/release/TESTING_AUTOMATION.md)
 - [Shorebird policy](docs/release/SHOREBIRD_POLICY.md)
 - [Environment strategy](docs/release/ENVIRONMENT_STRATEGY.md)
+- [App Store assets](docs/store/APP_STORE_ASSETS.md)
+- [Google Play assets](docs/store/GOOGLE_PLAY_ASSETS.md)
 - [Privacy policy draft](docs/legal/PRIVACY_POLICY_DRAFT.md)
 - [Terms draft](docs/legal/TERMS_DRAFT.md)
 
@@ -146,6 +157,18 @@ ios/
 6. On foreground/cold launch, Flutter calls `restoreState`.
 7. Swift recomputes remaining time from `endTime - now` and reconnects to any active Live Activity.
 
+## Daily Plan Data Lifecycle
+
+Today Plan data is scoped by `Firebase UID + local date` in the local cache and
+mirrored to `users/{uid}/days/{yyyy-MM-dd}` in Firestore. On startup the app
+resolves local and cloud revisions before accepting writes, so the default
+empty entity can never overwrite a saved plan while restoration is pending.
+Because every local key carries the owning UID, signing out, switching
+accounts, or deleting an account cannot mix or lose another account's plans.
+Native timer restoration only touches runtime fields and never replaces daily
+content. See [DATA_LIFECYCLE.md](docs/architecture/DATA_LIFECYCLE.md) for the
+full rules.
+
 ## Live Activity Notes
 
 Live Activity uses SwiftUI `Text(timerInterval:countsDown:)`. On the Lock Screen or in Simulator, iOS may temporarily show minute-level placeholders such as `19:--` while throttling second-level rendering. The underlying timer still uses the persisted absolute `endTime`, so this is a display policy rather than a state-sync bug.
@@ -181,7 +204,7 @@ Completed:
 4. `lib/firebase_options.dart` generated locally and ignored by git
 5. Identity Toolkit API enabled for Firebase Auth
 6. Google Calendar API enabled
-7. Apple and Google Firebase Authentication providers enabled
+7. Apple, Google, and Email/Password Firebase Authentication providers enabled
 8. Google Sign-In URL scheme is read from local `ios/Flutter/Firebase.local.xcconfig`
 9. Settings account UI supports Apple and Google Firebase sign-in
 10. Firestore sync stores each signed-in user's Today Plan at `users/{uid}/days/{yyyy-MM-dd}`
@@ -210,12 +233,16 @@ Public release URLs:
 - Support: https://timebox-mark-prod.web.app/support/
 - Terms: https://timebox-mark-prod.web.app/terms/
 
+The site source lives in `public/` (branded landing, privacy, support, and
+terms pages) and deploys through Firebase Hosting.
+
 Release automation:
 
-- Fastlane: `ios/fastlane`
-- Codemagic: `codemagic.yaml`
+- Fastlane: `ios/fastlane` with `verify`, `build_ipa`, `internal_beta`, and `metadata` lanes
+- Codemagic: `codemagic.yaml` — fetches signing files through the App Store Connect API, installs the FlutterFire CLI, derives the next iOS build number from the latest TestFlight build, and archives with generated export options
 - CircleCI: `.circleci/config.yml`
-- Public-repo guardrails: `scripts/ci/verify_release_guardrails.sh`
+- Public-repo guardrails: `scripts/ci/verify_release_guardrails.sh` (works with or without ripgrep on the runner)
+- Store screenshots: `integration_test/app_store_screenshot_test.dart` and the `test_driver/` workflows capture App Store and Google Play assets
 - Shorebird: documented only, not initialized for the first submitted binary
 
 1. Open `ios/Runner.xcworkspace` in Xcode.
@@ -224,7 +251,8 @@ Release automation:
    - `com.seongwoo.focusmark`
    - `com.seongwoo.focusmark.PomodoroWidgetExtension`
 4. Enable Live Activities support for the app target.
-5. Build an archive from Xcode or run:
+5. App icons are exported without an alpha channel to satisfy App Store validation.
+6. Build an archive from Xcode or run:
 
 ```bash
 flutter build ipa --release
@@ -245,8 +273,13 @@ flutter build ios --simulator
 ./gradlew :app:assembleDebug
 ```
 
-The Bridle quick gate also passed secret scanning across the worktree and Git
-history, duplicate implementation detection, analysis, and 36 Flutter tests.
+The Bridle quick gate covers secret scanning across the worktree and Git
+history, duplicate implementation detection, analysis, and the Flutter test
+suite. The Flutter gate (`gates/flutter_check.sh`, mirrored in the
+`flutter_gate` GitHub workflow) is reproducible: it exits with a distinct code
+when the toolchain is missing instead of passing silently, and it fails when
+generated code (`*.g.dart`, `*.freezed.dart`, `*.mocks.dart`, generated l10n)
+drifts from its sources.
 
 The iOS release archive requires local Apple signing credentials, so final App Store/TestFlight export should be performed on the developer account that owns the bundle ID.
 
