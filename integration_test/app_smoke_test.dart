@@ -6,7 +6,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   patrolTest('first launch shows intro onboarding', ($) async {
-    SharedPreferences.setMockInitialValues({});
+    // 시뮬레이터 시스템 언어와 무관하게 영어 문자열을 검증하도록 로케일 고정.
+    SharedPreferences.setMockInitialValues({'app.localeCode': 'en'});
 
     await $.pumpWidgetAndSettle(const ProviderScope(child: MyApp()));
 

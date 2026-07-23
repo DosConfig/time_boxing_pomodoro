@@ -4,6 +4,7 @@ import 'package:time_boxing_pomodoro/features/auth/domain/entities/auth_session.
 import 'package:time_boxing_pomodoro/features/auth/domain/repositories/auth_repository.dart';
 import 'package:time_boxing_pomodoro/features/focus/application/pomodoro_controller.dart';
 import 'package:time_boxing_pomodoro/features/focus/data/datasources/pomodoro_cloud_datasource.dart';
+import 'package:time_boxing_pomodoro/features/focus/data/datasources/pomodoro_local_datasource.dart';
 import 'package:time_boxing_pomodoro/features/focus/domain/entities/daily_plan_summary.dart';
 import 'package:time_boxing_pomodoro/features/focus/domain/entities/pomodoro.dart';
 
@@ -63,7 +64,15 @@ class FakeCloudDataSource extends PomodoroCloudDataSource {
 
   @override
   Future<Pomodoro?> loadPreviousPlan(Pomodoro fallback) async => null;
+
+  @override
+  Future<Pomodoro?> loadPlanForDate(String dateKey, Pomodoro fallback) async =>
+      null;
 }
+
+/// Firebase 미초기화 환경에서 FirebaseAuth를 건드리지 않는 고정 스코프.
+PomodoroLocalDataSource fakeLocalDataSource() =>
+    PomodoroLocalDataSource(storageScope: () => 'e2e-user');
 
 /// 로그인 완료 상태로 시작하는 컨테이너 (로그인 이후 저니용)
 ProviderContainer signedInContainer() => ProviderContainer(
@@ -71,6 +80,9 @@ ProviderContainer signedInContainer() => ProviderContainer(
     authRepositoryProvider.overrideWith((ref) => FakeAuthRepository()),
     pomodoroCloudDataSourceProvider.overrideWith(
       (ref) => FakeCloudDataSource(),
+    ),
+    pomodoroLocalDataSourceProvider.overrideWith(
+      (ref) => fakeLocalDataSource(),
     ),
   ],
 );
@@ -81,6 +93,9 @@ ProviderContainer signedOutContainer() => ProviderContainer(
     authRepositoryProvider.overrideWith((ref) => SignedOutFakeAuthRepository()),
     pomodoroCloudDataSourceProvider.overrideWith(
       (ref) => FakeCloudDataSource(),
+    ),
+    pomodoroLocalDataSourceProvider.overrideWith(
+      (ref) => fakeLocalDataSource(),
     ),
   ],
 );
