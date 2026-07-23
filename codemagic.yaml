@@ -12,6 +12,7 @@ workflows:
         - timebox_mark_ios_release
       vars:
         APP_IDENTIFIER: com.seongwoo.focusmark
+        APP_STORE_APPLE_ID: 6792788166
         XCODE_WORKSPACE: ios/Runner.xcworkspace
         XCODE_SCHEME: Runner
     cache:
@@ -49,8 +50,12 @@ workflows:
           xcode-project use-profiles
       - name: Build signed IPA
         script: |
+          LATEST_BUILD_NUMBER=$(app-store-connect get-latest-testflight-build-number \
+            "$APP_STORE_APPLE_ID")
+          NEXT_BUILD_NUMBER=$((LATEST_BUILD_NUMBER + 1))
+          echo "Building iOS version with build number $NEXT_BUILD_NUMBER"
           flutter build ipa --release \
-            --build-number=$BUILD_NUMBER \
+            --build-number="$NEXT_BUILD_NUMBER" \
             --export-options-plist="$CM_EXPORT_OPTIONS_PATH"
     artifacts:
       - build/ios/ipa/*.ipa
