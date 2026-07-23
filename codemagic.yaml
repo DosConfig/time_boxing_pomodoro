@@ -32,6 +32,7 @@ workflows:
         script: |
           flutter pub get
           dart run melos run codegen
+          dart pub global activate flutterfire_cli
       - name: Release guardrails
         script: |
           dart run melos run guard
