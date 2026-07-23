@@ -85,8 +85,9 @@ class OnboardingScreen extends ConsumerWidget {
                     RangeSlider(
                       values: range,
                       min: 0,
-                      max: 24 * 60,
-                      divisions: 48,
+                      max: AppPreferencesController.maximumAwakeEndMinutes
+                          .toDouble(),
+                      divisions: 56,
                       activeColor: const Color(0xFFF6F3EC),
                       inactiveColor: Colors.white.withValues(alpha: 0.16),
                       labels: RangeLabels(
@@ -150,19 +151,28 @@ RangeValues normalizeAwakeRange(RangeValues values) {
   final start = values.start.round();
   final end = values.end.round();
   final minimumSpan = AppPreferencesController.minimumAwakeWindowMinutes;
+  final maximumEnd = AppPreferencesController.maximumAwakeEndMinutes;
 
   if (end - start >= minimumSpan) {
     return RangeValues(start.toDouble(), end.toDouble());
   }
 
-  final adjustedEnd = (start + minimumSpan).clamp(0, 24 * 60);
-  final adjustedStart = (adjustedEnd - minimumSpan).clamp(0, 24 * 60);
+  final adjustedEnd = (start + minimumSpan).clamp(0, maximumEnd);
+  final adjustedStart = (adjustedEnd - minimumSpan).clamp(0, maximumEnd);
   return RangeValues(adjustedStart.toDouble(), adjustedEnd.toDouble());
 }
 
+/// 자정을 넘긴 시각(예: 1500분)은 "01:00 +1"처럼 다음날 표기를 붙인다.
 String formatClock(int minutes) {
-  if (minutes >= 24 * 60) {
+  if (minutes == 24 * 60) {
     return '24:00';
+  }
+  if (minutes > 24 * 60) {
+    final wrapped = minutes - (24 * 60);
+    final hour = wrapped ~/ 60;
+    final minute = wrapped % 60;
+    return '${hour.toString().padLeft(2, '0')}:'
+        '${minute.toString().padLeft(2, '0')} +1';
   }
   final normalized = minutes.clamp(0, (24 * 60) - 1);
   final hour = normalized ~/ 60;

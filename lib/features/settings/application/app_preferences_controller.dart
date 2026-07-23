@@ -12,8 +12,12 @@ class AppPreferencesController extends _$AppPreferencesController {
   static const _awakeStartKey = 'app.awakeStartMinutes';
   static const _awakeEndKey = 'app.awakeEndMinutes';
   static const _timeSlotIntervalKey = 'app.timeSlotIntervalMinutes';
+  static const _slotBreakEnabledKey = 'app.slotBreakEnabled';
   static const _localeCodeKey = 'app.localeCode';
   static const minimumAwakeWindowMinutes = 4 * 60;
+
+  /// 깨어있는 시간 종료는 다음날 04:00까지 허용한다(자정 넘김 지원).
+  static const maximumAwakeEndMinutes = 28 * 60;
   static const supportedLocaleCodes = <String>{
     '',
     'de',
@@ -46,10 +50,18 @@ class AppPreferencesController extends _$AppPreferencesController {
       timeSlotInterval: TimeSlotInterval.fromMinutes(
         preferences.getInt(_timeSlotIntervalKey),
       ),
+      slotBreakEnabled:
+          preferences.getBool(_slotBreakEnabledKey) ?? initial.slotBreakEnabled,
       localeCode: _normalizedLocaleCode(
         preferences.getString(_localeCodeKey) ?? initial.localeCode,
       ),
     );
+  }
+
+  Future<void> setSlotBreakEnabled(bool enabled) async {
+    state = state.copyWith(slotBreakEnabled: enabled);
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setBool(_slotBreakEnabledKey, enabled);
   }
 
   Future<void> setLocaleCode(String localeCode) async {
@@ -103,7 +115,10 @@ class AppPreferencesController extends _$AppPreferencesController {
 
   (int, int) _normalizeWindow(int startMinutes, int endMinutes) {
     final start = startMinutes.clamp(0, 20 * 60);
-    final end = endMinutes.clamp(start + minimumAwakeWindowMinutes, 24 * 60);
+    final end = endMinutes.clamp(
+      start + minimumAwakeWindowMinutes,
+      maximumAwakeEndMinutes,
+    );
     return (start, end);
   }
 

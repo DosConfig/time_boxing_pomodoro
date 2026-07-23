@@ -28,6 +28,10 @@ abstract class AppPreferences with _$AppPreferences {
     @Default(7 * 60) int awakeStartMinutes,
     @Default(23 * 60) int awakeEndMinutes,
     @Default(TimeSlotInterval.thirtyMinutes) TimeSlotInterval timeSlotInterval,
+
+    /// 슬롯 휴식: 슬롯 간격마다 마지막 몇 분을 휴식으로 쓴다
+    /// (15분→1분, 30분→3분, 60분→5분).
+    @Default(false) bool slotBreakEnabled,
     @Default('') String localeCode,
   }) = _AppPreferences;
 

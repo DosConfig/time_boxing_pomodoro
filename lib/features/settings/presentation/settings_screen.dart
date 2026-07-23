@@ -128,6 +128,23 @@ class SettingsScreen extends ConsumerWidget {
                             value: pomodoro.autoStartFocus,
                             onChanged: notifier.setAutoStartFocus,
                           ),
+                          _SettingsSwitch(
+                            label: l10n.slotBreakTitle,
+                            description: l10n.slotBreakDescription(
+                              preferences.timeSlotInterval.minutes,
+                              slotBreakMinutesForInterval(
+                                preferences.timeSlotInterval.minutes,
+                              ),
+                            ),
+                            value: preferences.slotBreakEnabled,
+                            onChanged: (enabled) {
+                              ref
+                                  .read(
+                                    appPreferencesControllerProvider.notifier,
+                                  )
+                                  .setSlotBreakEnabled(enabled);
+                            },
+                          ),
                         ],
                       ),
                     ),
@@ -304,8 +321,9 @@ class SettingsScreen extends ConsumerWidget {
                     RangeSlider(
                       values: range,
                       min: 0,
-                      max: 24 * 60,
-                      divisions: 48,
+                      max: AppPreferencesController.maximumAwakeEndMinutes
+                          .toDouble(),
+                      divisions: 56,
                       activeColor: const Color(0xFFF6F3EC),
                       inactiveColor: Colors.white.withValues(alpha: 0.16),
                       labels: RangeLabels(
