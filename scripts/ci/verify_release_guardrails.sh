@@ -5,10 +5,29 @@
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
+filter_regex() {
+  local pattern="$1"
+  if command -v rg >/dev/null 2>&1; then
+    rg "$pattern"
+  else
+    grep -E "$pattern"
+  fi
+}
+
+has_regex_in_paths() {
+  local pattern="$1"
+  shift
+  if command -v rg >/dev/null 2>&1; then
+    rg -q "$pattern" "$@"
+  else
+    grep -E -R -q "$pattern" "$@"
+  fi
+}
+
 # 1) 프로젝트 정책(하네스보다 엄격): 자격 파일은 추적 자체를 금지한다.
 #    이 저장소는 firebase_options.dart 등을 gitignore하고 CI에서 복원한다.
 tracked_secret_paths="$(
-  git ls-files | rg \
+  git ls-files | filter_regex \
     '(GoogleService-Info\.plist|google-services\.json|firebase_options\.dart|Firebase\.local\.xcconfig|\.p8$|\.p12$|\.mobileprovision$|\.provisionprofile$|\.jks$|\.keystore$)' || true
 )"
 if [[ -n "$tracked_secret_paths" ]]; then
@@ -30,6 +49,6 @@ plutil -lint \
 python3 -m json.tool firebase.json >/dev/null
 python3 -m json.tool firestore.indexes.json >/dev/null
 
-rg -q 'https://timebox-mark-prod\.web\.app/privacy/' lib docs public
-rg -q 'https://timebox-mark-prod\.web\.app/support/' lib docs public
-rg -q 'https://timebox-mark-prod\.web\.app/terms/' lib docs public
+has_regex_in_paths 'https://timebox-mark-prod\.web\.app/privacy/' lib docs public
+has_regex_in_paths 'https://timebox-mark-prod\.web\.app/support/' lib docs public
+has_regex_in_paths 'https://timebox-mark-prod\.web\.app/terms/' lib docs public
