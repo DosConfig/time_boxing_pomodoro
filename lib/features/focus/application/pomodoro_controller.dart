@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../settings/application/app_preferences_controller.dart';
 import '../di/focus_providers.dart';
 import '../domain/entities/native_timer_copy.dart';
 import '../domain/entities/daily_plan_item_category.dart';
@@ -13,6 +14,7 @@ import '../domain/usecases/pause_pomodoro.dart';
 import '../domain/usecases/reset_pomodoro.dart';
 import '../domain/usecases/restore_pomodoro_state.dart';
 import '../domain/usecases/restore_today_plan.dart';
+import '../domain/usecases/load_plan_for_date.dart';
 import '../domain/usecases/load_previous_plan.dart';
 import '../domain/usecases/start_pomodoro.dart';
 
@@ -43,9 +45,46 @@ class _SingleFlight {
 @Riverpod(keepAlive: true)
 DateTime Function() pomodoroClock(Ref ref) => DateTime.now;
 
+/// 슬롯 간격별 슬롯 휴식 길이(분): 15분→1분, 30분→3분, 60분→5분.
+int slotBreakMinutesForInterval(int intervalMinutes) {
+  return switch (intervalMinutes) {
+    15 => 1,
+    30 => 3,
+    _ => 5,
+  };
+}
+
+/// 현재 시각(자정 기준 초)에서 다음 슬롯 휴식 창까지의 거리.
+///
+/// 휴식 창은 각 슬롯 경계의 마지막 [breakMinutes]분이다.
+/// 예: 간격 30분·휴식 3분이면 창은 매시 27~30분, 57~60분.
+/// [secondsToBreakStart]가 0 이하이면 지금이 휴식 창 안이다.
+({int secondsToBreakStart, int secondsToBoundary}) slotBreakWindow(
+  int nowSeconds,
+  int intervalMinutes,
+  int breakMinutes,
+) {
+  final intervalSeconds = intervalMinutes * 60;
+  final boundary = ((nowSeconds ~/ intervalSeconds) + 1) * intervalSeconds;
+  final breakStart = boundary - (breakMinutes * 60);
+  return (
+    secondsToBreakStart: breakStart - nowSeconds,
+    secondsToBoundary: boundary - nowSeconds,
+  );
+}
+
 @riverpod
 Future<List<DailyPlanSummary>> dailyPlanHistory(Ref ref, {int days = 7}) {
   return ref.watch(loadDailyPlanHistoryUseCaseProvider).call(days: days);
+}
+
+/// 특정 날짜 키(yyyy-MM-dd)의 저장된 플랜 원문. 과거 기록 열람 UI가 사용한다.
+/// doc: docs/architecture/DATA_LIFECYCLE.md
+@riverpod
+Future<Pomodoro?> planForDate(Ref ref, {required String dateKey}) {
+  return ref
+      .watch(loadPlanForDateUseCaseProvider)
+      .call(dateKey, Pomodoro.initial());
 }
 
 @Riverpod(keepAlive: true)
@@ -66,12 +105,26 @@ class PomodoroController extends _$PomodoroController
       ref.read(restoreTodayPlanUseCaseProvider);
   LoadPreviousPlanUseCase get loadPreviousPlanUseCase =>
       ref.read(loadPreviousPlanUseCaseProvider);
+  LoadPlanForDateUseCase get loadPlanForDateUseCase =>
+      ref.read(loadPlanForDateUseCaseProvider);
 
   StreamSubscription? _timerSubscription;
   Timer? _clockSyncTimer;
   Future<void>? _localRestoreFuture;
   bool _hasRestoredLocalPlan = false;
   bool _initialRestoreCompleted = false;
+
+  /// 현재 세션이 추적(자동 시작)으로 시작됐는지. 추적을 꺼도 수동 세션은
+  /// 유지하기 위해 세션 기원을 구분한다.
+  bool _activeSessionAutoStarted = false;
+
+  /// 추적 모드에서 사용자가 정지를 택한 박스 id. 그 박스가 끝날 때까지
+  /// 1초 클록 동기화가 세션을 되살리지 않게 한다.
+  String _skippedAutoStartBoxId = '';
+
+  /// 슬롯 휴식이 진행 중인 박스 id. 휴식이 끝나면 같은 박스의 다음
+  /// 집중 세그먼트로 자동 복귀한다.
+  String _slotBreakBoxId = '';
   final _nativeRestore = _SingleFlight();
   final _dayRollover = _SingleFlight();
   final _scheduledAutoStart = _SingleFlight();
@@ -327,6 +380,8 @@ class PomodoroController extends _$PomodoroController
           phase: PomodoroPhase.focus,
         );
       }
+      // 사용자가 직접 시작을 택했으므로 이 박스의 정지(스킵) 선택은 해제한다.
+      _skippedAutoStartBoxId = '';
       syncFocusWithClock();
       if (state.remainingTime <= 0) {
         debugPrint(
@@ -334,7 +389,19 @@ class PomodoroController extends _$PomodoroController
         );
         return;
       }
-      state = state.copyWith(status: PomodoroStatus.running);
+
+      if (_startSlotBreakIfInWindow(
+        boxRemaining: state.remainingTime,
+        autoOrigin: false,
+      )) {
+        return;
+      }
+
+      _activeSessionAutoStarted = false;
+      state = state.copyWith(
+        status: PomodoroStatus.running,
+        remainingTime: _focusSegmentRemaining(state.remainingTime),
+      );
       repository.updatePomodoro(state);
 
       _timerSubscription?.cancel();
@@ -354,6 +421,13 @@ class PomodoroController extends _$PomodoroController
 
   Future<void> reset() async {
     final previous = state;
+    // 추적 모드에서 사용자가 정지를 택했다면, 이 박스는 끝날 때까지
+    // 클록 동기화가 자동으로 되살리지 않는다.
+    if (previous.autoStartFocus && previous.activeTimeBoxId.isNotEmpty) {
+      _skippedAutoStartBoxId = previous.activeTimeBoxId;
+    }
+    _activeSessionAutoStarted = false;
+    _slotBreakBoxId = '';
     _timerSubscription?.cancel();
     await resetUseCase(); // 네이티브 stop + Live Activity 종료 포함
     state = Pomodoro.initial().copyWith(
@@ -395,13 +469,17 @@ class PomodoroController extends _$PomodoroController
     unawaited(setScheduleTrackingEnabled(enabled, _nativeCopy));
   }
 
+  /// 타임박스 실시간 추적(알림·Live Activity) on/off — 순수 정책 스위치.
+  ///
+  /// 켜면 추적 세션(자동 시작)이 활성화되고, 끄면 추적으로 시작된 세션과
+  /// 그 알림/Live Activity만 내린다. 사용자가 직접 시작한 세션은 어느
+  /// 시점에 꺼도 유지된다.
   Future<void> setScheduleTrackingEnabled(
     bool enabled,
     NativeTimerCopy nativeCopy,
   ) async {
     _nativeCopy = nativeCopy;
-    if (state.autoStartFocus == enabled &&
-        (enabled || state.status == PomodoroStatus.idle)) {
+    if (state.autoStartFocus == enabled) {
       if (enabled) {
         syncFocusWithClock();
       }
@@ -412,20 +490,27 @@ class PomodoroController extends _$PomodoroController
     repository.updatePomodoro(state);
 
     if (enabled) {
+      _skippedAutoStartBoxId = '';
       syncFocusWithClock();
-      await _scheduledAutoStart.run(_startScheduledTimeBox);
       return;
     }
 
-    await _timerSubscription?.cancel();
-    _timerSubscription = null;
-    await resetUseCase();
-    state = state.copyWith(
-      status: PomodoroStatus.idle,
-      phase: PomodoroPhase.focus,
-    );
-    syncFocusWithClock();
-    repository.updatePomodoro(state);
+    final trackedSessionActive =
+        _activeSessionAutoStarted &&
+        (state.status == PomodoroStatus.running ||
+            state.status == PomodoroStatus.paused);
+    if (trackedSessionActive) {
+      await _timerSubscription?.cancel();
+      _timerSubscription = null;
+      _slotBreakBoxId = '';
+      await resetUseCase();
+      state = state.copyWith(
+        status: PomodoroStatus.idle,
+        phase: PomodoroPhase.focus,
+      );
+      repository.updatePomodoro(state);
+      syncFocusWithClock();
+    }
   }
 
   void setNotificationsEnabled(bool enabled) {
@@ -490,50 +575,106 @@ class PomodoroController extends _$PomodoroController
     repository.updatePomodoro(state);
   }
 
-  void moveBrainDumpItemToReminder(int index) {
-    if (index < 0 || index >= state.brainDump.length) {
-      return;
+  /// 카테고리와 무관하게 데일리 플랜 항목의 텍스트를 제자리 수정한다.
+  /// 공용 편집 시트(탭 → 수정)가 사용하는 단일 진입점이다.
+  bool updateDailyPlanItem(
+    DailyPlanItemCategory category,
+    int index,
+    String value,
+  ) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) {
+      return false;
     }
 
-    final brainDump = List<String>.from(state.brainDump);
-    final reminder = brainDump.removeAt(index);
-    state = state.copyWith(
-      brainDump: brainDump,
-      reminders: [...state.reminders, reminder],
-    );
+    switch (category) {
+      case DailyPlanItemCategory.topPriority:
+        if (index < 0 || index >= 3) {
+          return false;
+        }
+        setTopPriority(index, trimmed);
+        return true;
+      case DailyPlanItemCategory.brainDump:
+        if (index < 0 || index >= state.brainDump.length) {
+          return false;
+        }
+        final items = List<String>.from(state.brainDump);
+        items[index] = trimmed;
+        state = state.copyWith(brainDump: items);
+      case DailyPlanItemCategory.reminder:
+        if (index < 0 || index >= state.reminders.length) {
+          return false;
+        }
+        final items = List<String>.from(state.reminders);
+        items[index] = trimmed;
+        state = state.copyWith(reminders: items);
+    }
     repository.updatePomodoro(state);
+    return true;
   }
 
-  void promoteBrainDumpItem(int index) {
-    if (index < 0 || index >= state.brainDump.length) {
-      return;
-    }
-
-    final priorities = List<String>.from(state.topPriorities);
-    while (priorities.length < 3) {
-      priorities.add('');
-    }
-
-    var targetIndex = priorities.indexWhere(
-      (priority) => priority.trim().isEmpty,
+  bool moveBrainDumpItemToReminder(int index) {
+    return moveDailyPlanItem(
+      source: DailyPlanItemCategory.brainDump,
+      index: index,
+      target: DailyPlanItemCategory.reminder,
     );
-    if (targetIndex == -1) {
-      targetIndex = 2;
+  }
+
+  /// 빈 우선순위 슬롯이 없으면 덮어쓰지 않고 false를 반환한다.
+  /// 직접 추가/드래그 경로와 동일한 3개 제한 정책을 공유한다.
+  bool promoteBrainDumpItem(int index) {
+    return moveDailyPlanItem(
+      source: DailyPlanItemCategory.brainDump,
+      index: index,
+      target: DailyPlanItemCategory.topPriority,
+    );
+  }
+
+  /// 같은 카테고리 안에서 항목 순서를 변경한다. 성공 시 true.
+  bool reorderDailyPlanItem({
+    required DailyPlanItemCategory category,
+    required int fromIndex,
+    required int toIndex,
+  }) {
+    if (fromIndex == toIndex) {
+      return false;
     }
 
-    final items = List<String>.from(state.brainDump);
-    final promoted = items.removeAt(index);
-    priorities[targetIndex] = promoted;
-
-    state = state.copyWith(
-      brainDump: items,
-      topPriorities: priorities.take(3).toList(),
-    );
+    switch (category) {
+      case DailyPlanItemCategory.brainDump:
+        final items = List<String>.from(state.brainDump);
+        if (!_reorderWithin(items, fromIndex, toIndex)) {
+          return false;
+        }
+        state = state.copyWith(brainDump: items);
+      case DailyPlanItemCategory.reminder:
+        final items = List<String>.from(state.reminders);
+        if (!_reorderWithin(items, fromIndex, toIndex)) {
+          return false;
+        }
+        state = state.copyWith(reminders: items);
+      case DailyPlanItemCategory.topPriority:
+        final slots = state.topPrioritySlots;
+        if (!_reorderWithin(slots, fromIndex, toIndex)) {
+          return false;
+        }
+        state = state.copyWith(topPriorities: slots.take(3).toList());
+    }
     repository.updatePomodoro(state);
+    return true;
+  }
 
-    if (targetIndex == 0 || targetIndex == 1) {
-      setTopPriority(targetIndex, promoted);
+  bool _reorderWithin(List<String> items, int fromIndex, int toIndex) {
+    if (fromIndex < 0 ||
+        fromIndex >= items.length ||
+        toIndex < 0 ||
+        toIndex >= items.length) {
+      return false;
     }
+    final moved = items.removeAt(fromIndex);
+    items.insert(toIndex, moved);
+    return true;
   }
 
   void setTopPriority(int index, String value) {
@@ -1039,11 +1180,14 @@ class PomodoroController extends _$PomodoroController
         : normalizedStepMinutes;
     final minEnd = start + minimumDurationMinutes;
     final nextStart = _nextStartAfter(boxes, id, start);
-    final upperBound = [maxEndMinutes, nextStart, 24 * 60]
+    // 자정 넘김 창을 지원하므로 하드 캡은 다음날 04:00(28*60)까지 허용한다.
+    // 실제 상한은 호출부가 넘기는 maxEndMinutes(깨어있는 시간 끝)가 정한다.
+    const scheduleCapMinutes = 28 * 60;
+    final upperBound = [maxEndMinutes, nextStart, scheduleCapMinutes]
         .whereType<int>()
         .where((value) => value > start)
         .fold<int>(
-          24 * 60,
+          scheduleCapMinutes,
           (current, value) => value < current ? value : current,
         );
     if (upperBound < minEnd) {
@@ -1180,70 +1324,69 @@ class PomodoroController extends _$PomodoroController
     repository.updatePomodoro(state);
   }
 
-  Future<bool> carryOverPreviousTopPriorities() async {
-    final previous = await loadPreviousPlanUseCase(state);
-    final previousPriorities = previous?.topPriorities
-        .map((priority) => priority.trim())
-        .where((priority) => priority.isNotEmpty)
-        .take(3)
-        .toList();
-    if (previousPriorities == null || previousPriorities.isEmpty) {
-      return false;
-    }
-
-    final priorities = List<String>.from(state.topPriorities.take(3));
-    while (priorities.length < 3) {
-      priorities.add('');
-    }
-    var sourceIndex = 0;
-    for (var index = 0; index < priorities.length; index += 1) {
-      if (priorities[index].trim().isNotEmpty ||
-          sourceIndex >= previousPriorities.length) {
-        continue;
-      }
-      priorities[index] = previousPriorities[sourceIndex];
-      sourceIndex += 1;
-    }
-
-    state = state.copyWith(topPriorities: priorities.take(3).toList());
-    repository.updatePomodoro(state);
-    return true;
+  /// 선택형 가져오기 시트가 사용하는 가장 최근 과거 플랜 스냅샷.
+  /// doc: docs/architecture/DATA_LIFECYCLE.md
+  Future<Pomodoro?> loadPreviousPlanSnapshot() {
+    return loadPreviousPlanUseCase(state);
   }
 
-  Future<bool> carryOverPreviousBrainDump() async {
-    final previous = await loadPreviousPlanUseCase(state);
-    final items = previous?.brainDump
+  /// 특정 날짜 키(yyyy-MM-dd)의 저장된 플랜 전체를 조회한다(읽기 전용).
+  Future<Pomodoro?> loadPlanSnapshotForDate(String dateKey) {
+    return loadPlanForDateUseCase(dateKey, Pomodoro.initial());
+  }
+
+  /// 선택형 가져오기: 텍스트 항목들을 카테고리 규칙에 맞게 병합한다.
+  /// 우선순위는 빈 슬롯 채움(최대 3개), 덤프/기억할 것은 중복 없는 병합.
+  bool importDailyPlanItems(DailyPlanItemCategory category, List<String> items) {
+    final incoming = items
         .map((item) => item.trim())
         .where((item) => item.isNotEmpty)
         .toList();
-    if (items == null || items.isEmpty) {
+    if (incoming.isEmpty) {
       return false;
     }
 
-    state = state.copyWith(brainDump: _mergedTextList(state.brainDump, items));
+    switch (category) {
+      case DailyPlanItemCategory.topPriority:
+        final priorities = List<String>.from(state.topPriorities.take(3));
+        while (priorities.length < 3) {
+          priorities.add('');
+        }
+        var sourceIndex = 0;
+        var changed = false;
+        for (var index = 0; index < priorities.length; index += 1) {
+          if (priorities[index].trim().isNotEmpty ||
+              sourceIndex >= incoming.length) {
+            continue;
+          }
+          priorities[index] = incoming[sourceIndex];
+          sourceIndex += 1;
+          changed = true;
+        }
+        if (!changed) {
+          return false;
+        }
+        state = state.copyWith(topPriorities: priorities.take(3).toList());
+      case DailyPlanItemCategory.brainDump:
+        final merged = _mergedTextList(state.brainDump, incoming);
+        if (merged.length == state.brainDump.length) {
+          return false;
+        }
+        state = state.copyWith(brainDump: merged);
+      case DailyPlanItemCategory.reminder:
+        final merged = _mergedTextList(state.reminders, incoming);
+        if (merged.length == state.reminders.length) {
+          return false;
+        }
+        state = state.copyWith(reminders: merged);
+    }
     repository.updatePomodoro(state);
     return true;
   }
 
-  Future<bool> carryOverPreviousReminders() async {
-    final previous = await loadPreviousPlanUseCase(state);
-    final items = previous?.reminders
-        .map((item) => item.trim())
-        .where((item) => item.isNotEmpty)
-        .toList();
-    if (items == null || items.isEmpty) {
-      return false;
-    }
-
-    state = state.copyWith(reminders: _mergedTextList(state.reminders, items));
-    repository.updatePomodoro(state);
-    return true;
-  }
-
-  Future<bool> carryOverPreviousTimeBoxes() async {
-    final previous = await loadPreviousPlanUseCase(state);
-    final boxes = previous?.timeBoxes;
-    if (boxes == null || boxes.isEmpty) {
+  /// 선택한 타임박스들을 시간대·제목 지문 기준 중복 없이 복제 추가한다.
+  bool importTimeBoxes(List<TimeBox> boxes) {
+    if (boxes.isEmpty) {
       return false;
     }
 
@@ -1270,6 +1413,7 @@ class PomodoroController extends _$PomodoroController
     return true;
   }
 
+
   Future<void> selectCurrentTimeBoxForNow() async {
     if (state.status == PomodoroStatus.running ||
         state.status == PomodoroStatus.paused) {
@@ -1290,11 +1434,18 @@ class PomodoroController extends _$PomodoroController
 
     final currentBox = _currentTimeBoxForNow();
     if (currentBox != null) {
+      // 다른 박스로 넘어가면 이전 박스의 정지(스킵) 선택은 해제한다.
+      if (_skippedAutoStartBoxId.isNotEmpty &&
+          _skippedAutoStartBoxId != currentBox.id) {
+        _skippedAutoStartBoxId = '';
+      }
       _applyClockSyncedTimeBox(
         currentBox,
         _clockRemainingForTimeBox(currentBox),
       );
-      if (state.autoStartFocus && state.canStartFocus) {
+      if (state.autoStartFocus &&
+          state.canStartFocus &&
+          currentBox.id != _skippedAutoStartBoxId) {
         unawaited(_scheduledAutoStart.run(_startScheduledTimeBox));
       }
       return;
@@ -1336,11 +1487,103 @@ class PomodoroController extends _$PomodoroController
     if (!state.autoStartFocus || !state.canStartFocus) {
       return;
     }
+    if (state.activeTimeBoxId == _skippedAutoStartBoxId &&
+        _skippedAutoStartBoxId.isNotEmpty) {
+      return;
+    }
 
-    state = state.copyWith(status: PomodoroStatus.running);
+    if (_startSlotBreakIfInWindow(
+      boxRemaining: state.remainingTime,
+      autoOrigin: true,
+    )) {
+      return;
+    }
+
+    _activeSessionAutoStarted = true;
+    state = state.copyWith(
+      status: PomodoroStatus.running,
+      remainingTime: _focusSegmentRemaining(state.remainingTime),
+    );
     repository.updatePomodoro(state);
     await _timerSubscription?.cancel();
     _timerSubscription = _startNativeTimer(_nativeCopy);
+  }
+
+  /// 슬롯 휴식 정책(설정 기반). 간격별 휴식 길이는
+  /// [slotBreakMinutesForInterval]을 따른다.
+  ({bool enabled, int intervalMinutes, int breakMinutes}) get _slotBreakPolicy {
+    final preferences = ref.read(appPreferencesControllerProvider);
+    final intervalMinutes = preferences.timeSlotInterval.minutes;
+    return (
+      enabled: preferences.slotBreakEnabled,
+      intervalMinutes: intervalMinutes,
+      breakMinutes: slotBreakMinutesForInterval(intervalMinutes),
+    );
+  }
+
+  int _nowSecondsOfDay() {
+    final now = _now();
+    return (now.hour * 3600) + (now.minute * 60) + now.second;
+  }
+
+  /// 지금이 슬롯 휴식 창 안이고 박스가 그 뒤로도 이어지면
+  /// 집중 대신 휴식 세그먼트를 시작한다. 시작했으면 true.
+  bool _startSlotBreakIfInWindow({
+    required int boxRemaining,
+    required bool autoOrigin,
+  }) {
+    final policy = _slotBreakPolicy;
+    if (!policy.enabled ||
+        state.activeTimeBoxId.isEmpty ||
+        boxRemaining <= 0) {
+      return false;
+    }
+
+    final window = slotBreakWindow(
+      _nowSecondsOfDay(),
+      policy.intervalMinutes,
+      policy.breakMinutes,
+    );
+    // 세그먼트 완료 시점의 1~2초 오차를 흡수한다.
+    if (window.secondsToBreakStart > 2 || window.secondsToBoundary <= 0) {
+      return false;
+    }
+    // 박스가 휴식 창이 끝나기 전에 끝나면 휴식 없이 박스를 마저 소화한다.
+    if (window.secondsToBoundary >= boxRemaining) {
+      return false;
+    }
+
+    _slotBreakBoxId = state.activeTimeBoxId;
+    _activeSessionAutoStarted = autoOrigin;
+    state = state.copyWith(
+      phase: PomodoroPhase.shortBreak,
+      status: PomodoroStatus.running,
+      remainingTime: window.secondsToBoundary,
+    );
+    repository.updatePomodoro(state);
+    _timerSubscription?.cancel();
+    _timerSubscription = _startNativeTimer(_nativeCopy);
+    return true;
+  }
+
+  /// 슬롯 휴식이 켜져 있으면 집중 세그먼트를 다음 휴식 시작까지로 자른다.
+  int _focusSegmentRemaining(int fullRemaining) {
+    final policy = _slotBreakPolicy;
+    if (!policy.enabled || fullRemaining <= 0) {
+      return fullRemaining;
+    }
+
+    final window = slotBreakWindow(
+      _nowSecondsOfDay(),
+      policy.intervalMinutes,
+      policy.breakMinutes,
+    );
+    if (window.secondsToBreakStart <= 2) {
+      return fullRemaining;
+    }
+    return window.secondsToBreakStart < fullRemaining
+        ? window.secondsToBreakStart
+        : fullRemaining;
   }
 
   void _clearClockSyncedTimeBox() {
@@ -1633,20 +1876,71 @@ class PomodoroController extends _$PomodoroController
     _timerSubscription?.cancel();
 
     if (state.phase == PomodoroPhase.focus) {
+      // 슬롯 휴식: 박스가 아직 안 끝났으면 세션 완료가 아니라
+      // 휴식 세그먼트로 전환한다.
+      final activeBox = _timeBoxById(state.activeTimeBoxId);
+      if (activeBox != null &&
+          _startSlotBreakIfInWindow(
+            boxRemaining: _clockRemainingForTimeBox(activeBox),
+            autoOrigin: _activeSessionAutoStarted,
+          )) {
+        return;
+      }
+
       final completedSessions = state.completedSessions + 1;
       state = _stateAfterCompletedTodayBox(completedSessions);
       repository.updatePomodoro(state);
 
-      if (state.autoStartFocus && state.remainingTime > 0) {
-        state = state.copyWith(status: PomodoroStatus.running);
+      if (state.autoStartFocus &&
+          state.remainingTime > 0 &&
+          state.activeTimeBoxId != _skippedAutoStartBoxId) {
+        _activeSessionAutoStarted = true;
+        state = state.copyWith(
+          status: PomodoroStatus.running,
+          remainingTime: _focusSegmentRemaining(state.remainingTime),
+        );
         repository.updatePomodoro(state);
         _timerSubscription = _startNativeTimer(_nativeCopy);
       }
       return;
     }
 
+    // 휴식 완료: 슬롯 휴식이었다면 같은 박스의 다음 집중 세그먼트로 복귀한다.
+    final resumeBoxId = _slotBreakBoxId;
+    _slotBreakBoxId = '';
+    if (resumeBoxId.isNotEmpty) {
+      final box = _timeBoxById(resumeBoxId);
+      final boxRemaining = box == null ? 0 : _clockRemainingForTimeBox(box);
+      if (box != null && boxRemaining > 0) {
+        state = state.copyWith(
+          phase: PomodoroPhase.focus,
+          status: PomodoroStatus.running,
+          activeTimeBoxId: box.id,
+          currentTimeBoxTitle: _titleForTimeBox(box),
+          currentTimeBoxTimeRange: box.timeRange,
+          workDuration: box.durationSeconds,
+          remainingTime: _focusSegmentRemaining(boxRemaining),
+        );
+        repository.updatePomodoro(state);
+        _timerSubscription = _startNativeTimer(_nativeCopy);
+        return;
+      }
+    }
+
     state = _stateAfterCompletedTodayBox(state.completedSessions);
     repository.updatePomodoro(state);
+  }
+
+  TimeBox? _timeBoxById(String id) {
+    if (id.isEmpty) {
+      return null;
+    }
+    for (final box in state.timeBoxes) {
+      if (box.id == id) {
+        return box;
+      }
+    }
+    return null;
   }
 
   Pomodoro _stateAfterCompletedPhase(PomodoroPhase phase, int sessions) {

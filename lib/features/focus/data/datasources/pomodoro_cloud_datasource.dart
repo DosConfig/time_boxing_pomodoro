@@ -226,6 +226,32 @@ class PomodoroCloudDataSource {
     return null;
   }
 
+  /// 특정 날짜 키(yyyy-MM-dd)의 Firestore 플랜 문서를 반환한다.
+  /// doc: docs/architecture/DATA_LIFECYCLE.md
+  Future<Pomodoro?> loadPlanForDate(String dateKey, Pomodoro fallback) async {
+    final ready = await _ensureConfigured();
+    if (!ready) {
+      return null;
+    }
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return null;
+    }
+
+    try {
+      final snapshot = await _days(user.uid).doc(dateKey).get();
+      final planData = _jsonMap(snapshot.data()?[_planField]);
+      if (planData == null) {
+        return null;
+      }
+      return TodayPlanDto.fromJson(planData).toEntity(fallback);
+    } catch (error) {
+      debugPrint('Firestore plan for date skipped: $error');
+      return null;
+    }
+  }
+
   DocumentReference<Map<String, dynamic>> _user(String userId) {
     return FirebaseFirestore.instance.collection(_usersCollection).doc(userId);
   }

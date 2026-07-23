@@ -133,6 +133,94 @@ final class DailyPlanHistoryFamily extends $Family
   String toString() => r'dailyPlanHistoryProvider';
 }
 
+/// 특정 날짜 키(yyyy-MM-dd)의 저장된 플랜 원문. 과거 기록 열람 UI가 사용한다.
+/// doc: docs/architecture/DATA_LIFECYCLE.md
+
+@ProviderFor(planForDate)
+final planForDateProvider = PlanForDateFamily._();
+
+/// 특정 날짜 키(yyyy-MM-dd)의 저장된 플랜 원문. 과거 기록 열람 UI가 사용한다.
+/// doc: docs/architecture/DATA_LIFECYCLE.md
+
+final class PlanForDateProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<Pomodoro?>,
+          Pomodoro?,
+          FutureOr<Pomodoro?>
+        >
+    with $FutureModifier<Pomodoro?>, $FutureProvider<Pomodoro?> {
+  /// 특정 날짜 키(yyyy-MM-dd)의 저장된 플랜 원문. 과거 기록 열람 UI가 사용한다.
+  /// doc: docs/architecture/DATA_LIFECYCLE.md
+  PlanForDateProvider._({
+    required PlanForDateFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'planForDateProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$planForDateHash();
+
+  @override
+  String toString() {
+    return r'planForDateProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<Pomodoro?> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<Pomodoro?> create(Ref ref) {
+    final argument = this.argument as String;
+    return planForDate(ref, dateKey: argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is PlanForDateProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$planForDateHash() => r'28432e486924ea75f16c0408d0096350b5803e0a';
+
+/// 특정 날짜 키(yyyy-MM-dd)의 저장된 플랜 원문. 과거 기록 열람 UI가 사용한다.
+/// doc: docs/architecture/DATA_LIFECYCLE.md
+
+final class PlanForDateFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<Pomodoro?>, String> {
+  PlanForDateFamily._()
+    : super(
+        retry: null,
+        name: r'planForDateProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// 특정 날짜 키(yyyy-MM-dd)의 저장된 플랜 원문. 과거 기록 열람 UI가 사용한다.
+  /// doc: docs/architecture/DATA_LIFECYCLE.md
+
+  PlanForDateProvider call({required String dateKey}) =>
+      PlanForDateProvider._(argument: dateKey, from: this);
+
+  @override
+  String toString() => r'planForDateProvider';
+}
+
 @ProviderFor(PomodoroController)
 final pomodoroControllerProvider = PomodoroControllerProvider._();
 
@@ -166,7 +254,7 @@ final class PomodoroControllerProvider
 }
 
 String _$pomodoroControllerHash() =>
-    r'1f6ff9e05435eacde7ac28cd34f8dd28eb19b54e';
+    r'e54a0cd16b510ea10f1a90b7f9cbf7db84a0fe63';
 
 abstract class _$PomodoroController extends $Notifier<Pomodoro> {
   Pomodoro build();

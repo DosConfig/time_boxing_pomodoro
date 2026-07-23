@@ -218,8 +218,117 @@ void main() {
       expect(restored.brainDump, isEmpty);
       expect(restored.reminders, isEmpty);
       expect(restored.activeTimeBoxId, isEmpty);
-      expect(localDataSource.updatedPlans, [restored]);
-      expect(cloudDataSource.savedPlans, [restored]);
+      expect(localDataSource.updatedPlans.last, restored);
+      expect(cloudDataSource.savedPlans.last, restored);
+    });
+
+    test('injects recurring boxes even when today already has content', () async {
+      final fallback = Pomodoro.initial();
+      final todayPlan = Pomodoro.initial().copyWith(
+        brainDump: const ['Existing note'],
+        timeBoxes: const [
+          TimeBox(
+            id: 'today-box',
+            title: 'Existing box',
+            timeRange: '11:00-11:30',
+            durationSeconds: 30 * 60,
+          ),
+        ],
+      );
+      final previousPlan = Pomodoro.initial().copyWith(
+        timeBoxes: [
+          TimeBox(
+            id: 'box-standup',
+            title: 'Standup',
+            timeRange: '09:00-09:30',
+            durationSeconds: 30 * 60,
+            repeatWeekdays: [DateTime.now().weekday],
+          ),
+        ],
+      );
+      final localDataSource = _FakeLocalDataSource(
+        todayPlan,
+        previousPlan: previousPlan,
+      );
+      final cloudDataSource = _FakeCloudDataSource();
+      final repository = PomodoroRepositoryImpl(
+        localDataSource,
+        cloudDataSource,
+      );
+
+      final restored = await repository.restoreTodayPlan(fallback);
+
+      expect(restored.brainDump, ['Existing note']);
+      expect(
+        restored.timeBoxes.map((box) => box.title).toList(),
+        containsAll(['Existing box', 'Standup']),
+      );
+    });
+
+    test('injects recurring boxes when the device is offline', () async {
+      final fallback = Pomodoro.initial();
+      final previousPlan = Pomodoro.initial().copyWith(
+        timeBoxes: [
+          TimeBox(
+            id: 'box-standup',
+            title: 'Standup',
+            timeRange: '09:00-09:30',
+            durationSeconds: 30 * 60,
+            repeatWeekdays: [DateTime.now().weekday],
+          ),
+        ],
+      );
+      final localDataSource = _FakeLocalDataSource(
+        fallback,
+        previousPlan: previousPlan,
+        hasTodayPlan: false,
+      );
+      final cloudDataSource = _FakeCloudDataSource(
+        status: CloudTodayPlanStatus.unavailable,
+      );
+      final repository = PomodoroRepositoryImpl(
+        localDataSource,
+        cloudDataSource,
+      );
+
+      final restored = await repository.restoreTodayPlan(fallback);
+
+      expect(restored.timeBoxes, hasLength(1));
+      expect(restored.timeBoxes.single.title, 'Standup');
+    });
+
+    test('does not re-inject recurring boxes twice on the same day', () async {
+      final fallback = Pomodoro.initial();
+      final previousPlan = Pomodoro.initial().copyWith(
+        timeBoxes: [
+          TimeBox(
+            id: 'box-standup',
+            title: 'Standup',
+            timeRange: '09:00-09:30',
+            durationSeconds: 30 * 60,
+            repeatWeekdays: [DateTime.now().weekday],
+          ),
+        ],
+      );
+      final localDataSource = _FakeLocalDataSource(
+        fallback,
+        previousPlan: previousPlan,
+        hasTodayPlan: false,
+      );
+      final cloudDataSource = _FakeCloudDataSource();
+      final repository = PomodoroRepositoryImpl(
+        localDataSource,
+        cloudDataSource,
+      );
+
+      final first = await repository.restoreTodayPlan(fallback);
+      // 사용자가 오늘 인스턴스를 지운 상황을 재현: 오늘 플랜이 다시 비어
+      // 있어도 같은 날의 두 번째 복원은 반복 박스를 되살리지 않는다.
+      final second = await repository.restoreTodayPlan(fallback);
+
+      expect(first.timeBoxes.single.title, 'Standup');
+      expect(localDataSource.recurringAppliedDateKey, isNotNull);
+      expect(second.timeBoxes.where((box) => box.title == 'Standup'), isEmpty);
     });
 
     test(
@@ -278,6 +387,25 @@ class _FakeLocalDataSource extends PomodoroLocalDataSource {
   Future<Pomodoro?> loadPreviousPlan(Pomodoro fallback) async => previousPlan;
 
   @override
+  Future<Pomodoro?> loadPlanForDate(String dateKey, Pomodoro fallback) async {
+    if (dateKey == _yesterdayKey()) {
+      return previousPlan;
+    }
+    return null;
+  }
+
+  String? recurringAppliedDateKey;
+
+  @override
+  Future<String?> loadRecurringAppliedDateKey() async =>
+      recurringAppliedDateKey;
+
+  @override
+  Future<void> saveRecurringAppliedDateKey(String dateKey) async {
+    recurringAppliedDateKey = dateKey;
+  }
+
+  @override
   void updatePomodoro(Pomodoro pomodoro, {int? updatedAtEpochMs}) {
     updatedPlans.add(pomodoro);
   }
@@ -329,6 +457,10 @@ class _FakeCloudDataSource extends PomodoroCloudDataSource {
   Future<Pomodoro?> loadPreviousPlan(Pomodoro fallback) async => null;
 
   @override
+  Future<Pomodoro?> loadPlanForDate(String dateKey, Pomodoro fallback) async =>
+      null;
+
+  @override
   Future<void> saveTodayPlan(
     Pomodoro pomodoro, {
     int? updatedAtEpochMs,
@@ -349,5 +481,13 @@ String _todayKey() {
   final year = now.year.toString().padLeft(4, '0');
   final month = now.month.toString().padLeft(2, '0');
   final day = now.day.toString().padLeft(2, '0');
+  return '$year-$month-$day';
+}
+
+String _yesterdayKey() {
+  final yesterday = DateTime.now().subtract(const Duration(days: 1));
+  final year = yesterday.year.toString().padLeft(4, '0');
+  final month = yesterday.month.toString().padLeft(2, '0');
+  final day = yesterday.day.toString().padLeft(2, '0');
   return '$year-$month-$day';
 }

@@ -9,6 +9,7 @@ abstract class PomodoroRepository {
   Future<void> clearLocalPlanData();
   Future<Pomodoro> restoreTodayPlan(Pomodoro fallback);
   Future<Pomodoro?> loadPreviousPlan(Pomodoro fallback);
+  Future<Pomodoro?> loadPlanForDate(String dateKey, Pomodoro fallback);
   Future<List<DailyPlanSummary>> loadDailyPlanHistory({int days = 7});
   Stream<int> startTimer({
     required String phase,

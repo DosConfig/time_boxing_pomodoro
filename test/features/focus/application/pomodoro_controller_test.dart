@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:time_boxing_pomodoro/features/settings/application/app_preferences_controller.dart';
 import 'package:time_boxing_pomodoro/features/focus/application/pomodoro_controller.dart';
 import 'package:time_boxing_pomodoro/features/focus/domain/entities/daily_plan_summary.dart';
 import 'package:time_boxing_pomodoro/features/focus/domain/entities/daily_plan_item_category.dart';
@@ -11,6 +13,11 @@ import 'package:time_boxing_pomodoro/features/focus/domain/repositories/pomodoro
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUp(() {
+    // 슬롯 휴식 정책이 앱 설정 provider를 읽으므로 모든 테스트에서 필요하다.
+    SharedPreferences.setMockInitialValues({});
+  });
 
   group('PomodoroController time box editing', () {
     test('creates boxes with 15-minute and 1-hour intervals', () async {
@@ -244,6 +251,212 @@ void main() {
       expect(state.reminders, ['Book review']);
     });
 
+    test('edits brain dump and reminder text in place', () async {
+      final repository = _MemoryPomodoroRepository(
+        Pomodoro.initial().copyWith(
+          brainDump: const ['Draft note'],
+          reminders: const ['Water plants'],
+        ),
+      );
+      final container = ProviderContainer(
+        overrides: [pomodoroRepositoryProvider.overrideWithValue(repository)],
+      );
+      addTearDown(container.dispose);
+
+      final controller = container.read(pomodoroControllerProvider.notifier);
+      await _settleControllerRestore();
+
+      controller.updateDailyPlanItem(
+        DailyPlanItemCategory.brainDump,
+        0,
+        'Draft launch note',
+      );
+      controller.updateDailyPlanItem(
+        DailyPlanItemCategory.reminder,
+        0,
+        'Water plants at noon',
+      );
+      controller.updateDailyPlanItem(DailyPlanItemCategory.brainDump, 0, '   ');
+      controller.updateDailyPlanItem(
+        DailyPlanItemCategory.reminder,
+        5,
+        'Out of range',
+      );
+
+      final state = container.read(pomodoroControllerProvider);
+      expect(state.brainDump, ['Draft launch note']);
+      expect(state.reminders, ['Water plants at noon']);
+    });
+
+    test('blocks brain dump promotion when three priorities are set', () async {
+      final repository = _MemoryPomodoroRepository(
+        Pomodoro.initial().copyWith(
+          topPriorities: const ['One', 'Two', 'Three'],
+          brainDump: const ['Fourth idea'],
+        ),
+      );
+      final container = ProviderContainer(
+        overrides: [pomodoroRepositoryProvider.overrideWithValue(repository)],
+      );
+      addTearDown(container.dispose);
+
+      final controller = container.read(pomodoroControllerProvider.notifier);
+      await _settleControllerRestore();
+
+      final promoted = controller.promoteBrainDumpItem(0);
+
+      final state = container.read(pomodoroControllerProvider);
+      expect(promoted, isFalse);
+      expect(state.topPriorities, ['One', 'Two', 'Three']);
+      expect(state.brainDump, ['Fourth idea']);
+    });
+
+    test('promotes a brain dump item into the first empty slot', () async {
+      final repository = _MemoryPomodoroRepository(
+        Pomodoro.initial().copyWith(
+          topPriorities: const ['One', '', 'Three'],
+          brainDump: const ['New idea'],
+        ),
+      );
+      final container = ProviderContainer(
+        overrides: [pomodoroRepositoryProvider.overrideWithValue(repository)],
+      );
+      addTearDown(container.dispose);
+
+      final controller = container.read(pomodoroControllerProvider.notifier);
+      await _settleControllerRestore();
+
+      final promoted = controller.promoteBrainDumpItem(0);
+
+      final state = container.read(pomodoroControllerProvider);
+      expect(promoted, isTrue);
+      expect(state.topPriorities, ['One', 'New idea', 'Three']);
+      expect(state.brainDump, isEmpty);
+    });
+
+    test('reorders items inside each planning category', () async {
+      final repository = _MemoryPomodoroRepository(
+        Pomodoro.initial().copyWith(
+          topPriorities: const ['First', 'Second', 'Third'],
+          brainDump: const ['A', 'B', 'C'],
+          reminders: const ['R1', 'R2'],
+        ),
+      );
+      final container = ProviderContainer(
+        overrides: [pomodoroRepositoryProvider.overrideWithValue(repository)],
+      );
+      addTearDown(container.dispose);
+
+      final controller = container.read(pomodoroControllerProvider.notifier);
+      await _settleControllerRestore();
+
+      final priorityMoved = controller.reorderDailyPlanItem(
+        category: DailyPlanItemCategory.topPriority,
+        fromIndex: 2,
+        toIndex: 0,
+      );
+      final dumpMoved = controller.reorderDailyPlanItem(
+        category: DailyPlanItemCategory.brainDump,
+        fromIndex: 0,
+        toIndex: 2,
+      );
+      final reminderMoved = controller.reorderDailyPlanItem(
+        category: DailyPlanItemCategory.reminder,
+        fromIndex: 1,
+        toIndex: 1,
+      );
+
+      final state = container.read(pomodoroControllerProvider);
+      expect(priorityMoved, isTrue);
+      expect(state.topPriorities, ['Third', 'First', 'Second']);
+      expect(dumpMoved, isTrue);
+      expect(state.brainDump, ['B', 'C', 'A']);
+      expect(reminderMoved, isFalse);
+      expect(state.reminders, ['R1', 'R2']);
+    });
+
+    test('imports selected items without duplicating existing ones', () async {
+      final repository = _MemoryPomodoroRepository(
+        Pomodoro.initial().copyWith(
+          topPriorities: const ['Existing', '', ''],
+          brainDump: const ['Existing note'],
+          timeBoxes: const [
+            TimeBox(
+              id: 'existing-box',
+              title: 'Standup',
+              timeRange: '09:00-09:30',
+              durationSeconds: 30 * 60,
+            ),
+          ],
+        ),
+      );
+      final container = ProviderContainer(
+        overrides: [pomodoroRepositoryProvider.overrideWithValue(repository)],
+      );
+      addTearDown(container.dispose);
+
+      final controller = container.read(pomodoroControllerProvider.notifier);
+      await _settleControllerRestore();
+
+      final prioritiesImported = controller.importDailyPlanItems(
+        DailyPlanItemCategory.topPriority,
+        ['Ship build', 'Write recap', 'Overflow priority'],
+      );
+      final dumpImported = controller.importDailyPlanItems(
+        DailyPlanItemCategory.brainDump,
+        ['Existing note', 'Fresh idea'],
+      );
+      final boxesImported = controller.importTimeBoxes(const [
+        TimeBox(
+          id: 'prev-standup',
+          title: 'Standup',
+          timeRange: '09:00-09:30',
+          durationSeconds: 30 * 60,
+        ),
+        TimeBox(
+          id: 'prev-review',
+          title: 'Review',
+          timeRange: '10:00-10:30',
+          durationSeconds: 30 * 60,
+        ),
+      ]);
+
+      final state = container.read(pomodoroControllerProvider);
+      expect(prioritiesImported, isTrue);
+      expect(state.topPriorities, ['Existing', 'Ship build', 'Write recap']);
+      expect(dumpImported, isTrue);
+      expect(state.brainDump, ['Existing note', 'Fresh idea']);
+      expect(boxesImported, isTrue);
+      expect(state.timeBoxes, hasLength(2));
+      expect(
+        state.timeBoxes.map((box) => box.title).toList(),
+        containsAll(['Standup', 'Review']),
+      );
+    });
+
+    test('reorders priorities across an empty slot by compacting', () async {
+      final repository = _MemoryPomodoroRepository(
+        Pomodoro.initial().copyWith(topPriorities: const ['One', '', 'Three']),
+      );
+      final container = ProviderContainer(
+        overrides: [pomodoroRepositoryProvider.overrideWithValue(repository)],
+      );
+      addTearDown(container.dispose);
+
+      final controller = container.read(pomodoroControllerProvider.notifier);
+      await _settleControllerRestore();
+
+      final moved = controller.reorderDailyPlanItem(
+        category: DailyPlanItemCategory.topPriority,
+        fromIndex: 2,
+        toIndex: 0,
+      );
+
+      final state = container.read(pomodoroControllerProvider);
+      expect(moved, isTrue);
+      expect(state.topPriorities, ['Three', 'One', '']);
+    });
+
     test('moves a scheduled card back to a planning category', () async {
       final repository = _MemoryPomodoroRepository(
         Pomodoro.initial().copyWith(
@@ -310,6 +523,241 @@ void main() {
       expect(newDay.brainDump, isEmpty);
       expect(newDay.topPriorities, ['', '', '']);
       expect(repository.restoreCallCount, 2);
+    });
+
+    test('computes slot break windows from the wall clock', () {
+      // 간격 30분·휴식 3분: 창은 매시 27~30분.
+      // 10:00:00 → 휴식 시작까지 27분, 경계까지 30분.
+      var window = slotBreakWindow(10 * 3600, 30, 3);
+      expect(window.secondsToBreakStart, 27 * 60);
+      expect(window.secondsToBoundary, 30 * 60);
+
+      // 10:28:00 → 휴식 창 안 (시작 -60초 전), 경계까지 120초.
+      window = slotBreakWindow((10 * 3600) + (28 * 60), 30, 3);
+      expect(window.secondsToBreakStart, -60);
+      expect(window.secondsToBoundary, 120);
+
+      // 간격 15분·휴식 1분: 10:14:30 → 창 안, 경계까지 30초.
+      window = slotBreakWindow((10 * 3600) + (14 * 60) + 30, 15, 1);
+      expect(window.secondsToBreakStart, -30);
+      expect(window.secondsToBoundary, 30);
+
+      expect(slotBreakMinutesForInterval(15), 1);
+      expect(slotBreakMinutesForInterval(30), 3);
+      expect(slotBreakMinutesForInterval(60), 5);
+    });
+
+    test('disabling tracking keeps a manually started session', () async {
+      final now = DateTime(2026, 7, 21, 9, 15);
+      final repository = _MemoryPomodoroRepository(
+        Pomodoro.initial().copyWith(
+          timeBoxes: const [
+            TimeBox(
+              id: 'current',
+              title: 'Deep work',
+              timeRange: '09:00-10:00',
+              durationSeconds: 60 * 60,
+            ),
+          ],
+        ),
+      );
+      final container = ProviderContainer(
+        overrides: [
+          pomodoroRepositoryProvider.overrideWithValue(repository),
+          pomodoroClockProvider.overrideWithValue(() => now),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final controller = container.read(pomodoroControllerProvider.notifier);
+      await _settleControllerRestore();
+
+      // 추적 꺼진 상태에서 수동 시작
+      await controller.start(const NativeTimerCopy());
+      expect(
+        container.read(pomodoroControllerProvider).status,
+        PomodoroStatus.running,
+      );
+
+      // 추적을 켰다가 다시 꺼도 수동 세션은 유지되어야 한다.
+      await controller.setScheduleTrackingEnabled(
+        true,
+        const NativeTimerCopy(),
+      );
+      await controller.setScheduleTrackingEnabled(
+        false,
+        const NativeTimerCopy(),
+      );
+
+      final state = container.read(pomodoroControllerProvider);
+      expect(state.status, PomodoroStatus.running);
+      expect(state.activeTimeBoxId, 'current');
+    });
+
+    test('disabling tracking stops an auto-started session', () async {
+      final now = DateTime(2026, 7, 21, 9, 15);
+      final repository = _MemoryPomodoroRepository(
+        Pomodoro.initial().copyWith(
+          timeBoxes: const [
+            TimeBox(
+              id: 'current',
+              title: 'Deep work',
+              timeRange: '09:00-10:00',
+              durationSeconds: 60 * 60,
+            ),
+          ],
+        ),
+      );
+      final container = ProviderContainer(
+        overrides: [
+          pomodoroRepositoryProvider.overrideWithValue(repository),
+          pomodoroClockProvider.overrideWithValue(() => now),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final controller = container.read(pomodoroControllerProvider.notifier);
+      await _settleControllerRestore();
+
+      await controller.setScheduleTrackingEnabled(
+        true,
+        const NativeTimerCopy(),
+      );
+      await _settleControllerRestore();
+      expect(
+        container.read(pomodoroControllerProvider).status,
+        PomodoroStatus.running,
+      );
+
+      await controller.setScheduleTrackingEnabled(
+        false,
+        const NativeTimerCopy(),
+      );
+
+      expect(
+        container.read(pomodoroControllerProvider).status,
+        PomodoroStatus.idle,
+      );
+    });
+
+    test('reset is not revived by clock sync while tracking is on', () async {
+      final now = DateTime(2026, 7, 21, 9, 15);
+      final repository = _MemoryPomodoroRepository(
+        Pomodoro.initial().copyWith(
+          autoStartFocus: true,
+          timeBoxes: const [
+            TimeBox(
+              id: 'current',
+              title: 'Deep work',
+              timeRange: '09:00-10:00',
+              durationSeconds: 60 * 60,
+            ),
+          ],
+        ),
+      );
+      final container = ProviderContainer(
+        overrides: [
+          pomodoroRepositoryProvider.overrideWithValue(repository),
+          pomodoroClockProvider.overrideWithValue(() => now),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final controller = container.read(pomodoroControllerProvider.notifier);
+      await _settleControllerRestore();
+      expect(
+        container.read(pomodoroControllerProvider).status,
+        PomodoroStatus.running,
+      );
+
+      await controller.reset();
+      // 1초 클록 동기화를 재현: 스킵한 박스는 되살아나면 안 된다.
+      controller.syncFocusWithClock();
+      await _settleControllerRestore();
+
+      expect(
+        container.read(pomodoroControllerProvider).status,
+        PomodoroStatus.idle,
+      );
+    });
+
+    test('slot breaks clip the focus segment to the break start', () async {
+      SharedPreferences.setMockInitialValues({
+        'app.slotBreakEnabled': true,
+        'app.timeSlotIntervalMinutes': 30,
+      });
+      final now = DateTime(2026, 7, 21, 9, 0, 0);
+      final repository = _MemoryPomodoroRepository(
+        Pomodoro.initial().copyWith(
+          autoStartFocus: true,
+          timeBoxes: const [
+            TimeBox(
+              id: 'current',
+              title: 'Deep work',
+              timeRange: '09:00-10:00',
+              durationSeconds: 60 * 60,
+            ),
+          ],
+        ),
+      );
+      final container = ProviderContainer(
+        overrides: [
+          pomodoroRepositoryProvider.overrideWithValue(repository),
+          pomodoroClockProvider.overrideWithValue(() => now),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      // 설정 로드가 끝난 뒤 추적 자동 시작이 세그먼트를 계산하도록 한다.
+      container.read(appPreferencesControllerProvider);
+      await _settleControllerRestore();
+      container.read(pomodoroControllerProvider);
+      await _settleControllerRestore();
+
+      final state = container.read(pomodoroControllerProvider);
+      expect(state.status, PomodoroStatus.running);
+      expect(state.phase, PomodoroPhase.focus);
+      // 09:00 시작, 간격 30분·휴식 3분 → 집중 세그먼트는 09:27까지 27분.
+      expect(state.remainingTime, 27 * 60);
+    });
+
+    test('starting inside a slot break window runs the break first', () async {
+      SharedPreferences.setMockInitialValues({
+        'app.slotBreakEnabled': true,
+        'app.timeSlotIntervalMinutes': 30,
+      });
+      final now = DateTime(2026, 7, 21, 9, 28, 0);
+      final repository = _MemoryPomodoroRepository(
+        Pomodoro.initial().copyWith(
+          autoStartFocus: true,
+          timeBoxes: const [
+            TimeBox(
+              id: 'current',
+              title: 'Deep work',
+              timeRange: '09:00-10:00',
+              durationSeconds: 60 * 60,
+            ),
+          ],
+        ),
+      );
+      final container = ProviderContainer(
+        overrides: [
+          pomodoroRepositoryProvider.overrideWithValue(repository),
+          pomodoroClockProvider.overrideWithValue(() => now),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      container.read(appPreferencesControllerProvider);
+      await _settleControllerRestore();
+      container.read(pomodoroControllerProvider);
+      await _settleControllerRestore();
+
+      final state = container.read(pomodoroControllerProvider);
+      // 09:28은 27~30분 휴식 창 안 → 남은 휴식 2분을 먼저 소화.
+      expect(state.status, PomodoroStatus.running);
+      expect(state.phase, PomodoroPhase.shortBreak);
+      expect(state.remainingTime, 2 * 60);
     });
 
     test('auto-starts the current scheduled box when enabled', () async {
@@ -466,6 +914,10 @@ class _MemoryPomodoroRepository implements PomodoroRepository {
 
   @override
   Future<Pomodoro?> loadPreviousPlan(Pomodoro fallback) async => null;
+
+  @override
+  Future<Pomodoro?> loadPlanForDate(String dateKey, Pomodoro fallback) async =>
+      null;
 
   @override
   Future<List<DailyPlanSummary>> loadDailyPlanHistory({int days = 7}) async {

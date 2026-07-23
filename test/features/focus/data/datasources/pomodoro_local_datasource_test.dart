@@ -91,6 +91,27 @@ void main() {
       isEmpty,
     );
   });
+
+  test('loads a stored plan for a specific date key', () async {
+    final savedPlan = _savedPlan();
+    final dataSource = PomodoroLocalDataSource(storageScope: () => 'user-a');
+    dataSource.updatePomodoro(savedPlan);
+    await dataSource.flushPendingWrites();
+
+    final loaded = await dataSource.loadPlanForDate(
+      _todayKey(),
+      Pomodoro.initial(),
+    );
+    final missing = await dataSource.loadPlanForDate(
+      '1999-01-01',
+      Pomodoro.initial(),
+    );
+
+    expect(loaded, isNotNull);
+    expect(loaded!.brainDump, savedPlan.brainDump);
+    expect(loaded.timeBoxes.single.title, 'Keep this time box');
+    expect(missing, isNull);
+  });
 }
 
 Pomodoro _savedPlan() {

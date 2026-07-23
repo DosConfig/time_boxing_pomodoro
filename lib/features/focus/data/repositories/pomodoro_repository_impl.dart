@@ -66,9 +66,75 @@ class PomodoroRepositoryImpl implements PomodoroRepository {
 
   @override
   Future<Pomodoro> restoreTodayPlan(Pomodoro fallback) async {
-    final restored = await _restoreTodayPlan(fallback);
+    var restored = await _restoreTodayPlan(fallback);
+    restored = await _applyRecurringBoxesOncePerDay(restored);
     _restoreCompleted = true;
     return restored;
+  }
+
+  /// 요일 반복 타임박스를 하루 한 번 오늘 플랜에 주입한다.
+  ///
+  /// 로그인/오프라인 여부, 오늘 플랜에 이미 콘텐츠가 있는지와 무관하게
+  /// 동작한다. 최근 7일의 저장된 플랜에서 오늘 요일에 반복되는 박스를
+  /// 수집해 시간대·제목 지문 중복 없이 병합한다. 하루 한 번만 실행되므로
+  /// 사용자가 같은 날 지운 반복 인스턴스는 되살아나지 않는다.
+  /// doc: docs/product/TIMEBOXING_STRATEGY.md
+  Future<Pomodoro> _applyRecurringBoxesOncePerDay(Pomodoro todayPlan) async {
+    final now = DateTime.now();
+    final todayKey = _dateKey(now);
+    final appliedKey = await localDataSource.loadRecurringAppliedDateKey();
+    if (appliedKey == todayKey) {
+      return todayPlan;
+    }
+
+    final weekday = now.weekday;
+    final fingerprints = todayPlan.timeBoxes
+        .map((box) => '${box.timeRange}.${box.title.trim()}')
+        .toSet();
+    final additions = <TimeBox>[];
+    for (var back = 1; back <= 7; back += 1) {
+      final dateKey = _dateKey(now.subtract(Duration(days: back)));
+      final plan = await loadPlanForDate(dateKey, Pomodoro.initial());
+      if (plan == null) {
+        continue;
+      }
+      for (final box in plan.timeBoxes) {
+        if (!box.repeatsOn(weekday)) {
+          continue;
+        }
+        final fingerprint = '${box.timeRange}.${box.title.trim()}';
+        if (fingerprints.contains(fingerprint)) {
+          continue;
+        }
+        fingerprints.add(fingerprint);
+        additions.add(
+          box.copyWith(
+            id:
+                'box-${now.microsecondsSinceEpoch}'
+                '-recurring-${additions.length}',
+          ),
+        );
+      }
+    }
+
+    await localDataSource.saveRecurringAppliedDateKey(todayKey);
+    if (additions.isEmpty) {
+      return todayPlan;
+    }
+
+    final boxes = [...todayPlan.timeBoxes, ...additions]
+      ..sort((a, b) {
+        final startA = a.startMinutes ?? (24 * 60);
+        final startB = b.startMinutes ?? (24 * 60);
+        return startA.compareTo(startB);
+      });
+    final merged = todayPlan.copyWith(timeBoxes: boxes);
+    await _persistResolvedPlan(
+      merged,
+      _nextUpdatedAtEpochMs(),
+      writeCloud: true,
+    );
+    return merged;
   }
 
   Future<Pomodoro> _restoreTodayPlan(Pomodoro fallback) async {
@@ -96,16 +162,14 @@ class PomodoroRepositoryImpl implements PomodoroRepository {
     }
 
     if (localDto == null && cloudDto == null) {
-      final restoredPlan = await _planForNewDay(
-        localPlan,
-        localHadTodayPlan: false,
-      );
+      // 반복 타임박스 주입은 _applyRecurringBoxesOncePerDay가 모든 복원
+      // 경로에서 공통으로 수행한다.
       await _persistResolvedPlan(
-        restoredPlan,
+        localPlan,
         _nextUpdatedAtEpochMs(),
         writeCloud: true,
       );
-      return restoredPlan;
+      return localPlan;
     }
 
     if (cloudDto == null) {
@@ -147,6 +211,15 @@ class PomodoroRepositoryImpl implements PomodoroRepository {
       return cloudPlan;
     }
     return localDataSource.loadPreviousPlan(fallback);
+  }
+
+  @override
+  Future<Pomodoro?> loadPlanForDate(String dateKey, Pomodoro fallback) async {
+    final localPlan = await localDataSource.loadPlanForDate(dateKey, fallback);
+    if (localPlan != null) {
+      return localPlan;
+    }
+    return cloudDataSource.loadPlanForDate(dateKey, fallback);
   }
 
   @override
@@ -207,41 +280,6 @@ class PomodoroRepositoryImpl implements PomodoroRepository {
     notificationsEnabled: notificationsEnabled,
     soundEnabled: soundEnabled,
   );
-
-  Future<Pomodoro> _planForNewDay(
-    Pomodoro localPlan, {
-    required bool localHadTodayPlan,
-  }) async {
-    if (localHadTodayPlan || _hasDailyContent(localPlan)) {
-      return localPlan;
-    }
-
-    final previousPlan = await loadPreviousPlan(localPlan);
-    if (previousPlan == null) {
-      return localPlan;
-    }
-
-    final recurringBoxes = previousPlan.timeBoxes
-        .where((box) => box.repeatsOn(DateTime.now().weekday))
-        .toList();
-    if (recurringBoxes.isEmpty) {
-      return localPlan;
-    }
-
-    return localPlan.copyWith(
-      brainDump: const [],
-      reminders: const [],
-      topPriorities: const ['', '', ''],
-      timeBoxes: recurringBoxes,
-      activeTimeBoxId: '',
-      currentTimeBoxTitle: '',
-      currentTimeBoxTimeRange: '',
-      remainingTime: 0,
-      completedSessions: 0,
-      status: PomodoroStatus.idle,
-      phase: PomodoroPhase.focus,
-    );
-  }
 
   bool _hasDailyContent(Pomodoro pomodoro) {
     return pomodoro.brainDump.isNotEmpty ||

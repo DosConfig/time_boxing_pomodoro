@@ -55,7 +55,7 @@ final class PomodoroLocalDataSourceProvider
 }
 
 String _$pomodoroLocalDataSourceHash() =>
-    r'520413af8c6d192e88ac1bad6170b04f29d5d2c3';
+    r'fb42becf658dc549dcff09d2c1d80a47dcca2c2d';
 
 @ProviderFor(pomodoroCloudDataSource)
 final pomodoroCloudDataSourceProvider = PomodoroCloudDataSourceProvider._();
@@ -490,6 +490,54 @@ final class LoadPreviousPlanUseCaseProvider
 
 String _$loadPreviousPlanUseCaseHash() =>
     r'b21a07288987e5516f0c7e115cd3bfe86aca9b4e';
+
+@ProviderFor(loadPlanForDateUseCase)
+final loadPlanForDateUseCaseProvider = LoadPlanForDateUseCaseProvider._();
+
+final class LoadPlanForDateUseCaseProvider
+    extends
+        $FunctionalProvider<
+          LoadPlanForDateUseCase,
+          LoadPlanForDateUseCase,
+          LoadPlanForDateUseCase
+        >
+    with $Provider<LoadPlanForDateUseCase> {
+  LoadPlanForDateUseCaseProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'loadPlanForDateUseCaseProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$loadPlanForDateUseCaseHash();
+
+  @$internal
+  @override
+  $ProviderElement<LoadPlanForDateUseCase> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  LoadPlanForDateUseCase create(Ref ref) {
+    return loadPlanForDateUseCase(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(LoadPlanForDateUseCase value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<LoadPlanForDateUseCase>(value),
+    );
+  }
+}
+
+String _$loadPlanForDateUseCaseHash() =>
+    r'f2639c86206665d1d568e63281530659a6a84d7f';
 
 @ProviderFor(clearLocalPlanDataUseCase)
 final clearLocalPlanDataUseCaseProvider = ClearLocalPlanDataUseCaseProvider._();

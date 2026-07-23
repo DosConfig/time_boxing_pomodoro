@@ -7,6 +7,7 @@ import '../data/repositories/pomodoro_repository_impl.dart';
 import '../domain/repositories/pomodoro_repository.dart';
 import '../domain/usecases/clear_local_plan_data.dart';
 import '../domain/usecases/load_daily_plan_history.dart';
+import '../domain/usecases/load_plan_for_date.dart';
 import '../domain/usecases/load_previous_plan.dart';
 import '../domain/usecases/pause_pomodoro.dart';
 import '../domain/usecases/reset_pomodoro.dart';
@@ -18,12 +19,20 @@ part 'focus_providers.g.dart';
 
 @Riverpod(keepAlive: true)
 PomodoroLocalDataSource pomodoroLocalDataSource(Ref ref) {
-  return PomodoroLocalDataSource(
-    storageScope: () =>
-        FirebaseAuth.instance.currentUser?.uid.trim().isNotEmpty == true
-        ? FirebaseAuth.instance.currentUser!.uid
-        : 'signed-out',
-  );
+  return PomodoroLocalDataSource(storageScope: firebaseStorageScope);
+}
+
+/// 로컬 플랜 저장 스코프. 로그인 UID로 스코프를 나누되,
+/// Firebase가 초기화되지 않은 환경(E2E 테스트, 초기화 실패 등)에서는
+/// 크래시 대신 'signed-out' 스코프로 동작한다.
+/// doc: docs/architecture/DATA_LIFECYCLE.md
+String firebaseStorageScope() {
+  try {
+    final uid = FirebaseAuth.instance.currentUser?.uid.trim();
+    return (uid == null || uid.isEmpty) ? 'signed-out' : uid;
+  } catch (_) {
+    return 'signed-out';
+  }
 }
 
 @Riverpod(keepAlive: true)
@@ -72,6 +81,11 @@ LoadDailyPlanHistoryUseCase loadDailyPlanHistoryUseCase(Ref ref) {
 @Riverpod(keepAlive: true)
 LoadPreviousPlanUseCase loadPreviousPlanUseCase(Ref ref) {
   return LoadPreviousPlanUseCase(ref.watch(pomodoroRepositoryProvider));
+}
+
+@Riverpod(keepAlive: true)
+LoadPlanForDateUseCase loadPlanForDateUseCase(Ref ref) {
+  return LoadPlanForDateUseCase(ref.watch(pomodoroRepositoryProvider));
 }
 
 @Riverpod(keepAlive: true)

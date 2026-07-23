@@ -164,6 +164,44 @@ class PomodoroLocalDataSource {
     return null;
   }
 
+  /// 오늘 반복 타임박스 주입이 이미 실행된 날짜 키를 반환한다.
+  /// 하루 한 번만 주입해, 사용자가 지운 당일 인스턴스가 같은 날
+  /// 다시 살아나는 것을 막는다.
+  Future<String?> loadRecurringAppliedDateKey() async {
+    final preferences = await SharedPreferences.getInstance();
+    return preferences.getString(_recurringAppliedKey(_scopeKey));
+  }
+
+  Future<void> saveRecurringAppliedDateKey(String dateKey) async {
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setString(_recurringAppliedKey(_scopeKey), dateKey);
+  }
+
+  String _recurringAppliedKey(String scope) =>
+      'today.recurring.applied.$scope';
+
+  /// 특정 날짜 키(yyyy-MM-dd)의 저장된 플랜 원문을 반환한다.
+  /// doc: docs/architecture/DATA_LIFECYCLE.md
+  Future<Pomodoro?> loadPlanForDate(String dateKey, Pomodoro fallback) async {
+    final scope = _scopeKey;
+    final preferences = await SharedPreferences.getInstance();
+    await _migrateLegacyPlans(preferences, scope);
+    final encoded = preferences.getString(_storageKey(scope, dateKey));
+    if (encoded == null || encoded.isEmpty) {
+      return null;
+    }
+
+    try {
+      final decoded = jsonDecode(encoded);
+      if (decoded is Map<String, dynamic>) {
+        return TodayPlanDto.fromJson(decoded).toEntity(fallback);
+      }
+    } catch (_) {
+      return null;
+    }
+    return null;
+  }
+
   Future<NativeTimerStateDto> restoreState(Pomodoro fallback) async {
     final state = await PomodoroPlatformChannel.restoreState();
     return NativeTimerStateDto.fromPlatformMap(state, fallback: fallback);
