@@ -211,7 +211,7 @@ return $default(_that.timeBoxId,_that.title,_that.startAt,_that.endAt,_that.note
 
 class _CalendarExportItem implements CalendarExportItem {
   const _CalendarExportItem({required this.timeBoxId, required this.title, required this.startAt, required this.endAt, this.notes = ''});
-
+  
 
 @override final  String timeBoxId;
 @override final  String title;
@@ -1286,7 +1286,7 @@ return $default(_that.status);case _:
 
 class _CalendarAppOpenResult implements CalendarAppOpenResult {
   const _CalendarAppOpenResult({this.status = CalendarAppOpenStatus.failed});
-
+  
 
 @override@JsonKey() final  CalendarAppOpenStatus status;
 
