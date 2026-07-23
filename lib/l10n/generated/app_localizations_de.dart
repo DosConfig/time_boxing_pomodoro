@@ -200,11 +200,19 @@ class AppLocalizationsDe extends AppLocalizations {
   String get localAlerts => 'Lokale Hinweise';
 
   @override
-  String get soundLabel => 'Ton';
+  String get soundLabel => 'Abschlusston';
 
   @override
   String get soundDescription =>
-      'Nutzt den Standardton des Geräts für Abschlussmeldungen.';
+      'Spielt beim Abschluss einer Sitzung den Standardton des Geräts. Die laufende Timer-Benachrichtigung bleibt stumm.';
+
+  @override
+  String get slotBreakTitle => 'Slot-Pausen';
+
+  @override
+  String slotBreakDescription(int slotMinutes, int breakMinutes) {
+    return 'In jedem $slotMinutes-Minuten-Slot die letzten $breakMinutes Minuten pausieren.';
+  }
 
   @override
   String get saveAction => 'Speichern';
@@ -398,6 +406,15 @@ class AppLocalizationsDe extends AppLocalizations {
   String get moveToReminder => 'Zu Erinnerung verschieben';
 
   @override
+  String get moveToBrainDump => 'Zu Gedankenspeicher verschieben';
+
+  @override
+  String get editBrainDumpTitle => 'Gedankenspeicher bearbeiten';
+
+  @override
+  String get editReminderTitle => 'Erinnerung bearbeiten';
+
+  @override
   String get deleteAction => 'Löschen';
 
   @override
@@ -480,6 +497,15 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get carryOverPreviousSchedule => 'Vorigen Plan übernehmen';
+
+  @override
+  String get importSelected => 'Auswahl übernehmen';
+
+  @override
+  String get nothingToImport => 'Nichts Neues zu übernehmen.';
+
+  @override
+  String get noItemsForDay => 'Keine Einträge für diesen Tag.';
 
   @override
   String get noPreviousDailyItems => 'Keine vorherigen Tagesdaten gefunden.';

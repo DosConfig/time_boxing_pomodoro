@@ -60,8 +60,10 @@
   "liveTrackingDescription": "Follows the current block automatically in Focus, Live Activity, and notifications.",
   "alertsTitle": "Alerts",
   "localAlerts": "Local alerts",
-  "soundLabel": "Sound",
-  "soundDescription": "Uses your device's default sound for completion alerts.",
+  "soundLabel": "Completion sound",
+  "soundDescription": "Plays the device default sound when a session completes. The ongoing timer notification stays silent.",
+  "slotBreakTitle": "Slot breaks",
+  "slotBreakDescription": "Rest for the last {breakMinutes} min of every {slotMinutes}-min slot.",
   "saveAction": "Save",
   "onboardingSubtitle": "Set the hours you actually plan.",
   "startPlanning": "Start planning",
@@ -116,6 +118,9 @@
   "captureLabel": "Capture",
   "makePriority": "Make priority",
   "moveToReminder": "Move to reminder",
+  "moveToBrainDump": "Move to brain dump",
+  "editBrainDumpTitle": "Edit brain dump",
+  "editReminderTitle": "Edit reminder",
   "deleteAction": "Delete",
   "keepInMindTitle": "Keep in mind",
   "addReminderTooltip": "Add reminder",
@@ -143,6 +148,9 @@
   "carryOverPreviousBrainDump": "Bring in previous brain dump",
   "carryOverPreviousReminders": "Bring in previous reminders",
   "carryOverPreviousSchedule": "Bring in previous schedule",
+  "importSelected": "Bring in selected",
+  "nothingToImport": "Nothing new to bring in.",
+  "noItemsForDay": "No records for this day.",
   "noPreviousDailyItems": "No previous daily items found.",
   "threePrioritiesAlreadySet": "Three priorities are already set.",
   "addPriorityTitle": "Add priority",
@@ -242,6 +250,16 @@
   "@calendarExportSuccess": {
     "placeholders": {
       "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@slotBreakDescription": {
+    "placeholders": {
+      "slotMinutes": {
+        "type": "int"
+      },
+      "breakMinutes": {
         "type": "int"
       }
     }

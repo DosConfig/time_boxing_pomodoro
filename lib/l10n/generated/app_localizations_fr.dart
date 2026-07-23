@@ -200,11 +200,19 @@ class AppLocalizationsFr extends AppLocalizations {
   String get localAlerts => 'Alertes locales';
 
   @override
-  String get soundLabel => 'Son';
+  String get soundLabel => 'Son de fin';
 
   @override
   String get soundDescription =>
-      'Utilise le son par défaut de l\'appareil à la fin.';
+      'Joue le son par défaut à la fin d\'une session. La notification du minuteur en cours reste silencieuse.';
+
+  @override
+  String get slotBreakTitle => 'Pauses par créneau';
+
+  @override
+  String slotBreakDescription(int slotMinutes, int breakMinutes) {
+    return 'Repos pendant les $breakMinutes dernières minutes de chaque créneau de $slotMinutes min.';
+  }
 
   @override
   String get saveAction => 'Enregistrer';
@@ -398,6 +406,15 @@ class AppLocalizationsFr extends AppLocalizations {
   String get moveToReminder => 'Déplacer en rappel';
 
   @override
+  String get moveToBrainDump => 'Déplacer en décharge mentale';
+
+  @override
+  String get editBrainDumpTitle => 'Modifier la décharge mentale';
+
+  @override
+  String get editReminderTitle => 'Modifier le rappel';
+
+  @override
   String get deleteAction => 'Supprimer';
 
   @override
@@ -480,6 +497,15 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get carryOverPreviousSchedule => 'Reprendre le planning';
+
+  @override
+  String get importSelected => 'Importer la sélection';
+
+  @override
+  String get nothingToImport => 'Rien de nouveau à importer.';
+
+  @override
+  String get noItemsForDay => 'Aucun enregistrement pour ce jour.';
 
   @override
   String get noPreviousDailyItems => 'Aucun élément quotidien précédent.';

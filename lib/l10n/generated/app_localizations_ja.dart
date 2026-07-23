@@ -191,10 +191,18 @@ class AppLocalizationsJa extends AppLocalizations {
   String get localAlerts => 'ローカル通知';
 
   @override
-  String get soundLabel => 'サウンド';
+  String get soundLabel => '完了通知音';
 
   @override
-  String get soundDescription => '完了通知に端末の標準音を使います。';
+  String get soundDescription => 'セッション完了時に端末の標準音を鳴らします。進行中のタイマー通知は常に無音です。';
+
+  @override
+  String get slotBreakTitle => 'スロット休憩';
+
+  @override
+  String slotBreakDescription(int slotMinutes, int breakMinutes) {
+    return '$slotMinutes分スロットごとに最後の$breakMinutes分を休憩します。';
+  }
 
   @override
   String get saveAction => '保存';
@@ -380,6 +388,15 @@ class AppLocalizationsJa extends AppLocalizations {
   String get moveToReminder => 'リマインダーへ移動';
 
   @override
+  String get moveToBrainDump => 'ブレインダンプへ移動';
+
+  @override
+  String get editBrainDumpTitle => 'ブレインダンプを編集';
+
+  @override
+  String get editReminderTitle => 'リマインダーを編集';
+
+  @override
   String get deleteAction => '削除';
 
   @override
@@ -459,6 +476,15 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get carryOverPreviousSchedule => '前回の予定を取り込む';
+
+  @override
+  String get importSelected => '選択した項目を取り込む';
+
+  @override
+  String get nothingToImport => '取り込む新しい項目がありません。';
+
+  @override
+  String get noItemsForDay => 'この日の記録はありません。';
 
   @override
   String get noPreviousDailyItems => '前回のデイリー項目がありません。';

@@ -195,10 +195,19 @@ class AppLocalizationsKo extends AppLocalizations {
   String get localAlerts => '로컬 알림';
 
   @override
-  String get soundLabel => '사운드';
+  String get soundLabel => '완료 알림음';
 
   @override
-  String get soundDescription => '완료 알림에 기기의 기본 알림음을 사용합니다.';
+  String get soundDescription =>
+      '세션이 완료될 때 기기 기본 알림음을 재생합니다. 진행 중 타이머 알림은 항상 무음입니다.';
+
+  @override
+  String get slotBreakTitle => '슬롯 휴식';
+
+  @override
+  String slotBreakDescription(int slotMinutes, int breakMinutes) {
+    return '$slotMinutes분 슬롯마다 마지막 $breakMinutes분을 휴식합니다.';
+  }
 
   @override
   String get saveAction => '저장';
@@ -384,6 +393,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get moveToReminder => '리마인더로 이동';
 
   @override
+  String get moveToBrainDump => '브레인 덤프로 이동';
+
+  @override
+  String get editBrainDumpTitle => '브레인 덤프 수정';
+
+  @override
+  String get editReminderTitle => '리마인더 수정';
+
+  @override
   String get deleteAction => '삭제';
 
   @override
@@ -463,6 +481,15 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get carryOverPreviousSchedule => '이전 스케줄 가져오기';
+
+  @override
+  String get importSelected => '선택 항목 가져오기';
+
+  @override
+  String get nothingToImport => '가져올 새 항목이 없습니다.';
+
+  @override
+  String get noItemsForDay => '이 날의 기록이 없습니다.';
 
   @override
   String get noPreviousDailyItems => '가져올 이전 항목이 없어요.';

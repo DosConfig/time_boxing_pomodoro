@@ -471,14 +471,26 @@ abstract class AppLocalizations {
   /// No description provided for @soundLabel.
   ///
   /// In en, this message translates to:
-  /// **'Sound'**
+  /// **'Completion sound'**
   String get soundLabel;
 
   /// No description provided for @soundDescription.
   ///
   /// In en, this message translates to:
-  /// **'Uses your device\'s default sound for completion alerts.'**
+  /// **'Plays the device default sound when a session completes. The ongoing timer notification stays silent.'**
   String get soundDescription;
+
+  /// No description provided for @slotBreakTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Slot breaks'**
+  String get slotBreakTitle;
+
+  /// No description provided for @slotBreakDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Rest for the last {breakMinutes} min of every {slotMinutes}-min slot.'**
+  String slotBreakDescription(int slotMinutes, int breakMinutes);
 
   /// No description provided for @saveAction.
   ///
@@ -804,6 +816,24 @@ abstract class AppLocalizations {
   /// **'Move to reminder'**
   String get moveToReminder;
 
+  /// No description provided for @moveToBrainDump.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to brain dump'**
+  String get moveToBrainDump;
+
+  /// No description provided for @editBrainDumpTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit brain dump'**
+  String get editBrainDumpTitle;
+
+  /// No description provided for @editReminderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit reminder'**
+  String get editReminderTitle;
+
   /// No description provided for @deleteAction.
   ///
   /// In en, this message translates to:
@@ -965,6 +995,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Bring in previous schedule'**
   String get carryOverPreviousSchedule;
+
+  /// No description provided for @importSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Bring in selected'**
+  String get importSelected;
+
+  /// No description provided for @nothingToImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing new to bring in.'**
+  String get nothingToImport;
+
+  /// No description provided for @noItemsForDay.
+  ///
+  /// In en, this message translates to:
+  /// **'No records for this day.'**
+  String get noItemsForDay;
 
   /// No description provided for @noPreviousDailyItems.
   ///

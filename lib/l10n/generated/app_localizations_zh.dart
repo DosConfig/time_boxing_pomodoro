@@ -191,10 +191,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get localAlerts => '本地提醒';
 
   @override
-  String get soundLabel => '声音';
+  String get soundLabel => '完成提示音';
 
   @override
-  String get soundDescription => '完成提醒使用设备默认提示音。';
+  String get soundDescription => '会话完成时播放设备默认提示音。进行中的计时器通知始终静音。';
+
+  @override
+  String get slotBreakTitle => '时段休息';
+
+  @override
+  String slotBreakDescription(int slotMinutes, int breakMinutes) {
+    return '每个$slotMinutes分钟时段的最后$breakMinutes分钟休息。';
+  }
 
   @override
   String get saveAction => '保存';
@@ -380,6 +388,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get moveToReminder => '移到提醒';
 
   @override
+  String get moveToBrainDump => '移到想法收集';
+
+  @override
+  String get editBrainDumpTitle => '编辑想法收集';
+
+  @override
+  String get editReminderTitle => '编辑提醒';
+
+  @override
   String get deleteAction => '删除';
 
   @override
@@ -459,6 +476,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get carryOverPreviousSchedule => '导入上次日程';
+
+  @override
+  String get importSelected => '导入所选';
+
+  @override
+  String get nothingToImport => '没有可导入的新项目。';
+
+  @override
+  String get noItemsForDay => '这一天没有记录。';
 
   @override
   String get noPreviousDailyItems => '没有找到上次每日项目。';

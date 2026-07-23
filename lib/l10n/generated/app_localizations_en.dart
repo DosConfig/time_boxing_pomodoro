@@ -199,11 +199,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get localAlerts => 'Local alerts';
 
   @override
-  String get soundLabel => 'Sound';
+  String get soundLabel => 'Completion sound';
 
   @override
   String get soundDescription =>
-      'Uses your device\'s default sound for completion alerts.';
+      'Plays the device default sound when a session completes. The ongoing timer notification stays silent.';
+
+  @override
+  String get slotBreakTitle => 'Slot breaks';
+
+  @override
+  String slotBreakDescription(int slotMinutes, int breakMinutes) {
+    return 'Rest for the last $breakMinutes min of every $slotMinutes-min slot.';
+  }
 
   @override
   String get saveAction => 'Save';
@@ -394,6 +402,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get moveToReminder => 'Move to reminder';
 
   @override
+  String get moveToBrainDump => 'Move to brain dump';
+
+  @override
+  String get editBrainDumpTitle => 'Edit brain dump';
+
+  @override
+  String get editReminderTitle => 'Edit reminder';
+
+  @override
   String get deleteAction => 'Delete';
 
   @override
@@ -476,6 +493,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get carryOverPreviousSchedule => 'Bring in previous schedule';
+
+  @override
+  String get importSelected => 'Bring in selected';
+
+  @override
+  String get nothingToImport => 'Nothing new to bring in.';
+
+  @override
+  String get noItemsForDay => 'No records for this day.';
 
   @override
   String get noPreviousDailyItems => 'No previous daily items found.';
