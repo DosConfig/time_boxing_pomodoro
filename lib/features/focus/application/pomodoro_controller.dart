@@ -141,6 +141,11 @@ class PomodoroController extends _$PomodoroController
       _timerSubscription?.cancel();
       _clockSyncTimer?.cancel();
     });
+    ref.listen(appPreferencesControllerProvider, (prev, next) {
+      if (prev?.slotBreakEnabled != next.slotBreakEnabled) {
+        _onSlotBreakSettingChanged(next.slotBreakEnabled);
+      }
+    });
     Future.microtask(() async {
       await _restoreFromLocalPlan();
       await _restoreFromNative();
@@ -1588,6 +1593,27 @@ class PomodoroController extends _$PomodoroController
   int _nowSecondsOfDay() {
     final now = _now();
     return (now.hour * 3600) + (now.minute * 60) + now.second;
+  }
+
+  /// 슬롯 휴식 설정 변경 시 running focus 세그먼트를 재계산.
+  void _onSlotBreakSettingChanged(bool enabled) {
+    if (state.status != PomodoroStatus.running ||
+        state.phase != PomodoroPhase.focus) {
+      return;
+    }
+    final activeBox = _timeBoxById(state.activeTimeBoxId);
+    if (activeBox == null) return;
+
+    final boxRemaining = _clockRemainingForTimeBox(activeBox);
+    if (boxRemaining <= 0) return;
+
+    final newRemaining = _focusSegmentRemaining(boxRemaining);
+    if (newRemaining == state.remainingTime) return;
+
+    state = state.copyWith(remainingTime: newRemaining);
+    repository.updatePomodoro(state);
+    _timerSubscription?.cancel();
+    _timerSubscription = _startNativeTimer(_nativeCopy);
   }
 
   /// 지금이 슬롯 휴식 창 안이고 박스가 그 뒤로도 이어지면
