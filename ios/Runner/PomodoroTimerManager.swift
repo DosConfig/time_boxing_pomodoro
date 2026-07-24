@@ -211,7 +211,7 @@ class PomodoroTimerManager: NSObject {
 
         guard d.bool(forKey: PersistKeys.isActive) else {
             // 저장된 타이머가 없는데 화면에 Activity가 남아 있으면 고아 — 정리
-            if #available(iOS 16.1, *) { endAllActivities() }
+            if #available(iOS 16.1, *) { Task { await endAllActivities() } }
             return notificationSettingsPayload.merging(["status": "idle"]) { _, new in new }
         }
 
@@ -232,7 +232,7 @@ class PomodoroTimerManager: NSObject {
             pausedRemainingTime = d.double(forKey: PersistKeys.pausedRemaining)
             guard pausedRemainingTime > 0 else {
                 clearPersistedState()
-                if #available(iOS 16.1, *) { endAllActivities() }
+                if #available(iOS 16.1, *) { Task { await endAllActivities() } }
                 return notificationSettingsPayload.merging(["status": "completed", "sessionCount": sessionCount, "sessionGoal": sessionGoal, "phase": currentPhase]) { _, new in new }
             }
             endTime = nil
@@ -248,7 +248,7 @@ class PomodoroTimerManager: NSObject {
         targetDuration = d.double(forKey: PersistKeys.targetDuration)
         guard let restoredEndTime = restoredEndTime(from: d) else {
             clearPersistedState()
-            if #available(iOS 16.1, *) { endAllActivities() }
+            if #available(iOS 16.1, *) { Task { await endAllActivities() } }
             return notificationSettingsPayload.merging(["status": "idle"]) { _, new in new }
         }
         endTime = restoredEndTime
@@ -258,7 +258,7 @@ class PomodoroTimerManager: NSObject {
             // 앱이 죽어 있는 동안 완료됨
             endTime = nil
             clearPersistedState()
-            if #available(iOS 16.1, *) { endAllActivities() }
+            if #available(iOS 16.1, *) { Task { await endAllActivities() } }
             NSLog("[Pomodoro] restored: completed while away")
             return notificationSettingsPayload.merging(["status": "completed", "sessionCount": sessionCount, "sessionGoal": sessionGoal, "phase": currentPhase]) { _, new in new }
         }
@@ -340,7 +340,7 @@ class PomodoroTimerManager: NSObject {
         persistState()
 
         if #available(iOS 16.1, *) {
-            startLiveActivity(duration: duration, sessionCount: sessionCount, endTime: endTime)
+            Task { await startLiveActivity(duration: duration, sessionCount: sessionCount, endTime: endTime) }
         }
     }
 
@@ -398,7 +398,7 @@ class PomodoroTimerManager: NSObject {
         clearPersistedState()
 
         if #available(iOS 16.1, *) {
-            endAllActivities()
+            Task { await endAllActivities() }
         }
     }
 
@@ -447,7 +447,19 @@ class PomodoroTimerManager: NSObject {
     }
 
     private func onTimerComplete() {
-        stopTimer()
+        // ponytail: LA를 죽이지 않는 경량 정리.
+        // Dart가 break startTimer()를 보내면 startLiveActivity() 안에서
+        // 기존 LA를 await end 후 교체한다.
+        timer?.invalidate()
+        timer = nil
+        endTime = nil
+        pausedRemainingTime = 0
+        isPaused = false
+
+        cancelLocalNotification()
+        endBackgroundTask()
+        clearPersistedState()
+
         channel.invokeMethod("onComplete", arguments: nil)
     }
 
@@ -486,29 +498,7 @@ class PomodoroTimerManager: NSObject {
             }
         }
 
-        // Schedule ongoing notification for lock screen
-        scheduleOngoingNotification(duration: safeSeconds)
-    }
-
-    private func scheduleOngoingNotification(duration: Int) {
-        let content = UNMutableNotificationContent()
-        let taskTitle = currentTimeBoxTitle.trimmingCharacters(in: .whitespacesAndNewlines)
-        content.title = taskTitle.isEmpty ? localizedCopy.inProgressTitle(for: currentPhase) : taskTitle
-        content.body = [
-            localizedCopy.inProgressTitle(for: currentPhase),
-            currentTimeBoxTimeRange,
-            localizedCopy.remainingBody(time: formatTime(seconds: duration))
-        ]
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
-            .joined(separator: " · ")
-        content.sound = nil
-        content.categoryIdentifier = "POMODORO_RUNNING"
-
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
-        let request = UNNotificationRequest(identifier: "pomodoro_running", content: content, trigger: trigger)
-
-        UNUserNotificationCenter.current().add(request)
+        // ponytail: ongoing notification 삭제 — LA가 lock screen에 표시되므로 중복
     }
 
     private func cancelLocalNotification() {
@@ -549,10 +539,9 @@ class PomodoroTimerManager: NSObject {
     // MARK: - Live Activity
 
     @available(iOS 16.1, *)
-    private func startLiveActivity(duration: Int, sessionCount: Int, endTime activityEndTime: Date? = nil) {
-        // 다중 LA 방지: 메모리의 currentActivity만 정리하면 프로세스 재시작 후
-        // 고아 Activity가 남는다 — OS에 등록된 전부를 정리하고 시작
-        endAllActivities()
+    private func startLiveActivity(duration: Int, sessionCount: Int, endTime activityEndTime: Date? = nil) async {
+        // 다중 LA 방지: 이전 Activity의 end를 await해서 race condition 차단
+        await endAllActivities()
 
         let attributes = PomodoroActivityAttributes(totalDuration: duration)
         let endTime = activityEndTime ?? Date().addingTimeInterval(TimeInterval(duration))
@@ -573,7 +562,6 @@ class PomodoroTimerManager: NSObject {
             localizedTopPriorityLabel: localizedCopy.topPriorityLabel
         )
 
-        // Check if Live Activities are enabled
         guard ActivityAuthorizationInfo().areActivitiesEnabled else {
             lastActivityStatus = "DISABLED — 설정에서 Live Activities 꺼짐"
             NSLog("[Pomodoro] ⚠️ Live Activities are NOT enabled (ActivityAuthorizationInfo)")
@@ -664,12 +652,9 @@ class PomodoroTimerManager: NSObject {
     }
 
     @available(iOS 16.1, *)
-    private func endAllActivities() {
-        // OS에 등록된 이 앱의 모든 Activity 종료 (고아 포함)
+    private func endAllActivities() async {
         for activity in Activity<PomodoroActivityAttributes>.activities {
-            Task {
-                await activity.end(dismissalPolicy: .immediate)
-            }
+            await activity.end(dismissalPolicy: .immediate)
         }
         currentActivity = nil
     }
@@ -689,9 +674,11 @@ class PomodoroTimerManager: NSObject {
             NSLog("[Pomodoro] reattached to activity %@ (extra %d ended)", first.id, existing.count - 1)
         } else {
             let remaining = remainingSecondsRoundedUp()
-            startLiveActivity(duration: remaining, sessionCount: sessionCount, endTime: endTime)
-            if isPaused {
-                updateLiveActivity(status: "paused")
+            Task {
+                await startLiveActivity(duration: remaining, sessionCount: sessionCount, endTime: endTime)
+                if isPaused {
+                    updateLiveActivity(status: "paused")
+                }
             }
             NSLog("[Pomodoro] no live activity found — recreated")
         }

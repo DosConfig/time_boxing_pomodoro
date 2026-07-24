@@ -640,6 +640,72 @@ void main() {
       );
     });
 
+    test('persists notification and sound toggles across restarts', () async {
+      SharedPreferences.setMockInitialValues({});
+      final repository = _MemoryPomodoroRepository(Pomodoro.initial());
+      final container = ProviderContainer(
+        overrides: [pomodoroRepositoryProvider.overrideWithValue(repository)],
+      );
+      addTearDown(container.dispose);
+
+      final controller = container.read(pomodoroControllerProvider.notifier);
+      await _settleControllerRestore();
+
+      controller.setNotificationsEnabled(false);
+      controller.setSoundEnabled(false);
+      await Future<void>.delayed(Duration.zero);
+
+      // 앱 재시작 재현: 새 컨테이너로 다시 복원.
+      final repository2 = _MemoryPomodoroRepository(Pomodoro.initial());
+      final container2 = ProviderContainer(
+        overrides: [pomodoroRepositoryProvider.overrideWithValue(repository2)],
+      );
+      addTearDown(container2.dispose);
+      container2.read(pomodoroControllerProvider);
+      await _settleControllerRestore();
+
+      final restored = container2.read(pomodoroControllerProvider);
+      expect(restored.notificationsEnabled, isFalse);
+      expect(restored.soundEnabled, isFalse);
+    });
+
+    test('re-syncs the active box after a time-range edit', () async {
+      // 09:15 현재, 09:00-10:00 박스가 지금 진행 중으로 활성.
+      final now = DateTime(2026, 7, 21, 9, 15);
+      final repository = _MemoryPomodoroRepository(
+        Pomodoro.initial().copyWith(
+          timeBoxes: const [
+            TimeBox(
+              id: 'current',
+              title: 'Deep work',
+              timeRange: '09:00-10:00',
+              durationSeconds: 60 * 60,
+            ),
+          ],
+        ),
+      );
+      final container = ProviderContainer(
+        overrides: [
+          pomodoroRepositoryProvider.overrideWithValue(repository),
+          pomodoroClockProvider.overrideWithValue(() => now),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final controller = container.read(pomodoroControllerProvider.notifier);
+      await _settleControllerRestore();
+      expect(
+        container.read(pomodoroControllerProvider).activeTimeBoxId,
+        'current',
+      );
+
+      // 이 박스를 오후로 옮기면 더 이상 '지금'이 아니므로 활성 해제되어야 한다.
+      controller.updateTimeBox('current', timeRange: '14:00-15:00');
+
+      final state = container.read(pomodoroControllerProvider);
+      expect(state.activeTimeBoxId, isEmpty);
+    });
+
     test('reset is not revived by clock sync while tracking is on', () async {
       final now = DateTime(2026, 7, 21, 9, 15);
       final repository = _MemoryPomodoroRepository(

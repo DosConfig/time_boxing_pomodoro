@@ -14,3 +14,5 @@ a256fd0b2ff1
 434a43656f28
 d3b11e26479d
 e0da7d6794fa
+# Notification/sound toggles are paired but independent settings.
+770a563ef546
