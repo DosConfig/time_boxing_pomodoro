@@ -312,7 +312,7 @@ class PomodoroTimerManager: NSObject {
         localizedCopy: NativeTimerCopy = NativeTimerCopy()
     ) {
         NSLog("[Pomodoro] native startTimer called — duration=%d session=%d", duration, sessionCount)
-        stopTimer()
+        clearTimerState()
 
         endTime = Date().addingTimeInterval(TimeInterval(duration))
         targetDuration = TimeInterval(duration)
@@ -382,6 +382,15 @@ class PomodoroTimerManager: NSObject {
     }
 
     func stopTimer() {
+        clearTimerState()
+        if #available(iOS 16.1, *) {
+            Task { await endAllActivities() }
+        }
+    }
+
+    /// 타이머 상태만 정리, LA는 건드리지 않음.
+    /// startTimer()에서 호출 — LA는 startLiveActivity() 안에서 await로 교체.
+    private func clearTimerState() {
         timer?.invalidate()
         timer = nil
         endTime = nil
@@ -396,10 +405,6 @@ class PomodoroTimerManager: NSObject {
         cancelLocalNotification()
         endBackgroundTask()
         clearPersistedState()
-
-        if #available(iOS 16.1, *) {
-            Task { await endAllActivities() }
-        }
     }
 
     func getRemainingTime() -> TimeInterval {
@@ -450,16 +455,7 @@ class PomodoroTimerManager: NSObject {
         // ponytail: LA를 죽이지 않는 경량 정리.
         // Dart가 break startTimer()를 보내면 startLiveActivity() 안에서
         // 기존 LA를 await end 후 교체한다.
-        timer?.invalidate()
-        timer = nil
-        endTime = nil
-        pausedRemainingTime = 0
-        isPaused = false
-
-        cancelLocalNotification()
-        endBackgroundTask()
-        clearPersistedState()
-
+        clearTimerState()
         channel.invokeMethod("onComplete", arguments: nil)
     }
 

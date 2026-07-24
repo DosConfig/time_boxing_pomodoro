@@ -1257,19 +1257,29 @@ class PomodoroController extends _$PomodoroController
     _sortTimeBoxes(boxes);
 
     final updatingActiveBox = id == state.activeTimeBoxId;
+    final isRunning = updatingActiveBox &&
+        (state.status == PomodoroStatus.running ||
+         state.status == PomodoroStatus.paused);
+    final newRemaining = updatingActiveBox
+        ? (isRunning
+            ? _clockRemainingForTimeBox(nextBox)
+            : _remainingForTimeBox(nextBox))
+        : state.remainingTime;
     state = state.copyWith(
       timeBoxes: boxes,
       currentTimeBoxTimeRange: updatingActiveBox
           ? nextBox.timeRange
           : state.currentTimeBoxTimeRange,
-      workDuration: updatingActiveBox && state.status == PomodoroStatus.idle
+      workDuration: updatingActiveBox
           ? nextBox.durationSeconds
           : state.workDuration,
-      remainingTime: updatingActiveBox && state.status == PomodoroStatus.idle
-          ? _remainingForTimeBox(nextBox)
-          : state.remainingTime,
+      remainingTime: updatingActiveBox ? newRemaining : state.remainingTime,
     );
     repository.updatePomodoro(state);
+    if (isRunning && state.status == PomodoroStatus.running) {
+      _timerSubscription?.cancel();
+      _timerSubscription = _startNativeTimer(_nativeCopy);
+    }
   }
 
   void resizeTimeBoxStart(
@@ -1323,19 +1333,29 @@ class PomodoroController extends _$PomodoroController
     _sortTimeBoxes(boxes);
 
     final updatingActiveBox = id == state.activeTimeBoxId;
+    final isRunning = updatingActiveBox &&
+        (state.status == PomodoroStatus.running ||
+         state.status == PomodoroStatus.paused);
+    final newRemaining = updatingActiveBox
+        ? (isRunning
+            ? _clockRemainingForTimeBox(nextBox)
+            : _remainingForTimeBox(nextBox))
+        : state.remainingTime;
     state = state.copyWith(
       timeBoxes: boxes,
       currentTimeBoxTimeRange: updatingActiveBox
           ? nextBox.timeRange
           : state.currentTimeBoxTimeRange,
-      workDuration: updatingActiveBox && state.status == PomodoroStatus.idle
+      workDuration: updatingActiveBox
           ? nextBox.durationSeconds
           : state.workDuration,
-      remainingTime: updatingActiveBox && state.status == PomodoroStatus.idle
-          ? _remainingForTimeBox(nextBox)
-          : state.remainingTime,
+      remainingTime: updatingActiveBox ? newRemaining : state.remainingTime,
     );
     repository.updatePomodoro(state);
+    if (isRunning && state.status == PomodoroStatus.running) {
+      _timerSubscription?.cancel();
+      _timerSubscription = _startNativeTimer(_nativeCopy);
+    }
   }
 
   Future<void> selectTimeBox(String id) async {
