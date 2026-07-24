@@ -35,7 +35,6 @@ struct PomodoroWidgetLiveActivity: Widget {
                             .foregroundStyle(.white)
                             .lineLimit(2)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                        priorityText(context)
                         ProgressView(value: progressValue(context), total: Double(context.attributes.totalDuration))
                             .tint(.white)
                     }
@@ -67,17 +66,6 @@ struct PomodoroWidgetLiveActivity: Widget {
                 .font(.system(size: size, weight: .semibold, design: .rounded))
                 .foregroundStyle(.white)
                 .monospacedDigit()
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-        }
-    }
-
-    @ViewBuilder
-    private func priorityText(_ context: ActivityViewContext<PomodoroActivityAttributes>) -> some View {
-        if let firstPriority = context.state.topPriorities.first {
-            Text(firstPriority)
-                .font(.caption2.weight(.semibold))
-                .foregroundStyle(.white.opacity(0.72))
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
         }
@@ -135,19 +123,31 @@ struct LockScreenLiveActivityView: View {
     let context: ActivityViewContext<PomodoroActivityAttributes>
 
     var body: some View {
-        // 제목이 타이머와 폭을 다투지 않도록, 타이머는 우선순위 스트립과
-        // 한 줄을 쓰고 현재 타임박스 제목은 전체 폭에서 최대 2줄로 그린다.
+        // LA는 실행 화면이므로 현재 타임박스(진행 중인 일)와 남은 시간만
+        // 보여준다. 우선순위 목록 같은 계획 정보는 앱 안에서 본다.
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .center, spacing: 12) {
-                priorityStrip
-                    .layoutPriority(1)
+                Image(systemName: phaseIcon)
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(.white.opacity(0.85))
 
-                Spacer(minLength: 8)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(currentTimeBoxTitle)
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(.white)
+                        .lineLimit(2)
+                    if !context.state.currentTimeBoxTimeRange.isEmpty {
+                        Text(context.state.currentTimeBoxTimeRange)
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(.white.opacity(0.58))
+                            .lineLimit(1)
+                            .monospacedDigit()
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
 
-                timerText(size: 26)
+                timerText(size: 28)
             }
-
-            currentBlockRow
 
             ProgressView(value: progressValue, total: Double(context.attributes.totalDuration))
                 .tint(.white)
@@ -157,50 +157,6 @@ struct LockScreenLiveActivityView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .activityBackgroundTint(Color.black)
         .activitySystemActionForegroundColor(.white)
-    }
-
-    @ViewBuilder
-    private var priorityStrip: some View {
-        if let firstPriority = context.state.topPriorities.first {
-            HStack(spacing: 8) {
-                Text(context.state.localizedTopPriorityLabel)
-                    .font(.caption2.weight(.bold))
-                    .foregroundStyle(.white.opacity(0.48))
-                    .textCase(.uppercase)
-
-                Text(firstPriority)
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.white.opacity(0.86))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.75)
-                    .layoutPriority(1)
-
-                if context.state.topPriorities.count > 1 {
-                    Text("+\(context.state.topPriorities.count - 1)")
-                        .font(.caption2.weight(.bold))
-                        .foregroundStyle(.white.opacity(0.52))
-                }
-            }
-        }
-    }
-
-    private var currentBlockRow: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Text(currentTimeBoxTitle)
-                .font(.footnote.weight(.semibold))
-                .foregroundStyle(.white)
-                .lineLimit(2)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .layoutPriority(1)
-
-            if !context.state.currentTimeBoxTimeRange.isEmpty {
-                Text(context.state.currentTimeBoxTimeRange)
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(.white.opacity(0.58))
-                    .lineLimit(1)
-                    .monospacedDigit()
-            }
-        }
     }
 
     @ViewBuilder
