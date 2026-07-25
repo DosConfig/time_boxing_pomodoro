@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/widgets.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../settings/application/app_preferences_controller.dart';
 import '../di/focus_providers.dart';
@@ -141,55 +140,12 @@ class PomodoroController extends _$PomodoroController
       _timerSubscription?.cancel();
       _clockSyncTimer?.cancel();
     });
-    ref.listen(appPreferencesControllerProvider, (prev, next) {
-      if (prev?.slotBreakEnabled != next.slotBreakEnabled) {
-        _onSlotBreakSettingChanged(next.slotBreakEnabled);
-      }
-    });
     Future.microtask(() async {
       await _restoreFromLocalPlan();
       await _restoreFromNative();
-      // 알림/사운드 토글은 기기 설정이므로 네이티브 기본값이 아니라
-      // 저장된 사용자 선택을 최종 적용한다. (앱 재시작 시 스위치 초기화 방지)
-      await _restoreNotificationPrefs();
       _completeInitialRestore();
     });
     return Pomodoro.initial();
-  }
-
-  static const _notificationsEnabledKey = 'app.notificationsEnabled';
-  static const _soundEnabledKey = 'app.soundEnabled';
-
-  Future<void> _restoreNotificationPrefs() async {
-    final preferences = await SharedPreferences.getInstance();
-    final notificationsEnabled =
-        preferences.getBool(_notificationsEnabledKey) ??
-        state.notificationsEnabled;
-    final soundEnabled =
-        preferences.getBool(_soundEnabledKey) ?? state.soundEnabled;
-    if (notificationsEnabled == state.notificationsEnabled &&
-        soundEnabled == state.soundEnabled) {
-      return;
-    }
-    state = state.copyWith(
-      notificationsEnabled: notificationsEnabled,
-      soundEnabled: soundEnabled,
-    );
-    unawaited(
-      repository.updateNotificationSettings(
-        notificationsEnabled: notificationsEnabled,
-        soundEnabled: soundEnabled,
-      ),
-    );
-  }
-
-  Future<void> _persistNotificationPrefs() async {
-    final preferences = await SharedPreferences.getInstance();
-    await preferences.setBool(
-      _notificationsEnabledKey,
-      state.notificationsEnabled,
-    );
-    await preferences.setBool(_soundEnabledKey, state.soundEnabled);
   }
 
   Future<void> syncTodayPlanWithDatabase() async {
@@ -560,7 +516,6 @@ class PomodoroController extends _$PomodoroController
   void setNotificationsEnabled(bool enabled) {
     state = state.copyWith(notificationsEnabled: enabled);
     repository.updatePomodoro(state);
-    unawaited(_persistNotificationPrefs());
     unawaited(
       repository.updateNotificationSettings(
         notificationsEnabled: state.notificationsEnabled,
@@ -572,7 +527,6 @@ class PomodoroController extends _$PomodoroController
   void setSoundEnabled(bool enabled) {
     state = state.copyWith(soundEnabled: enabled);
     repository.updatePomodoro(state);
-    unawaited(_persistNotificationPrefs());
     unawaited(
       repository.updateNotificationSettings(
         notificationsEnabled: state.notificationsEnabled,
@@ -1155,9 +1109,6 @@ class PomodoroController extends _$PomodoroController
           : state.remainingTime,
     );
     repository.updatePomodoro(state);
-    // 시간대를 수정하면 "지금 진행 중" 판정이 낡을 수 있으므로 벽시계 기준으로
-    // 활성 박스를 다시 계산한다. (오늘 리뷰의 '지금' 오표시 방지)
-    syncFocusWithClock();
   }
 
   void moveTimeBoxToStart(String id, int startMinutes) {
@@ -1262,29 +1213,19 @@ class PomodoroController extends _$PomodoroController
     _sortTimeBoxes(boxes);
 
     final updatingActiveBox = id == state.activeTimeBoxId;
-    final isRunning = updatingActiveBox &&
-        (state.status == PomodoroStatus.running ||
-         state.status == PomodoroStatus.paused);
-    final newRemaining = updatingActiveBox
-        ? (isRunning
-            ? _clockRemainingForTimeBox(nextBox)
-            : _remainingForTimeBox(nextBox))
-        : state.remainingTime;
     state = state.copyWith(
       timeBoxes: boxes,
       currentTimeBoxTimeRange: updatingActiveBox
           ? nextBox.timeRange
           : state.currentTimeBoxTimeRange,
-      workDuration: updatingActiveBox
+      workDuration: updatingActiveBox && state.status == PomodoroStatus.idle
           ? nextBox.durationSeconds
           : state.workDuration,
-      remainingTime: updatingActiveBox ? newRemaining : state.remainingTime,
+      remainingTime: updatingActiveBox && state.status == PomodoroStatus.idle
+          ? _remainingForTimeBox(nextBox)
+          : state.remainingTime,
     );
     repository.updatePomodoro(state);
-    if (isRunning && state.status == PomodoroStatus.running) {
-      _timerSubscription?.cancel();
-      _timerSubscription = _startNativeTimer(_nativeCopy);
-    }
   }
 
   void resizeTimeBoxStart(
@@ -1338,29 +1279,19 @@ class PomodoroController extends _$PomodoroController
     _sortTimeBoxes(boxes);
 
     final updatingActiveBox = id == state.activeTimeBoxId;
-    final isRunning = updatingActiveBox &&
-        (state.status == PomodoroStatus.running ||
-         state.status == PomodoroStatus.paused);
-    final newRemaining = updatingActiveBox
-        ? (isRunning
-            ? _clockRemainingForTimeBox(nextBox)
-            : _remainingForTimeBox(nextBox))
-        : state.remainingTime;
     state = state.copyWith(
       timeBoxes: boxes,
       currentTimeBoxTimeRange: updatingActiveBox
           ? nextBox.timeRange
           : state.currentTimeBoxTimeRange,
-      workDuration: updatingActiveBox
+      workDuration: updatingActiveBox && state.status == PomodoroStatus.idle
           ? nextBox.durationSeconds
           : state.workDuration,
-      remainingTime: updatingActiveBox ? newRemaining : state.remainingTime,
+      remainingTime: updatingActiveBox && state.status == PomodoroStatus.idle
+          ? _remainingForTimeBox(nextBox)
+          : state.remainingTime,
     );
     repository.updatePomodoro(state);
-    if (isRunning && state.status == PomodoroStatus.running) {
-      _timerSubscription?.cancel();
-      _timerSubscription = _startNativeTimer(_nativeCopy);
-    }
   }
 
   Future<void> selectTimeBox(String id) async {
@@ -1593,27 +1524,6 @@ class PomodoroController extends _$PomodoroController
   int _nowSecondsOfDay() {
     final now = _now();
     return (now.hour * 3600) + (now.minute * 60) + now.second;
-  }
-
-  /// 슬롯 휴식 설정 변경 시 running focus 세그먼트를 재계산.
-  void _onSlotBreakSettingChanged(bool enabled) {
-    if (state.status != PomodoroStatus.running ||
-        state.phase != PomodoroPhase.focus) {
-      return;
-    }
-    final activeBox = _timeBoxById(state.activeTimeBoxId);
-    if (activeBox == null) return;
-
-    final boxRemaining = _clockRemainingForTimeBox(activeBox);
-    if (boxRemaining <= 0) return;
-
-    final newRemaining = _focusSegmentRemaining(boxRemaining);
-    if (newRemaining == state.remainingTime) return;
-
-    state = state.copyWith(remainingTime: newRemaining);
-    repository.updatePomodoro(state);
-    _timerSubscription?.cancel();
-    _timerSubscription = _startNativeTimer(_nativeCopy);
   }
 
   /// 지금이 슬롯 휴식 창 안이고 박스가 그 뒤로도 이어지면

@@ -17,13 +17,10 @@ FAIL=0
 RECEIPT_DIR=".bridle"
 RECEIPT_LOG="$RECEIPT_DIR/receipts.log"
 
-# prepush: standard와 동일하되 느린 플랫폼 빌드(build-android/ios)만 제외한다.
-# CI 실패의 실제 원인인 codegen/generated-clean을 push 전에 로컬에서 잡아
-# 원격 게이트 낭비를 막는 용도.
 case "$MODE" in
-  quick|standard|prepush|e2e) ;;
+  quick|standard|e2e) ;;
   *)
-    echo "지원하지 않는 모드: $MODE (quick, standard, prepush, e2e 중 하나를 사용하십시오.)"
+    echo "지원하지 않는 모드: $MODE (quick, standard, e2e 중 하나를 사용하십시오.)"
     exit 2
     ;;
 esac
@@ -161,7 +158,7 @@ run_gate secrets scan_secrets
 run_gate doctags check_doctags
 run_gate dupscan check_dupscan
 
-if [ "$MODE" = "standard" ] || [ "$MODE" = "prepush" ]; then
+if [ "$MODE" = "standard" ]; then
   if [ -f l10n.yaml ]; then
     run_gate l10n flutter gen-l10n
   fi

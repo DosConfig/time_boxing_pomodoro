@@ -113,6 +113,3 @@ BLOG_SERIES_STRUCTURE.md
 LIVE_ACTIVITY_UI_GUIDE.md
 .bridle/
 integration_test/test_bundle.dart
-
-# 로컬 전달용 임시 폴더 (전송 후 삭제)
-_to_delete/
