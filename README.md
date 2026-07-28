@@ -68,6 +68,9 @@ The feature set is intentionally small and portfolio-friendly:
 - Alert sound can be disabled while keeping visual notifications.
 - Notification permission is requested contextually when the user starts a timer, not on first launch.
 - Live Activity stays glanceable: top priorities, current time box, remaining time, and progress.
+- Focus and break segments reuse one Live Activity. Segment-specific values such
+  as `endTime`, phase, title, and total duration are updated through
+  `ContentState` instead of ending and recreating the system activity.
 
 ## Product Roadmap
 
@@ -157,6 +160,11 @@ ios/
 6. On foreground/cold launch, Flutter calls `restoreState`.
 7. Swift recomputes remaining time from `endTime - now` and reconnects to any active Live Activity.
 
+The current binary uses absolute timestamps, persistence, local notification,
+and foreground reconciliation as its cross-version foundation. An iOS 26
+`AlarmKit` path is being evaluated for system-owned background countdowns; it
+is intentionally documented as a follow-up rather than an implemented claim.
+
 ## Daily Plan Data Lifecycle
 
 Today Plan data is scoped by `Firebase UID + local date` in the local cache and
@@ -172,6 +180,12 @@ full rules.
 ## Live Activity Notes
 
 Live Activity uses SwiftUI `Text(timerInterval:countsDown:)`. On the Lock Screen or in Simulator, iOS may temporarily show minute-level placeholders such as `19:--` while throttling second-level rendering. The underlying timer still uses the persisted absolute `endTime`, so this is a display policy rather than a state-sync bug.
+
+A Pomodoro session owns one Live Activity. Starting the next focus or break
+segment updates the existing activity's dynamic `ContentState`, while an
+explicit stop ends it. This avoids an asynchronous end/request race, duplicate
+activities after process restoration, and visible Dynamic Island churn between
+segments.
 
 ## Android Timer Notes
 
@@ -243,7 +257,9 @@ Release automation:
 - CircleCI: `.circleci/config.yml`
 - Public-repo guardrails: `scripts/ci/verify_release_guardrails.sh` (works with or without ripgrep on the runner)
 - Store screenshots: `integration_test/app_store_screenshot_test.dart` and the `test_driver/` workflows capture App Store and Google Play assets
-- Shorebird: documented only, not initialized for the first submitted binary
+- Shorebird: initialized for compatible Dart-only patches after a normal signed
+  binary release; native, ActivityKit, entitlement, and permission changes
+  always use the TestFlight/App Store binary workflow
 
 1. Open `ios/Runner.xcworkspace` in Xcode.
 2. Set a valid Apple Developer Team for `Runner` and `PomodoroWidgetExtensionExtension`.
