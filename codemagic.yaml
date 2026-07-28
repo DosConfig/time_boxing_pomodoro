@@ -22,7 +22,7 @@ workflows:
       events:
         - tag
       tag_patterns:
-        - pattern: ios-*
+        - pattern: v*.*.*+*
           include: true
     scripts:
       - name: Restore ignored Firebase config
