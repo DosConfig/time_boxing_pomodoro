@@ -94,7 +94,7 @@ short-lived branch
 → merge to main
 → update pubspec version
 → annotated vX.Y.Z+BUILD tag
-→ Codemagic/Fastlane TestFlight build
+→ Codemagic `shorebird release ios` TestFlight build
 → smoke test
 → App Store rollout
 ```
@@ -116,6 +116,7 @@ platform-channel changes always use this normal binary release path.
 
 Shorebird CI is not used. GitHub Actions remains the pull-request quality gate.
 
-Shorebird Code Push is a separate, future release mechanism. It remains inactive
-until a normal reviewed binary exists. If activated later, only eligible
-Dart-only fixes may use it, following `docs/release/SHOREBIRD_POLICY.md`.
+Shorebird Code Push is initialized. Store binaries still use the normal tagged
+and reviewed release flow, with Codemagic calling `shorebird release ios` so the
+installed binary can receive future patches. Eligible Dart-only fixes may then
+use the manual patch workflow in `docs/release/SHOREBIRD_POLICY.md`.
