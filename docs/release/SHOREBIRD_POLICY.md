@@ -2,6 +2,9 @@
 
 Status: not initialized in the submitted binary yet.
 
+This policy is for Shorebird Code Push only. Shorebird CI is not used; pull
+request checks run in GitHub Actions.
+
 Use Shorebird only after a normal App Store Connect build has been accepted into
 TestFlight or App Review. Do not use Shorebird for the first binary submission.
 

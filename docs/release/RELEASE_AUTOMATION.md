@@ -107,7 +107,8 @@ Codemagic setup:
    `com.seongwoo.focusmark.PomodoroWidgetExtension`.
 3. Create environment group `timebox_mark_ios_release`.
 4. Add the Firebase and App Store Connect environment variables listed above.
-5. Push a tag matching `ios-*`, or run the workflow manually.
+5. Push an annotated tag matching `vMAJOR.MINOR.PATCH+BUILD`, or run the
+   workflow manually. See `docs/release/BRANCHING_AND_TAGGING.md`.
 
 ## CircleCI
 
@@ -138,6 +139,10 @@ The release guard checks:
 ## Shorebird
 
 See `docs/release/SHOREBIRD_POLICY.md`.
+
+Shorebird CI is not used. GitHub Actions provides the pull-request quality
+gate. The Shorebird section below refers only to the optional Code Push release
+mechanism.
 
 Do not enable Shorebird for the first submitted binary. After a normal reviewed
 binary exists, use Shorebird only for small Dart-only hotfixes that do not alter
