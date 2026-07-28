@@ -1,7 +1,7 @@
 # Release Automation
 
-Status: Fastlane and Codemagic configuration added. Shorebird is guarded and not
-active until initialized with a real Shorebird app id.
+Status: Fastlane and Codemagic configuration added. Shorebird is initialized;
+Codemagic creates patchable iOS releases and keeps patches manually triggered.
 
 ## Current Status
 
@@ -14,7 +14,8 @@ active until initialized with a real Shorebird app id.
 - Ignored Firebase client files are restored in CI from base64 environment
   variables.
 - Secret-like tracked files are blocked by `scripts/ci/verify_release_guardrails.sh`.
-- Shorebird patch workflow exists but intentionally fails until configured.
+- Shorebird release and patch workflows require the encrypted
+  `SHOREBIRD_TOKEN` in Codemagic.
 
 ## Required Secrets
 
@@ -144,9 +145,10 @@ Shorebird CI is not used. GitHub Actions provides the pull-request quality
 gate. The Shorebird section below refers only to the optional Code Push release
 mechanism.
 
-Do not enable Shorebird for the first submitted binary. After a normal reviewed
-binary exists, use Shorebird only for small Dart-only hotfixes that do not alter
-the app's reviewed purpose, monetization, permissions, or privacy behavior.
+The first patchable binary is built with `shorebird release ios` and still goes
+through the normal TestFlight/App Store review flow. After it is installed, use
+Shorebird only for small Dart-only hotfixes that do not alter native code or the
+app's reviewed purpose, monetization, permissions, or privacy behavior.
 
 ## Android Release Signing
 

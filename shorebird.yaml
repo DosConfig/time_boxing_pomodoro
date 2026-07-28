@@ -1,0 +1,4 @@
+# This file is used to configure the Shorebird updater used by your app.
+# It contains a public project identifier, not an API secret.
+app_id: cb308c49-101b-4fcb-ad4d-9e182f404f6b
+

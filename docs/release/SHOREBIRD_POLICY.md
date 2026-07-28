@@ -1,12 +1,14 @@
 # Shorebird Policy
 
-Status: not initialized in the submitted binary yet.
+Status: initialized. New store binaries are created with the Shorebird release
+workflow; patches remain restricted by the policy below.
 
 This policy is for Shorebird Code Push only. Shorebird CI is not used; pull
 request checks run in GitHub Actions.
 
-Use Shorebird only after a normal App Store Connect build has been accepted into
-TestFlight or App Review. Do not use Shorebird for the first binary submission.
+The first patchable binary must be created with `shorebird release ios` and
+uploaded through the normal TestFlight/App Store review flow. A binary built
+only with `flutter build ipa` cannot receive a Shorebird patch.
 
 ## Review-Safe Use
 
@@ -30,25 +32,15 @@ Those changes must go through a normal App Store Connect upload and review.
 
 ## Setup
 
-Install and authenticate locally:
-
-```bash
-curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/shorebirdtech/install/main/install.sh | bash
-shorebird login
-shorebird init
-```
-
-`shorebird init` creates `shorebird.yaml` with the real Shorebird app id. Commit
-that file only after confirming the app id belongs to Timebox Mark.
+`shorebird.yaml` contains the Timebox Mark Shorebird app id. Codemagic stores
+the API key as the encrypted `SHOREBIRD_TOKEN` variable in the
+`timebox_mark_ios_release` group. Never commit that token.
 
 ## Release Flow
 
-Use a normal signed release for the first TestFlight/App Store binary:
-
-```bash
-cd ios
-bundle exec fastlane ios internal_beta
-```
+Run the Codemagic `iOS TestFlight` workflow from an annotated release tag. It
+uses `shorebird release ios`, produces the signed IPA, registers the release
+with Shorebird, and uploads the same IPA to TestFlight.
 
 After that release exists in Shorebird, small Dart-only hotfixes can use:
 
@@ -56,9 +48,9 @@ After that release exists in Shorebird, small Dart-only hotfixes can use:
 shorebird patch ios --release-version 1.0.0+1
 ```
 
-Codemagic has an `ios-shorebird-patch` workflow, but it intentionally fails
-until `shorebird.yaml`, `SHOREBIRD_TOKEN`, and `SHOREBIRD_RELEASE_VERSION` are
-configured.
+For a Dart-only hotfix, manually run the Codemagic `iOS Shorebird Patch`
+workflow and enter the installed release version, such as `1.0.0+4`, in its
+`release_version` input.
 
 ## Patch Checklist
 
