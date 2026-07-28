@@ -11,6 +11,7 @@ struct PomodoroActivityAttributes: ActivityAttributes {
         var phase: String       // "focus", "shortBreak", "longBreak"
         var sessionCount: Int
         var sessionGoal: Int
+        var totalDuration: Int // 구간이 바뀌어도 같은 LA를 재사용하기 위한 동적 값
         var pausedRemainingSeconds: Int?  // 일시정지 시 남은 시간
         var topPriorities: [String]
         var currentTimeBoxTitle: String
@@ -22,5 +23,6 @@ struct PomodoroActivityAttributes: ActivityAttributes {
         var localizedTopPriorityLabel: String
     }
 
-    var totalDuration: Int  // in seconds
+    // 세션 전체에서 바뀌지 않는 식별자만 attributes에 둔다.
+    var sessionID: String
 }

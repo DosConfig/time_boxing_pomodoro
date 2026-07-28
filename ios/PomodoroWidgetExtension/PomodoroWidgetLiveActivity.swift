@@ -36,7 +36,7 @@ struct PomodoroWidgetLiveActivity: Widget {
                             .lineLimit(2)
                             .frame(maxWidth: .infinity, alignment: .leading)
                         priorityText(context)
-                        ProgressView(value: progressValue(context), total: Double(context.attributes.totalDuration))
+                        ProgressView(value: progressValue(context), total: Double(context.state.totalDuration))
                             .tint(.white)
                     }
                 }
@@ -149,7 +149,7 @@ struct LockScreenLiveActivityView: View {
 
             currentBlockRow
 
-            ProgressView(value: progressValue, total: Double(context.attributes.totalDuration))
+            ProgressView(value: progressValue, total: Double(context.state.totalDuration))
                 .tint(.white)
         }
         .padding(.horizontal, 16)
