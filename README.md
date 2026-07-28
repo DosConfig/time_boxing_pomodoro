@@ -71,6 +71,9 @@ The feature set is intentionally small and portfolio-friendly:
 - Focus and break segments reuse one Live Activity. Segment-specific values such
   as `endTime`, phase, title, and total duration are updated through
   `ContentState` instead of ending and recreating the system activity.
+- Running scheduled focus sessions reconcile against the wall clock after an
+  active time box edit and whenever the app returns to the foreground. This
+  keeps the in-app Focus UI, native timer, and existing Live Activity aligned.
 
 ## Product Roadmap
 
@@ -159,11 +162,15 @@ ios/
 5. Native sends `onTick` events to Flutter while the app process is alive.
 6. On foreground/cold launch, Flutter calls `restoreState`.
 7. Swift recomputes remaining time from `endTime - now` and reconnects to any active Live Activity.
+8. Flutter compares the daily schedule with the current wall clock and moves to
+   the currently active time box instead of replaying every missed callback.
 
 The current binary uses absolute timestamps, persistence, local notification,
-and foreground reconciliation as its cross-version foundation. An iOS 26
-`AlarmKit` path is being evaluated for system-owned background countdowns; it
-is intentionally documented as a follow-up rather than an implemented claim.
+and foreground reconciliation as its cross-version foundation. If iOS suspends
+the app, the system-rendered countdown remains correct, but a scheduled time-box
+title change is not guaranteed until the app becomes active again. Exact
+background `ContentState` transitions would require an ActivityKit APNs server;
+that infrastructure is intentionally outside the current product scope.
 
 ## Daily Plan Data Lifecycle
 

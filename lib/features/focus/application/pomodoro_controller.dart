@@ -1109,6 +1109,10 @@ class PomodoroController extends _$PomodoroController
           : state.remainingTime,
     );
     repository.updatePomodoro(state);
+
+    // 실행 중인 활성 카드의 제목/시간이 바뀌면 Flutter state만 바꾸지 않고
+    // 같은 절대 시각 기준으로 Native Timer와 Live Activity도 즉시 갱신한다.
+    _syncAfterScheduleMutation(activeBoxChanged: updatingActiveBox);
   }
 
   void moveTimeBoxToStart(String id, int startMinutes) {
@@ -1151,6 +1155,7 @@ class PomodoroController extends _$PomodoroController
           : state.remainingTime,
     );
     repository.updatePomodoro(state);
+    _syncAfterScheduleMutation(activeBoxChanged: updatingActiveBox);
   }
 
   void resizeTimeBoxEnd(
@@ -1226,6 +1231,7 @@ class PomodoroController extends _$PomodoroController
           : state.remainingTime,
     );
     repository.updatePomodoro(state);
+    _syncAfterScheduleMutation(activeBoxChanged: updatingActiveBox);
   }
 
   void resizeTimeBoxStart(
@@ -1292,6 +1298,7 @@ class PomodoroController extends _$PomodoroController
           : state.remainingTime,
     );
     repository.updatePomodoro(state);
+    _syncAfterScheduleMutation(activeBoxChanged: updatingActiveBox);
   }
 
   Future<void> selectTimeBox(String id) async {
@@ -1337,7 +1344,10 @@ class PomodoroController extends _$PomodoroController
 
   /// 선택형 가져오기: 텍스트 항목들을 카테고리 규칙에 맞게 병합한다.
   /// 우선순위는 빈 슬롯 채움(최대 3개), 덤프/기억할 것은 중복 없는 병합.
-  bool importDailyPlanItems(DailyPlanItemCategory category, List<String> items) {
+  bool importDailyPlanItems(
+    DailyPlanItemCategory category,
+    List<String> items,
+  ) {
     final incoming = items
         .map((item) => item.trim())
         .where((item) => item.isNotEmpty)
@@ -1413,7 +1423,6 @@ class PomodoroController extends _$PomodoroController
     return true;
   }
 
-
   Future<void> selectCurrentTimeBoxForNow() async {
     if (state.status == PomodoroStatus.running ||
         state.status == PomodoroStatus.paused) {
@@ -1427,12 +1436,32 @@ class PomodoroController extends _$PomodoroController
     if (!_initialRestoreCompleted) {
       return;
     }
-    if (state.status != PomodoroStatus.idle ||
-        state.phase != PomodoroPhase.focus) {
+    if (state.phase != PomodoroPhase.focus) {
       return;
     }
 
     final currentBox = _currentTimeBoxForNow();
+    if (state.status == PomodoroStatus.running && state.autoStartFocus) {
+      if (currentBox == null) {
+        unawaited(_stopTrackedTimerOutsideSchedule());
+        return;
+      }
+
+      final scheduleChanged =
+          state.activeTimeBoxId != currentBox.id ||
+          state.currentTimeBoxTitle != _titleForTimeBox(currentBox) ||
+          state.currentTimeBoxTimeRange != currentBox.timeRange ||
+          state.workDuration != currentBox.durationSeconds;
+      if (scheduleChanged) {
+        unawaited(_restartRunningTrackedTimer(box: currentBox));
+      }
+      return;
+    }
+
+    if (state.status != PomodoroStatus.idle) {
+      return;
+    }
+
     if (currentBox != null) {
       // 다른 박스로 넘어가면 이전 박스의 정지(스킵) 선택은 해제한다.
       if (_skippedAutoStartBoxId.isNotEmpty &&
@@ -1452,6 +1481,61 @@ class PomodoroController extends _$PomodoroController
     }
 
     _clearClockSyncedTimeBox();
+  }
+
+  void _syncAfterScheduleMutation({required bool activeBoxChanged}) {
+    if (activeBoxChanged && state.status == PomodoroStatus.running) {
+      unawaited(_restartRunningTrackedTimer());
+      return;
+    }
+    syncFocusWithClock();
+  }
+
+  Future<void> _restartRunningTrackedTimer({TimeBox? box}) async {
+    final currentBox = box ?? _currentTimeBoxForNow();
+    if (currentBox == null ||
+        state.status != PomodoroStatus.running ||
+        state.phase != PomodoroPhase.focus) {
+      return;
+    }
+
+    final clockRemaining = _clockRemainingForTimeBox(currentBox);
+    if (clockRemaining <= 0) {
+      await _stopTrackedTimerOutsideSchedule();
+      return;
+    }
+
+    state = state.copyWith(
+      activeTimeBoxId: currentBox.id,
+      currentTimeBoxTitle: _titleForTimeBox(currentBox),
+      currentTimeBoxTimeRange: currentBox.timeRange,
+      workDuration: currentBox.durationSeconds,
+      remainingTime: _focusSegmentRemaining(clockRemaining),
+      status: PomodoroStatus.running,
+      phase: PomodoroPhase.focus,
+    );
+    repository.updatePomodoro(state);
+
+    await _timerSubscription?.cancel();
+    _timerSubscription = _startNativeTimer(_nativeCopy);
+  }
+
+  Future<void> _stopTrackedTimerOutsideSchedule() async {
+    if (state.status != PomodoroStatus.running || !state.autoStartFocus) {
+      return;
+    }
+    await _timerSubscription?.cancel();
+    _timerSubscription = null;
+    await repository.stopTimer();
+    state = state.copyWith(
+      activeTimeBoxId: '',
+      currentTimeBoxTitle: '',
+      currentTimeBoxTimeRange: '',
+      remainingTime: 0,
+      status: PomodoroStatus.idle,
+      phase: PomodoroPhase.focus,
+    );
+    repository.updatePomodoro(state);
   }
 
   void _applyClockSyncedTimeBox(TimeBox box, int remainingTime) {
@@ -1533,9 +1617,7 @@ class PomodoroController extends _$PomodoroController
     required bool autoOrigin,
   }) {
     final policy = _slotBreakPolicy;
-    if (!policy.enabled ||
-        state.activeTimeBoxId.isEmpty ||
-        boxRemaining <= 0) {
+    if (!policy.enabled || state.activeTimeBoxId.isEmpty || boxRemaining <= 0) {
       return false;
     }
 

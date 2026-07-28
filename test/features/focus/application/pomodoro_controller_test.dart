@@ -793,6 +793,96 @@ void main() {
       expect(repository.startTimerCalls, 1);
     });
 
+    test(
+      'updates a running Focus UI and native timer after schedule edit',
+      () async {
+        final now = DateTime(2026, 7, 21, 9, 15);
+        final repository = _MemoryPomodoroRepository(
+          Pomodoro.initial().copyWith(
+            autoStartFocus: true,
+            timeBoxes: const [
+              TimeBox(
+                id: 'current',
+                title: 'Before edit',
+                timeRange: '09:00-10:00',
+                durationSeconds: 60 * 60,
+              ),
+            ],
+          ),
+        );
+        final container = ProviderContainer(
+          overrides: [
+            pomodoroRepositoryProvider.overrideWithValue(repository),
+            pomodoroClockProvider.overrideWithValue(() => now),
+          ],
+        );
+        addTearDown(container.dispose);
+
+        final controller = container.read(pomodoroControllerProvider.notifier);
+        await _settleControllerRestore();
+        expect(repository.startTimerCalls, 1);
+
+        controller.updateTimeBox('current', title: 'After edit');
+        await _settleControllerRestore();
+
+        final state = container.read(pomodoroControllerProvider);
+        expect(state.currentTimeBoxTitle, 'After edit');
+        expect(state.status, PomodoroStatus.running);
+        expect(repository.startTimerCalls, 2);
+      },
+    );
+
+    test(
+      'switches to and starts the next scheduled box at its boundary',
+      () async {
+        var now = DateTime(2026, 7, 21, 9, 29, 50);
+        final repository = _MemoryPomodoroRepository(
+          Pomodoro.initial().copyWith(
+            autoStartFocus: true,
+            timeBoxes: const [
+              TimeBox(
+                id: 'first',
+                title: 'First',
+                timeRange: '09:00-09:30',
+                durationSeconds: 30 * 60,
+              ),
+              TimeBox(
+                id: 'second',
+                title: 'Second',
+                timeRange: '09:30-10:00',
+                durationSeconds: 30 * 60,
+              ),
+            ],
+          ),
+        );
+        final container = ProviderContainer(
+          overrides: [
+            pomodoroRepositoryProvider.overrideWithValue(repository),
+            pomodoroClockProvider.overrideWithValue(() => now),
+          ],
+        );
+        addTearDown(container.dispose);
+
+        final controller = container.read(pomodoroControllerProvider.notifier);
+        await _settleControllerRestore();
+        expect(
+          container.read(pomodoroControllerProvider).activeTimeBoxId,
+          'first',
+        );
+        expect(repository.startTimerCalls, 1);
+
+        now = DateTime(2026, 7, 21, 9, 30);
+        controller.syncFocusWithClock();
+        await _settleControllerRestore();
+
+        final state = container.read(pomodoroControllerProvider);
+        expect(state.activeTimeBoxId, 'second');
+        expect(state.currentTimeBoxTitle, 'Second');
+        expect(state.status, PomodoroStatus.running);
+        expect(repository.startTimerCalls, 2);
+      },
+    );
+
     test('native restore preserves every synced daily-plan field', () async {
       final repository = _MemoryPomodoroRepository(
         Pomodoro.initial().copyWith(
