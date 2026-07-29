@@ -48,6 +48,11 @@ void main() {
       expect(shortBox.durationSeconds, 15 * 60);
       expect(longBox.timeRange, '11:00-12:00');
       expect(longBox.durationSeconds, 60 * 60);
+      expect(
+        container.read(pomodoroControllerProvider).autoStartFocus,
+        isTrue,
+        reason: 'registering a card should enable schedule Live tracking',
+      );
     });
 
     test('resizes both edges using the selected interval', () async {
