@@ -1,8 +1,22 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+import '../../domain/entities/live_activity_push_registration.dart';
+
 class PomodoroPlatformChannel {
   static const _channel = MethodChannel('com.pomodoro/timer');
+  static final _liveActivityRegistrationController =
+      StreamController<LiveActivityPushRegistration>.broadcast();
+  static final _liveActivityEndedController =
+      StreamController<String>.broadcast();
+
+  static Stream<LiveActivityPushRegistration> get liveActivityRegistrations =>
+      _liveActivityRegistrationController.stream;
+
+  static Stream<String> get endedLiveActivityIds =>
+      _liveActivityEndedController.stream;
 
   // Callback for timer tick updates
   static void setMethodCallHandler(
@@ -21,6 +35,25 @@ class PomodoroPlatformChannel {
         case 'onComplete':
           if (onComplete != null) {
             onComplete();
+          }
+          break;
+        case 'onLiveActivityPushToken':
+          if (call.arguments is Map) {
+            final registration = LiveActivityPushRegistration.fromPlatformMap(
+              call.arguments as Map,
+            );
+            if (registration.isValid) {
+              _liveActivityRegistrationController.add(registration);
+            }
+          }
+          break;
+        case 'onLiveActivityEnded':
+          if (call.arguments is Map) {
+            final activityId =
+                (call.arguments as Map)['activityId']?.toString() ?? '';
+            if (activityId.isNotEmpty) {
+              _liveActivityEndedController.add(activityId);
+            }
           }
           break;
       }
@@ -86,6 +119,14 @@ class PomodoroPlatformChannel {
     } catch (e) {
       debugPrint('Error stopping timer: $e');
       return false;
+    }
+  }
+
+  static Future<void> syncLiveActivityPushTokens() async {
+    try {
+      await _channel.invokeMethod('syncLiveActivityPushTokens');
+    } catch (e) {
+      debugPrint('Error syncing Live Activity push tokens: $e');
     }
   }
 

@@ -8,6 +8,7 @@ import 'package:time_boxing_pomodoro/features/focus/application/pomodoro_control
 import 'package:time_boxing_pomodoro/features/focus/domain/entities/daily_plan_summary.dart';
 import 'package:time_boxing_pomodoro/features/focus/domain/entities/daily_plan_item_category.dart';
 import 'package:time_boxing_pomodoro/features/focus/domain/entities/native_timer_copy.dart';
+import 'package:time_boxing_pomodoro/features/focus/domain/entities/live_activity_push_registration.dart';
 import 'package:time_boxing_pomodoro/features/focus/domain/entities/pomodoro.dart';
 import 'package:time_boxing_pomodoro/features/focus/domain/repositories/pomodoro_repository.dart';
 
@@ -1050,6 +1051,24 @@ class _MemoryPomodoroRepository implements PomodoroRepository {
     required bool notificationsEnabled,
     required bool soundEnabled,
   }) async {}
+
+  @override
+  Stream<LiveActivityPushRegistration> liveActivityRegistrations() =>
+      const Stream<LiveActivityPushRegistration>.empty();
+
+  @override
+  Stream<String> endedLiveActivityIds() => const Stream<String>.empty();
+
+  @override
+  Future<void> registerLiveActivityPushToken(
+    LiveActivityPushRegistration registration,
+  ) async {}
+
+  @override
+  Future<void> removeLiveActivityPushToken(String activityId) async {}
+
+  @override
+  Future<void> syncLiveActivityPushTokens() async {}
 
   @override
   Future<void> clearLocalPlanData() async {
