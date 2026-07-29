@@ -141,14 +141,20 @@ The release guard checks:
 
 See `docs/release/SHOREBIRD_POLICY.md`.
 
-Shorebird CI is not used. GitHub Actions provides the pull-request quality
-gate. The Shorebird section below refers only to the optional Code Push release
-mechanism.
+GitHub Actions provides the pull-request quality gate. Codemagic provides the
+manual `iOS TestFlight` Shorebird release and `iOS Shorebird Patch` workflows;
+there is no branch-triggered automatic OTA publication.
 
 The first patchable binary is built with `shorebird release ios` and still goes
 through the normal TestFlight/App Store review flow. After it is installed, use
 Shorebird only for small Dart-only hotfixes that do not alter native code or the
 app's reviewed purpose, monetization, permissions, or privacy behavior.
+
+The first end-to-end patch was published for `1.0.0+9`. It included only Dart
+UI/state changes: full-card dragging while resize mode is active, visible trash
+feedback, compact 15-minute card layout, and automatic schedule tracking for a
+new card. Native timer, ActivityKit, entitlements, and permissions were not
+changed.
 
 ## Android Release Signing
 

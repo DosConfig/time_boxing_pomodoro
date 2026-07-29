@@ -61,8 +61,8 @@ on production accounts and physical devices.
 - Morning planning and end-of-day review notification scheduling. Timebox
   start/progress and completion notifications are already implemented for the
   actively tracked block.
-- Shorebird initialization and release; patches remain intentionally blocked
-  until a normal reviewed binary exists.
+- Shorebird release `1.0.0+9` and the first Dart-only OTA patch are verified
+  through Codemagic. Native changes still require a new store binary.
 - Firebase Analytics and Crashlytics.
 
 ## Toolchain Watch Items

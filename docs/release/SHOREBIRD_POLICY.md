@@ -3,8 +3,8 @@
 Status: initialized. New store binaries are created with the Shorebird release
 workflow; patches remain restricted by the policy below.
 
-This policy is for Shorebird Code Push only. Shorebird CI is not used; pull
-request checks run in GitHub Actions.
+This policy is for Shorebird Code Push only. Pull-request checks run in GitHub
+Actions, while release and patch publication run manually in Codemagic.
 
 The first patchable binary must be created with `shorebird release ios` and
 uploaded through the normal TestFlight/App Store review flow. A binary built
@@ -52,6 +52,17 @@ For a Dart-only hotfix, manually run the Codemagic `iOS Shorebird Patch`
 workflow and enter the installed release version, such as `1.0.0+4`, in its
 `release_version` input.
 
+The first verified production path is:
+
+- baseline: `1.0.0+9`, created by Codemagic `iOS TestFlight`
+- first patch: Today card interaction and automatic tracking fixes
+- patch build: `6a69b95610ae38231fc7fdd0`
+
+The patch workflow installs `flutterfire_cli` because the Runner archive has a
+FlutterFire service-file build phase. `shorebird patch ios` does not accept the
+release-only `--flutter-version` flag; the patch resolves the Flutter version
+from the matching Shorebird release metadata.
+
 ## Patch Checklist
 
 - Write a one-line reason for the patch.
@@ -59,6 +70,7 @@ workflow and enter the installed release version, such as `1.0.0+4`, in its
 - Confirm no App Store metadata, privacy, paid feature, or permission behavior
   changed.
 - Smoke test sign-in, Today, Focus, Live Activity, Settings, and Calendar.
+- Confirm the patch build is based on the intended `main` commit.
 - Keep the patch rollout small at first, then expand after verifying crash-free
   behavior.
 

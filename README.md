@@ -268,6 +268,11 @@ Release automation:
   binary release; native, ActivityKit, entitlement, and permission changes
   always use the TestFlight/App Store binary workflow
 
+The first verified OTA path used TestFlight/Shorebird release `1.0.0+9` and a
+Dart-only Today UI patch. The patch improved full-card dragging, trash-target
+visibility, compact 15-minute cards, and automatic tracking for newly created
+cards without changing native code.
+
 1. Open `ios/Runner.xcworkspace` in Xcode.
 2. Set a valid Apple Developer Team for `Runner` and `PomodoroWidgetExtensionExtension`.
 3. Confirm the bundle IDs are available in your Apple Developer account:
