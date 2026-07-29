@@ -134,5 +134,4 @@ workflows:
         script: |
           shorebird patch ios \
             --release-version="${{ inputs.release_version }}" \
-            --flutter-version="$FLUTTER_VERSION" \
             --export-options-plist="${HOME:?}/export_options.plist"
