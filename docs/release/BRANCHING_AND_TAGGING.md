@@ -114,7 +114,8 @@ platform-channel changes always use this normal binary release path.
 
 ## Shorebird Boundary
 
-Shorebird CI is not used. GitHub Actions remains the pull-request quality gate.
+GitHub Actions remains the pull-request quality gate. Codemagic runs the manual
+Shorebird release and patch workflows; no branch automatically publishes OTA.
 
 Shorebird Code Push is initialized. Store binaries still use the normal tagged
 and reviewed release flow, with Codemagic calling `shorebird release ios` so the

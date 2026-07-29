@@ -52,6 +52,11 @@ The new day starts with empty priorities, brain dump, and reminders. Only time
 boxes whose recurrence includes the new weekday are carried forward. Manual
 carry-over remains available for the other daily lists.
 
+An empty Today screen therefore does not imply that the app container was
+cleared. Diagnose it by checking the current Firebase UID and today's dated
+record separately from previous-day history. A TestFlight update or Shorebird
+patch must not delete `SharedPreferences` or Firestore day documents.
+
 ## Regression Coverage
 
 - Delayed startup restoration cannot persist an empty plan.

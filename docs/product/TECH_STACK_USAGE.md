@@ -22,8 +22,8 @@ Status: practical usage only. This document avoids resume-padding claims.
 - CircleCI: Linux pull-request quality workflow.
 - Codemagic: signed iOS/TestFlight workflow skeleton.
 - Fastlane: local/CI iOS verification, build, metadata, and TestFlight lanes.
-- Shorebird: documented and guarded patch workflow, not initialized in the
-  first submitted binary.
+- Shorebird: guarded Dart-only patch workflow verified against release
+  `1.0.0+9`; native changes remain on the normal store-binary path.
 
 ## Intentionally Not Forced
 
