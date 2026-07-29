@@ -109,6 +109,7 @@ workflows:
         script: |
           flutter pub get
           dart run melos run codegen
+          dart pub global activate flutterfire_cli
       - name: Install Shorebird
         script: |
           curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/shorebirdtech/install/main/install.sh | bash
