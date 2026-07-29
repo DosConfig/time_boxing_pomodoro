@@ -45,7 +45,9 @@ void main() {
                     now: DateTime(2026, 7, 23, 7, 7),
                     awakeStartMinutes: 7 * 60,
                     awakeEndMinutes: 9 * 60,
-                    slotMinutes: 15,
+                    // A 15-minute card on a coarser grid is the smallest card
+                    // the board can render and exercises the compact layout.
+                    slotMinutes: 30,
                     onDragStarted: () {},
                     onDragUpdate: (_) {},
                     onDragEnd: () {},
@@ -73,6 +75,73 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('card body stays draggable while resize mode is active', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    var dragStarted = false;
+    final pomodoro = Pomodoro.initial().copyWith(
+      timeBoxes: const [
+        TimeBox(
+          id: 'deep-work',
+          title: 'Deep work',
+          timeRange: '07:00-09:00',
+          durationSeconds: 120 * 60,
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          pomodoroControllerProvider.overrideWith(
+            () => _TestPomodoroController(pomodoro),
+          ),
+        ],
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            backgroundColor: const Color(0xFF080808),
+            body: SingleChildScrollView(
+              child: Consumer(
+                builder: (context, ref, child) => TimeBoxBoard(
+                  pomodoro: ref.watch(pomodoroControllerProvider),
+                  notifier: ref.read(pomodoroControllerProvider.notifier),
+                  now: DateTime(2026, 7, 23, 7, 30),
+                  awakeStartMinutes: 7 * 60,
+                  awakeEndMinutes: 10 * 60,
+                  slotMinutes: 30,
+                  onDragStarted: () => dragStarted = true,
+                  onDragUpdate: (_) {},
+                  onDragEnd: () {},
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Deep work'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.unfold_more_rounded));
+    await tester.pumpAndSettle();
+
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.text('Deep work')),
+    );
+    await tester.pump(const Duration(milliseconds: 260));
+    await gesture.moveBy(const Offset(0, 30));
+    await tester.pump();
+
+    expect(dragStarted, isTrue);
+    await gesture.up();
+    await tester.pumpAndSettle();
   });
 
   test('wraps early-morning minutes into a past-midnight window', () {
