@@ -334,7 +334,7 @@ class _TimeBoxTrashTarget extends StatelessWidget {
                   return AnimatedContainer(
                     duration: const Duration(milliseconds: 140),
                     curve: Curves.easeOutCubic,
-                    width: targeted ? 62 : 54,
+                    width: targeted ? 164 : 148,
                     height: targeted ? 62 : 54,
                     decoration: BoxDecoration(
                       color: targeted
@@ -345,7 +345,7 @@ class _TimeBoxTrashTarget extends StatelessWidget {
                             ? const Color(0xFFF6F3EC)
                             : Colors.white.withValues(alpha: 0.18),
                       ),
-                      shape: BoxShape.circle,
+                      borderRadius: BorderRadius.circular(999),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withValues(alpha: 0.34),
@@ -354,14 +354,32 @@ class _TimeBoxTrashTarget extends StatelessWidget {
                         ),
                       ],
                     ),
-                    child: Icon(
-                      enabled
-                          ? Icons.delete_outline_rounded
-                          : Icons.lock_outline_rounded,
-                      color: targeted
-                          ? const Color(0xFF080808)
-                          : const Color(0xFFF6F3EC),
-                      size: 24,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          enabled
+                              ? Icons.delete_outline_rounded
+                              : Icons.lock_outline_rounded,
+                          color: targeted
+                              ? const Color(0xFF080808)
+                              : const Color(0xFFF6F3EC),
+                          size: 23,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          targeted
+                              ? context.l10n.deleteAction
+                              : '${context.l10n.dragTimeBoxTooltip} · ${context.l10n.deleteAction}',
+                          style: TextStyle(
+                            color: targeted
+                                ? const Color(0xFF080808)
+                                : const Color(0xFFF6F3EC),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ],
                     ),
                   );
                 },
@@ -762,7 +780,6 @@ class _ScheduleDragFeedback extends StatelessWidget {
   }
 }
 
-
 class _TodaySummaryPanel extends StatelessWidget {
   final Pomodoro pomodoro;
   final List<String> priorities;
@@ -1016,37 +1033,37 @@ class _HistoryCell extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
           ),
           child: Column(
-        children: [
-          Expanded(
-            child: Align(
-              alignment: Alignment.bottomCenter,
-              child: FractionallySizedBox(
-                heightFactor: fill.clamp(0.05, 1).toDouble(),
-                widthFactor: 1,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 220),
-                  curve: Curves.easeOutCubic,
-                  decoration: BoxDecoration(
-                    color: const Color(
-                      0xFFF6F3EC,
-                    ).withValues(alpha: fill <= 0 ? 0.08 : 0.78),
-                    borderRadius: BorderRadius.circular(4),
+            children: [
+              Expanded(
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: FractionallySizedBox(
+                    heightFactor: fill.clamp(0.05, 1).toDouble(),
+                    widthFactor: 1,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 220),
+                      curve: Curves.easeOutCubic,
+                      decoration: BoxDecoration(
+                        color: const Color(
+                          0xFFF6F3EC,
+                        ).withValues(alpha: fill <= 0 ? 0.08 : 0.78),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              color: selected
-                  ? const Color(0xFFF6F3EC)
-                  : Colors.white.withValues(alpha: 0.42),
-              fontSize: 9,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  color: selected
+                      ? const Color(0xFFF6F3EC)
+                      : Colors.white.withValues(alpha: 0.42),
+                  fontSize: 9,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
             ],
           ),
         ),
