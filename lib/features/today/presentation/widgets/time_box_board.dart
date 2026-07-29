@@ -673,7 +673,10 @@ class _TimeBoxBoardCard extends ConsumerWidget {
       children: [
         Positioned.fill(
           child: _DraggableTimeBoxCard(
-            enabled: !resizeModeActive,
+            // The resize handles own only the top and bottom strips. Keep the
+            // card body draggable so a tall card never gets stuck in resize
+            // mode with an inert middle area.
+            enabled: true,
             payload: dragPayload,
             title: title,
             selected: selected,
@@ -692,6 +695,7 @@ class _TimeBoxBoardCard extends ConsumerWidget {
             right: 6,
             child: _TimeBoxCardActionOverlay(
               selected: selected,
+              compact: cardHeight < 44,
               onEdit: () => _handleEdit(ref),
               onResize: () => _activateResizeMode(ref),
             ),
@@ -825,6 +829,7 @@ class _DraggableTimeBoxCard extends StatelessWidget {
         final feedbackWidth = constraints.hasBoundedWidth
             ? constraints.maxWidth
             : MediaQuery.sizeOf(context).width - 112;
+        final compactFeedbackHeight = feedbackHeight.clamp(36.0, 88.0);
 
         return Listener(
           onPointerDown: (event) {
@@ -837,16 +842,22 @@ class _DraggableTimeBoxCard extends StatelessWidget {
             dragAnchorStrategy: childDragAnchorStrategy,
             feedback: Material(
               color: Colors.transparent,
-              child: Transform.rotate(
-                angle: -0.025,
-                child: SizedBox(
-                  width: feedbackWidth,
-                  height: feedbackHeight,
-                  child: _TimeBoxBoardCardSurface(
-                    title: title,
-                    selected: selected,
-                    current: current,
-                    feedback: true,
+              child: Transform.translate(
+                // Keep the compact preview above the finger. The drop target
+                // still follows the pointer, while the trash target remains
+                // visible instead of being hidden behind a tall card preview.
+                offset: Offset(0, -(compactFeedbackHeight + 20)),
+                child: Transform.rotate(
+                  angle: -0.025,
+                  child: SizedBox(
+                    width: feedbackWidth,
+                    height: compactFeedbackHeight,
+                    child: _TimeBoxBoardCardSurface(
+                      title: title,
+                      selected: selected,
+                      current: current,
+                      feedback: true,
+                    ),
                   ),
                 ),
               ),
@@ -918,14 +929,19 @@ class _TimeBoxBoardCardSurface extends StatelessWidget {
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
+          final veryCompact = constraints.maxHeight < 44;
           final compact = constraints.maxHeight < 70;
           final bottomInset = !reserveResizeHandle
-              ? 8.0
+              ? (veryCompact ? 3.0 : 8.0)
               : compact
               ? 10.0
               : 16.0;
           final topInset = !reserveResizeHandle
-              ? (compact ? 7.0 : 10.0)
+              ? (veryCompact
+                    ? 3.0
+                    : compact
+                    ? 7.0
+                    : 10.0)
               : compact
               ? 10.0
               : 16.0;
@@ -946,6 +962,7 @@ class _TimeBoxBoardCardSurface extends StatelessWidget {
                     selected: selected,
                     current: current,
                     compact: compact,
+                    veryCompact: veryCompact,
                   ),
                 ),
               ),
@@ -962,12 +979,14 @@ class _TimeBoxBoardCardText extends StatelessWidget {
   final bool selected;
   final bool current;
   final bool compact;
+  final bool veryCompact;
 
   const _TimeBoxBoardCardText({
     required this.title,
     required this.selected,
     required this.current,
     required this.compact,
+    required this.veryCompact,
   });
 
   @override
@@ -993,9 +1012,17 @@ class _TimeBoxBoardCardText extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
             color: selected ? const Color(0xFF080808) : const Color(0xFFF6F3EC),
-            fontSize: compact ? 14 : 15,
+            fontSize: veryCompact
+                ? 9
+                : compact
+                ? 14
+                : 15,
             fontWeight: FontWeight.w900,
-            height: compact ? 1.0 : 1.08,
+            height: veryCompact
+                ? 1.0
+                : compact
+                ? 1.0
+                : 1.08,
           ),
         ),
       ],
@@ -1059,11 +1086,13 @@ class _TimeBoxResizeHandle extends StatelessWidget {
 
 class _TimeBoxCardActionOverlay extends StatelessWidget {
   final bool selected;
+  final bool compact;
   final VoidCallback onEdit;
   final VoidCallback onResize;
 
   const _TimeBoxCardActionOverlay({
     required this.selected,
+    required this.compact,
     required this.onEdit,
     required this.onResize,
   });
@@ -1090,17 +1119,19 @@ class _TimeBoxCardActionOverlay extends StatelessWidget {
             icon: Icons.edit_rounded,
             label: context.l10n.editAction,
             foreground: foreground,
+            compact: compact,
             onPressed: onEdit,
           ),
           Container(
             width: 1,
-            height: 18,
+            height: compact ? 12 : 18,
             color: foreground.withValues(alpha: 0.12),
           ),
           _TimeBoxCardActionButton(
             icon: Icons.unfold_more_rounded,
             label: context.l10n.resizeTimeBoxTooltip,
             foreground: foreground,
+            compact: compact,
             onPressed: onResize,
           ),
         ],
@@ -1113,12 +1144,14 @@ class _TimeBoxCardActionButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final Color foreground;
+  final bool compact;
   final VoidCallback onPressed;
 
   const _TimeBoxCardActionButton({
     required this.icon,
     required this.label,
     required this.foreground,
+    required this.compact,
     required this.onPressed,
   });
 
@@ -1128,11 +1161,14 @@ class _TimeBoxCardActionButton extends StatelessWidget {
       message: label,
       child: IconButton(
         onPressed: onPressed,
-        icon: Icon(icon, size: 17),
+        icon: Icon(icon, size: compact ? 14 : 17),
         color: foreground,
         visualDensity: VisualDensity.compact,
         padding: EdgeInsets.zero,
-        constraints: const BoxConstraints.tightFor(width: 34, height: 34),
+        constraints: BoxConstraints.tightFor(
+          width: compact ? 24 : 34,
+          height: compact ? 24 : 34,
+        ),
       ),
     );
   }

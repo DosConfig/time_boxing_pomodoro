@@ -991,8 +991,14 @@ class PomodoroController extends _$PomodoroController
       remainingTime: shouldActivate
           ? _remainingForTimeBox(nextBox)
           : state.remainingTime,
+      // Registering a card opts the schedule into Live tracking. The user can
+      // still turn it off afterwards, but adding every new card no longer
+      // requires a second trip to Focus just to activate its Live Activity.
+      autoStartFocus: true,
     );
     repository.updatePomodoro(state);
+    _skippedAutoStartBoxId = '';
+    syncFocusWithClock();
     return nextBox;
   }
 
