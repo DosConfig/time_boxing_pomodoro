@@ -109,6 +109,8 @@ class PomodoroController extends _$PomodoroController
       ref.read(loadPlanForDateUseCaseProvider);
 
   StreamSubscription? _timerSubscription;
+  StreamSubscription? _liveActivityRegistrationSubscription;
+  StreamSubscription? _liveActivityEndedSubscription;
   Timer? _clockSyncTimer;
   Future<void>? _localRestoreFuture;
   bool _hasRestoredLocalPlan = false;
@@ -135,12 +137,25 @@ class PomodoroController extends _$PomodoroController
   Pomodoro build() {
     _activeDateKey = _dateKey(_now());
     WidgetsBinding.instance.addObserver(this);
+    _liveActivityRegistrationSubscription = repository
+        .liveActivityRegistrations()
+        .listen((registration) {
+          unawaited(repository.registerLiveActivityPushToken(registration));
+        });
+    _liveActivityEndedSubscription = repository.endedLiveActivityIds().listen((
+      activityId,
+    ) {
+      unawaited(repository.removeLiveActivityPushToken(activityId));
+    });
     ref.onDispose(() {
       WidgetsBinding.instance.removeObserver(this);
       _timerSubscription?.cancel();
+      _liveActivityRegistrationSubscription?.cancel();
+      _liveActivityEndedSubscription?.cancel();
       _clockSyncTimer?.cancel();
     });
     Future.microtask(() async {
+      await repository.syncLiveActivityPushTokens();
       await _restoreFromLocalPlan();
       await _restoreFromNative();
       _completeInitialRestore();
@@ -266,6 +281,7 @@ class PomodoroController extends _$PomodoroController
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+      unawaited(repository.syncLiveActivityPushTokens());
       Future.microtask(() async {
         await _restoreFromNative();
         syncDayBoundaryAndFocus();

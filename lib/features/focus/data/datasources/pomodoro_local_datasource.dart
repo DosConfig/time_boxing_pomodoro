@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/entities/daily_plan_summary.dart';
 import '../../domain/entities/pomodoro.dart';
 import '../../domain/entities/native_timer_copy.dart';
+import '../../domain/entities/live_activity_push_registration.dart';
 import '../dtos/native_timer_copy_dto.dart';
 import '../dtos/native_timer_state_dto.dart';
 import '../dtos/today_plan_dto.dart';
@@ -49,6 +50,15 @@ class PomodoroLocalDataSource {
 
   /// 네이티브 tick 스트림 (startTimer 없이 구독만 — 상태 복원 시 사용)
   Stream<int> ticks() => _tickController.stream;
+
+  Stream<LiveActivityPushRegistration> liveActivityRegistrations() =>
+      PomodoroPlatformChannel.liveActivityRegistrations;
+
+  Stream<String> endedLiveActivityIds() =>
+      PomodoroPlatformChannel.endedLiveActivityIds;
+
+  Future<void> syncLiveActivityPushTokens() =>
+      PomodoroPlatformChannel.syncLiveActivityPushTokens();
 
   Future<Pomodoro> restoreTodayPlan(Pomodoro fallback) async {
     final dto = await loadTodayPlanDto();
@@ -177,8 +187,7 @@ class PomodoroLocalDataSource {
     await preferences.setString(_recurringAppliedKey(_scopeKey), dateKey);
   }
 
-  String _recurringAppliedKey(String scope) =>
-      'today.recurring.applied.$scope';
+  String _recurringAppliedKey(String scope) => 'today.recurring.applied.$scope';
 
   /// 특정 날짜 키(yyyy-MM-dd)의 저장된 플랜 원문을 반환한다.
   /// doc: docs/architecture/DATA_LIFECYCLE.md

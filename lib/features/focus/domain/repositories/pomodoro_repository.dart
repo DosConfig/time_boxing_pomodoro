@@ -1,6 +1,7 @@
 import '../entities/pomodoro.dart';
 import '../entities/native_timer_copy.dart';
 import '../entities/daily_plan_summary.dart';
+import '../entities/live_activity_push_registration.dart';
 
 abstract class PomodoroRepository {
   Pomodoro getPomodoro();
@@ -29,4 +30,11 @@ abstract class PomodoroRepository {
     required bool notificationsEnabled,
     required bool soundEnabled,
   });
+  Stream<LiveActivityPushRegistration> liveActivityRegistrations();
+  Stream<String> endedLiveActivityIds();
+  Future<void> registerLiveActivityPushToken(
+    LiveActivityPushRegistration registration,
+  );
+  Future<void> removeLiveActivityPushToken(String activityId);
+  Future<void> syncLiveActivityPushTokens();
 }

@@ -81,6 +81,8 @@ struct NativeTimerCopy {
 
 class PomodoroTimerManager: NSObject {
     private var channel: FlutterMethodChannel
+    private var pushTokenObservationTask: Task<Void, Never>?
+    private var activityStateObservationTask: Task<Void, Never>?
     private var timer: Timer?
     private var backgroundTask: UIBackgroundTaskIdentifier = .invalid
 
@@ -542,6 +544,18 @@ class PomodoroTimerManager: NSObject {
     // MARK: - Live Activity
 
     @available(iOS 16.1, *)
+    func syncLiveActivityPushTokens() {
+        guard let activity = Activity<PomodoroActivityAttributes>.activities.first else {
+            return
+        }
+        currentActivity = activity
+        observeRemoteUpdates(for: activity)
+        if let tokenData = activity.pushToken {
+            publishPushToken(tokenData, for: activity)
+        }
+    }
+
+    @available(iOS 16.1, *)
     private func startLiveActivity(duration: Int, sessionCount: Int, endTime activityEndTime: Date? = nil) async {
         let endTime = activityEndTime ?? Date().addingTimeInterval(TimeInterval(duration))
         let contentState = PomodoroActivityAttributes.ContentState(
@@ -573,7 +587,14 @@ class PomodoroTimerManager: NSObject {
         // 프로세스가 재시작돼 currentActivity가 비어 있어도 OS 목록에서 재연결한다.
         let existing = Activity<PomodoroActivityAttributes>.activities
         if let activity = existing.first {
+            // pushType: .token으로 생성해도 OS가 token을 비동기로 발급하므로
+            // 잠깐 pushToken == nil일 수 있다. nil을 legacy 판별 기준으로 삼아
+            // Activity를 종료하면 연속 start/update 요청 때 발급 전에 소멸한다.
             currentActivity = activity
+            observeRemoteUpdates(for: activity)
+            if let tokenData = activity.pushToken {
+                publishPushToken(tokenData, for: activity)
+            }
             await activity.update(using: contentState)
             for extra in existing.dropFirst() {
                 await extra.end(dismissalPolicy: .immediate)
@@ -588,15 +609,88 @@ class PomodoroTimerManager: NSObject {
             let activity = try Activity.request(
                 attributes: attributes,
                 contentState: contentState,
-                pushType: nil
+                pushType: .token
             )
             currentActivity = activity
+            observeRemoteUpdates(for: activity)
             lastActivityStatus = "STARTED — id=\(activity.id.prefix(8))"
             NSLog("[Pomodoro] ✅ Live Activity started — id=%@ duration=%d", activity.id, duration)
         } catch {
             lastActivityStatus = "ERROR — \(error.localizedDescription)"
             NSLog("[Pomodoro] ❌ Live Activity request failed: %@", String(describing: error))
         }
+    }
+
+    @available(iOS 16.1, *)
+    private func observeRemoteUpdates(for activity: Activity<PomodoroActivityAttributes>) {
+        pushTokenObservationTask?.cancel()
+        activityStateObservationTask?.cancel()
+
+        pushTokenObservationTask = Task { [weak self] in
+            for await tokenData in activity.pushTokenUpdates {
+                guard !Task.isCancelled else { return }
+                await MainActor.run {
+                    self?.publishPushToken(tokenData, for: activity)
+                }
+                NSLog("[Pomodoro] Live Activity push token updated — id=%@", activity.id)
+            }
+        }
+
+        activityStateObservationTask = Task { [weak self] in
+            for await state in activity.activityStateUpdates {
+                guard !Task.isCancelled else { return }
+                if state == .ended || state == .dismissed {
+                    await MainActor.run {
+                        self?.channel.invokeMethod(
+                            "onLiveActivityEnded",
+                            arguments: ["activityId": activity.id]
+                        )
+                    }
+                    return
+                }
+            }
+        }
+    }
+
+    @available(iOS 16.1, *)
+    private func publishPushToken(
+        _ tokenData: Data,
+        for activity: Activity<PomodoroActivityAttributes>
+    ) {
+        let token = tokenData.map { String(format: "%02x", $0) }.joined()
+        channel.invokeMethod(
+            "onLiveActivityPushToken",
+            arguments: liveActivityRegistration(activity: activity, token: token)
+        )
+    }
+
+    @available(iOS 16.1, *)
+    private func liveActivityRegistration(
+        activity: Activity<PomodoroActivityAttributes>,
+        token: String
+    ) -> [String: Any] {
+        #if DEBUG
+        let apnsEnvironment = "sandbox"
+        #else
+        let apnsEnvironment = "production"
+        #endif
+
+        return [
+            "activityId": activity.id,
+            "sessionId": activity.attributes.sessionID,
+            "pushToken": token,
+            "apnsEnvironment": apnsEnvironment,
+            "bundleId": Bundle.main.bundleIdentifier ?? "com.seongwoo.focusmark",
+            "timeZone": TimeZone.current.identifier,
+            "sessionCount": sessionCount,
+            "sessionGoal": sessionGoal,
+            "topPriorities": topPriorities,
+            "localizedFocusTitle": localizedCopy.focusTitle,
+            "localizedShortBreakTitle": localizedCopy.shortBreakTitle,
+            "localizedLongBreakTitle": localizedCopy.longBreakTitle,
+            "localizedPausedTitle": localizedCopy.pausedTitle,
+            "localizedTopPriorityLabel": localizedCopy.topPriorityLabel,
+        ]
     }
 
     @available(iOS 16.1, *)
@@ -672,6 +766,8 @@ class PomodoroTimerManager: NSObject {
 
     @available(iOS 16.1, *)
     private func endAllActivities() async {
+        pushTokenObservationTask?.cancel()
+        activityStateObservationTask?.cancel()
         for activity in Activity<PomodoroActivityAttributes>.activities {
             await activity.end(dismissalPolicy: .immediate)
         }
