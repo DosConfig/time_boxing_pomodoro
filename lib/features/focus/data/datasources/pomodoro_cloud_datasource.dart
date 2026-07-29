@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:time_boxing_pomodoro/firebase_options.dart';
 
 import '../../domain/entities/daily_plan_summary.dart';
+import '../../domain/entities/live_activity_push_registration.dart';
 import '../../domain/entities/pomodoro.dart';
 import '../dtos/today_plan_dto.dart';
 
@@ -31,6 +32,88 @@ class PomodoroCloudDataSource {
       return null;
     }
     return FirebaseAuth.instance.currentUser?.uid;
+  }
+
+  Future<void> registerLiveActivityPushToken(
+    LiveActivityPushRegistration registration,
+  ) async {
+    if (!await _ensureConfigured() || !registration.isValid) {
+      return;
+    }
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return;
+    }
+    final userReference = _user(user.uid);
+    final activities = userReference.collection('liveActivities');
+    await FirebaseFirestore.instance.runTransaction((transaction) async {
+      final userSnapshot = await transaction.get(userReference);
+      final previousActivityId =
+          userSnapshot.data()?['activeLiveActivityId']?.toString() ?? '';
+      if (previousActivityId.isNotEmpty &&
+          previousActivityId != registration.activityId) {
+        transaction.set(activities.doc(previousActivityId), {
+          'active': false,
+          'supersededAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      }
+      transaction.set(activities.doc(registration.activityId), {
+        ...registration.toFirestore(),
+        'active': true,
+        'remoteUpdatesEnabled': true,
+        'registeredAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+      transaction.set(userReference, {
+        'activeLiveActivityId': registration.activityId,
+      }, SetOptions(merge: true));
+    });
+  }
+
+  /// Pause 중에는 예약 스케줄 push가 사용자의 로컬 상태를 덮어쓰지 않게 한다.
+  Future<void> setLiveActivityRemoteUpdatesEnabled(bool enabled) async {
+    if (!await _ensureConfigured()) {
+      return;
+    }
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return;
+    }
+    final userReference = _user(user.uid);
+    final userSnapshot = await userReference.get();
+    final activityId =
+        userSnapshot.data()?['activeLiveActivityId']?.toString() ?? '';
+    if (activityId.isEmpty) {
+      return;
+    }
+    await userReference.collection('liveActivities').doc(activityId).set({
+      'remoteUpdatesEnabled': enabled,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  Future<void> removeLiveActivityPushToken(String activityId) async {
+    if (!await _ensureConfigured() || activityId.isEmpty) {
+      return;
+    }
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return;
+    }
+    final userReference = _user(user.uid);
+    await FirebaseFirestore.instance.runTransaction((transaction) async {
+      final userSnapshot = await transaction.get(userReference);
+      transaction.set(
+        userReference.collection('liveActivities').doc(activityId),
+        {'active': false, 'endedAt': FieldValue.serverTimestamp()},
+        SetOptions(merge: true),
+      );
+      if (userSnapshot.data()?['activeLiveActivityId'] == activityId) {
+        transaction.update(userReference, {
+          'activeLiveActivityId': FieldValue.delete(),
+        });
+      }
+    });
   }
 
   Future<void> saveTodayPlan(

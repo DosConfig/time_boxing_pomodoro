@@ -94,6 +94,12 @@ import UserNotifications
       case "getActivityStatus":
         result(self.pomodoroTimer?.lastActivityStatus ?? "no-manager")
 
+      case "syncLiveActivityPushTokens":
+        if #available(iOS 16.1, *) {
+          self.pomodoroTimer?.syncLiveActivityPushTokens()
+        }
+        result(true)
+
       case "restoreState":
         result(self.pomodoroTimer?.restoreState() ?? ["status": "idle"])
 

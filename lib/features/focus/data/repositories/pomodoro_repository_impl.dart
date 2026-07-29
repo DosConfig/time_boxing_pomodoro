@@ -1,6 +1,7 @@
 import '../../domain/entities/pomodoro.dart';
 import '../../domain/entities/native_timer_copy.dart';
 import '../../domain/entities/daily_plan_summary.dart';
+import '../../domain/entities/live_activity_push_registration.dart';
 import '../../domain/repositories/pomodoro_repository.dart';
 import '../datasources/pomodoro_cloud_datasource.dart';
 import '../datasources/pomodoro_local_datasource.dart';
@@ -255,10 +256,16 @@ class PomodoroRepositoryImpl implements PomodoroRepository {
   );
 
   @override
-  Future<void> pauseTimer() => localDataSource.pauseTimer();
+  Future<void> pauseTimer() async {
+    await localDataSource.pauseTimer();
+    await cloudDataSource.setLiveActivityRemoteUpdatesEnabled(false);
+  }
 
   @override
-  Future<void> resumeTimer() => localDataSource.resumeTimer();
+  Future<void> resumeTimer() async {
+    await localDataSource.resumeTimer();
+    await cloudDataSource.setLiveActivityRemoteUpdatesEnabled(true);
+  }
 
   @override
   Future<void> stopTimer() => localDataSource.stopTimer();
@@ -280,6 +287,27 @@ class PomodoroRepositoryImpl implements PomodoroRepository {
     notificationsEnabled: notificationsEnabled,
     soundEnabled: soundEnabled,
   );
+
+  @override
+  Stream<LiveActivityPushRegistration> liveActivityRegistrations() =>
+      localDataSource.liveActivityRegistrations();
+
+  @override
+  Stream<String> endedLiveActivityIds() =>
+      localDataSource.endedLiveActivityIds();
+
+  @override
+  Future<void> registerLiveActivityPushToken(
+    LiveActivityPushRegistration registration,
+  ) => cloudDataSource.registerLiveActivityPushToken(registration);
+
+  @override
+  Future<void> removeLiveActivityPushToken(String activityId) =>
+      cloudDataSource.removeLiveActivityPushToken(activityId);
+
+  @override
+  Future<void> syncLiveActivityPushTokens() =>
+      localDataSource.syncLiveActivityPushTokens();
 
   bool _hasDailyContent(Pomodoro pomodoro) {
     return pomodoro.brainDump.isNotEmpty ||
