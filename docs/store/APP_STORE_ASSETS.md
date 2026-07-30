@@ -1,7 +1,7 @@
 # App Store Connect 입력 자산 (v1.0)
 
-> 상태 반영: Google/Apple 로그인 + 캘린더 연동 포함, Crashlytics 미포함(결정 대기).
-> Crashlytics를 넣기로 하면 개인정보 처리방침의 [진단 데이터] 절과 라벨의 진단 항목을 활성화할 것.
+> 상태 반영: Google/Apple 로그인 + 캘린더 연동 + Firebase
+> Crashlytics/Analytics 포함. 계정 ID와 사용자 입력 계획은 진단 로그에서 제외.
 
 ## 앱 이름 / 부제
 
@@ -23,7 +23,9 @@ Timebox Mark는 오늘의 계획을 실행 가능한 타이머로 바꾸는 타�
 - Firebase 기반 오늘 계획 동기화로 로그인 후 계획과 진행 상태 복원
 - 선택한 타임박스를 Apple 캘린더 또는 Google 캘린더에 이벤트로 내보내기
 
-수집하는 데이터가 거의 없는 가벼운 앱입니다. 캘린더 연동은 선택 사항이며, 연동 시에도 일정 데이터는 사용자의 캘린더에만 기록됩니다.
+광고 추적 없이 기능과 안정성에 필요한 데이터만 사용하는 앱입니다. 캘린더
+연동은 선택 사항이며, 연동 시에도 일정 데이터는 사용자의 캘린더에만
+기록됩니다.
 
 ## Description (English)
 
@@ -63,7 +65,11 @@ Live Activity is the core feature. To verify: sign in, add a timebox for the cur
   - 사용자 콘텐츠 > 기타 사용자 콘텐츠: 브레인 덤프, 리마인더, 우선순위, 타임박스 계획을 Firebase 동기화에 사용, 사용자와 연결됨, 추적 아님
   - 사용자 콘텐츠 > 캘린더 일정: 캘린더 내보내기 사용 시, 앱 기능에 사용, 사용자와 연결됨, 추적 아님
 - 미수집: 위치, 검색 기록, 브라우징, 광고 식별자 등 전부 아니오
-- (Crashlytics 포함 시) 진단 > 충돌 데이터: 앱 기능에 사용, 사용자와 연결되지 않음
+- 진단 > 충돌 데이터: 앱 기능/분석에 사용, 사용자와 연결되지 않음, 추적 아님
+- 사용 데이터 > 제품 상호작용: 제한된 lifecycle/screen/timer event를
+  장애 재현 및 release 안정성 분석에 사용, 사용자와 연결되지 않음, 추적 아님
+- 식별자 > 기기 ID: Firebase installation/session 식별자를 안정성 지표에
+  사용, 계정과 연결하지 않음, 추적 아님
 
 ## 개인정보 처리방침 페이지
 
@@ -90,15 +96,20 @@ Timebox Mark의 Google API 사용은 Google API 서비스 사용자 데이터 �
 3. 수집하지 않는 정보
 위치, 연락처, 사진, 광고 식별자를 수집하지 않으며, 사용자를 추적하지 않습니다.
 
-4. (Crashlytics 포함 시에만) 진단 데이터
-앱 안정성 개선을 위해 익명화된 충돌 로그를 수집합니다. 이 데이터는 특정 사용자와 연결되지 않습니다.
+4. 진단 및 분석 데이터
+앱 안정성 개선을 위해 Firebase Crashlytics와 Analytics를 사용합니다. Stack
+trace, 앱/OS/기기 버전, 앱 lifecycle 및 timer 상태, Firebase가 생성한
+installation/session 식별자와 오류 직전의 제한된 동작 event가 수집될 수
+있습니다. 이메일, 계정 ID, 타임박스 제목, Brain Dump/Reminder 텍스트,
+인증 token과 Live Activity push token은 진단 로그에 넣지 않습니다. 광고나
+cross-app tracking에는 사용하지 않습니다.
 
 5. 문의
 seongwoo@10xkeleton.com
 
 Privacy Policy (English summary)
 
-Timebox Mark stores timer and planning data on your device and may sync daily plans through Firebase after sign-in. Sign in with Apple or Google is used for authentication, plan sync, and calendar provider connection. Calendar export creates only the events you choose to export. Use of Google user data complies with the Google API Services User Data Policy, including the Limited Use requirements. We do not collect location, contacts, photos, or advertising identifiers, and we do not track you. Contact: seongwoo@10xkeleton.com
+Timebox Mark stores timer and planning data on your device and may sync daily plans through Firebase after sign-in. Sign in with Apple or Google is used for authentication, plan sync, and calendar provider connection. Calendar export creates only the events you choose to export. Firebase Crashlytics and Analytics collect crash, device/app version, installation/session, and limited interaction data for stability; account IDs and user-entered plan text are excluded from diagnostics. Use of Google user data complies with the Google API Services User Data Policy, including the Limited Use requirements. We do not collect location, contacts, photos, or advertising identifiers, and we do not track you. Contact: seongwoo@10xkeleton.com
 
 ## 스크린샷 플랜 (6.7인치 필수, 6.5인치 겸용)
 

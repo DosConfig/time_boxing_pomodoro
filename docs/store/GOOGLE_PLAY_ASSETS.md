@@ -122,7 +122,7 @@ Do not commit or paste the review password into this file, source code, CI confi
 - Target audience: Adults, 18 and over
 - Content rating: No violence, sexual content, language, controlled substances, gambling, or user-to-user communication
 - User-generated content: Private planning data only; it is not public and cannot be shared with other users
-- Remote push notifications: Not used in v1.0
+- Remote push notifications: iOS Live Activity updates only; not used for marketing
 - Foreground service: User-started timebox countdown shown as an ongoing notification
 
 ## Data safety answers
@@ -136,7 +136,13 @@ Do not commit or paste the review password into this file, source code, CI confi
 - User IDs: Collected, linked to the user, required for authentication and cloud sync
 - Other user-generated content: Daily priorities, brain dump items, reminders, timebox titles, schedules, and completion state; linked to the user and used for app functionality
 - Calendar event data: Processed only when the user requests Google Calendar export; used for app functionality and not sold or used for advertising
-- Diagnostics: Not collected in v1.0 because Crashlytics is not enabled
+- Crash logs and diagnostics: Collected through Crashlytics for app stability,
+  not sold, not used for advertising, and not linked to the Firebase account
+- App interactions: Limited lifecycle, screen, auth-state boolean, and timer
+  action events collected through Analytics for crash breadcrumbs and release
+  stability; user-entered plan text is excluded
+- Device or other IDs: Firebase installation/session identifiers used for
+  stability metrics; not an advertising ID and not linked to the Firebase account
 - Location, contacts, photos, browsing history, advertising ID: Not collected
 
 ## Release notes (Korean)

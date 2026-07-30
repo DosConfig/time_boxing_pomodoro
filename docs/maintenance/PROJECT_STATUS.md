@@ -51,6 +51,19 @@ on production accounts and physical devices.
 - Configure Codemagic signing and encrypted environment variables.
 - Configure an Android upload key and register its SHA certificates with
   Firebase before a Play release.
+- Trigger one disposable test crash on a physical release build, verify iOS
+  symbolication and Android stack traces, and confirm actual alert delivery
+  before rollout. Email channels and `1% + 10 users` Velocity thresholds are
+  already configured for both Firebase apps.
+- Accept the Google Analytics terms and choose the Analytics account location
+  in Firebase Console. SDK integration is complete, but project-level Analytics
+  activation cannot be completed on the user's behalf.
+
+## Recently Implemented
+
+- Firebase Analytics and Crashlytics SDK integration, Flutter/async fatal
+  handlers, targeted timer/Live Activity non-fatals, iOS dSYM upload, Android
+  Gradle plugin, and Firebase email/Velocity Alert settings.
 
 ## Planned, Not Implemented
 
@@ -63,7 +76,6 @@ on production accounts and physical devices.
   actively tracked block.
 - Shorebird release `1.0.0+9` and the first Dart-only OTA patch are verified
   through Codemagic. Native changes still require a new store binary.
-- Firebase Analytics and Crashlytics.
 
 ## Toolchain Watch Items
 

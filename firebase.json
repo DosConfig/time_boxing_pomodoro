@@ -42,6 +42,14 @@
           "appId": "1:135782331609:ios:2a2f70f4bec6f8ba4dbac8",
           "uploadDebugSymbols": false,
           "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        },
+        "targets": {
+          "Runner": {
+            "projectId": "timebox-mark-prod",
+            "appId": "1:135782331609:ios:2a2f70f4bec6f8ba4dbac8",
+            "uploadDebugSymbols": true,
+            "fileOutput": "ios/Runner/GoogleService-Info.plist"
+          }
         }
       },
       "dart": {

@@ -102,13 +102,15 @@ Implemented Firebase modules:
 
 - Firebase Core,
 - Firebase Auth,
-- Cloud Firestore.
+- Cloud Firestore,
+- Firebase Analytics,
+- Firebase Crashlytics.
 
 Pending modules:
 
 - Cloud Functions for trusted entitlement and invite-code operations,
-- Firebase Analytics,
-- Firebase Crashlytics.
+- one-time Google Analytics account location and terms confirmation,
+- first production Crashlytics report and alert-delivery verification.
 
 Optional later:
 

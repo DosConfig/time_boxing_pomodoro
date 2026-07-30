@@ -23,6 +23,7 @@ The product direction is inspired by explicit timeboxing: brain dump, top three 
 - Apple Calendar export through EventKit
 - Google Calendar export through Google Sign-In and a Dio REST client
 - Firebase Auth gate with Apple, Google, and email sign-in and account deletion
+- Crashlytics fatal/non-fatal monitoring with lifecycle and timer breadcrumbs
 - Android foreground timer with OS-rendered countdown notifications
 - Melos workspace scripts for codegen, testing, guardrails, and release checks
 - Mockito repository/data-source tests and a Patrol first-launch smoke test
@@ -79,6 +80,7 @@ The feature set is intentionally small and portfolio-friendly:
 
 - [Product TODO](docs/product/TODO.md)
 - [Current maintenance status](docs/maintenance/PROJECT_STATUS.md)
+- [Crash monitoring and alert policy](docs/maintenance/CRASH_MONITORING.md)
 - [Menu structure](docs/product/MENU_STRUCTURE.md)
 - [Naming direction](docs/product/NAMING.md)
 - [Timeboxing strategy](docs/product/TIMEBOXING_STRATEGY.md)
@@ -166,11 +168,12 @@ ios/
    the currently active time box instead of replaying every missed callback.
 
 The current binary uses absolute timestamps, persistence, local notification,
-and foreground reconciliation as its cross-version foundation. If iOS suspends
-the app, the system-rendered countdown remains correct, but a scheduled time-box
-title change is not guaranteed until the app becomes active again. Exact
-background `ContentState` transitions would require an ActivityKit APNs server;
-that infrastructure is intentionally outside the current product scope.
+and foreground reconciliation as its cross-version foundation. ActivityKit
+push tokens are registered under the signed-in account, and a scheduled Cloud
+Function can send APNs updates to the existing Live Activity while Flutter is
+suspended. If a token or network path is unavailable, the system-rendered
+countdown remains correct from `endTime`, and foreground reconciliation catches
+the metadata up when the app becomes active again.
 
 ## Daily Plan Data Lifecycle
 
@@ -232,6 +235,7 @@ Completed:
 11. Local Today Plan records upload to Firestore after sign-in when no cloud record exists
 12. Daily history merges local summaries with Firestore summaries for the signed-in user
 13. Account deletion returns immediately to the auth gate and clears local plan data after the Firebase account is deleted
+14. Crashlytics and Analytics collect release-only stability signals without account IDs or user-entered plan text
 
 Still required in Firebase, Google Cloud, and Apple Developer consoles:
 
