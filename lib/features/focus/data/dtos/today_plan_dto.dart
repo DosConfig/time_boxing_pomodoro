@@ -18,6 +18,7 @@ abstract class TimeBoxDto with _$TimeBoxDto {
     @Default('') String timeRange,
     @Default(30 * 60) int durationSeconds,
     @Default(<int>[]) List<int> repeatWeekdays,
+    @Default('') String recurrenceId,
   }) = _TimeBoxDto;
 
   factory TimeBoxDto.fromJson(Map<String, dynamic> json) =>
@@ -30,6 +31,7 @@ abstract class TimeBoxDto with _$TimeBoxDto {
       timeRange: box.timeRange,
       durationSeconds: box.durationSeconds,
       repeatWeekdays: _normalizedWeekdays(box.repeatWeekdays),
+      recurrenceId: box.recurrenceId,
     );
   }
 
@@ -40,6 +42,7 @@ abstract class TimeBoxDto with _$TimeBoxDto {
       timeRange: timeRange,
       durationSeconds: durationSeconds,
       repeatWeekdays: _normalizedWeekdays(repeatWeekdays),
+      recurrenceId: recurrenceId,
     );
   }
 
@@ -57,7 +60,7 @@ abstract class TodayPlanDto with _$TodayPlanDto {
   const TodayPlanDto._();
 
   const factory TodayPlanDto({
-    @Default(1) int schemaVersion,
+    @Default(2) int schemaVersion,
     @Default('') String dateKey,
     @Default(0) int updatedAtEpochMs,
     @Default(<String>[]) List<String> brainDump,
@@ -66,6 +69,7 @@ abstract class TodayPlanDto with _$TodayPlanDto {
     @Default(<TimeBoxDto>[]) List<TimeBoxDto> timeBoxes,
     @Default('') String activeTimeBoxId,
     @Default(0) int completedSessions,
+    @Default(<String>[]) List<String> cancelledRecurrenceKeys,
   }) = _TodayPlanDto;
 
   factory TodayPlanDto.fromJson(Map<String, dynamic> json) =>
@@ -96,6 +100,7 @@ abstract class TodayPlanDto with _$TodayPlanDto {
       timeBoxes: pomodoro.timeBoxes.map(TimeBoxDto.fromEntity).toList(),
       activeTimeBoxId: pomodoro.activeTimeBoxId,
       completedSessions: pomodoro.completedSessions,
+      cancelledRecurrenceKeys: pomodoro.cancelledRecurrenceKeys,
     );
   }
 
@@ -117,6 +122,7 @@ abstract class TodayPlanDto with _$TodayPlanDto {
       timeBoxes: nextBoxes,
       activeTimeBoxId: nextActiveBoxId,
       completedSessions: completedSessions < 0 ? 0 : completedSessions,
+      cancelledRecurrenceKeys: cancelledRecurrenceKeys.toSet().toList(),
       currentTimeBoxTitle: activeBox?.title ?? '',
       currentTimeBoxTimeRange: activeBox?.timeRange ?? '',
       workDuration: activeBox?.durationSeconds ?? fallback.workDuration,

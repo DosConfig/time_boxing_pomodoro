@@ -220,7 +220,7 @@ return $default(_that.focusTitle,_that.shortBreakTitle,_that.longBreakTitle,_tha
 
 
 class _NativeTimerCopy implements NativeTimerCopy {
-  const _NativeTimerCopy({this.focusTitle = 'Focus', this.shortBreakTitle = 'Short break', this.longBreakTitle = 'Long break', this.pausedTitle = 'Paused', this.focusBlockTitle = 'Focus block', this.breakBlockTitle = 'Break block', this.topPriorityLabel = 'Top', this.focusInProgressTitle = 'Focus in progress', this.shortBreakInProgressTitle = 'Short break in progress', this.longBreakInProgressTitle = 'Long break in progress', this.remainingTimeFormat = '%@ remaining', this.focusCompleteTitle = 'Focus complete', this.breakCompleteTitle = 'Break complete', this.focusCompleteBody = 'Step away before the next block.', this.breakCompleteBody = 'Your next focus block is ready.'});
+  const _NativeTimerCopy({this.focusTitle = 'Focus', this.shortBreakTitle = 'Short break', this.longBreakTitle = 'Long break', this.pausedTitle = 'Paused', this.focusBlockTitle = 'Focus block', this.breakBlockTitle = 'Break block', this.topPriorityLabel = 'Top', this.focusInProgressTitle = 'Focus in progress', this.shortBreakInProgressTitle = 'Short break in progress', this.longBreakInProgressTitle = 'Long break in progress', this.remainingTimeFormat = '%@ remaining', this.focusCompleteTitle = 'Focus complete', this.breakCompleteTitle = 'Break complete', this.focusCompleteBody = 'The next scheduled timer is starting.', this.breakCompleteBody = 'The next scheduled timer is starting.'});
   
 
 @override@JsonKey() final  String focusTitle;

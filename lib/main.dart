@@ -11,9 +11,23 @@ import 'package:time_boxing_pomodoro/features/settings/application/app_preferenc
 import 'package:time_boxing_pomodoro/features/shell/presentation/app_shell.dart';
 import 'package:time_boxing_pomodoro/l10n/generated/app_localizations.dart';
 import 'package:time_boxing_pomodoro/l10n/l10n.dart';
+import 'package:time_boxing_pomodoro/shared/diagnostics/app_diagnostics.dart';
 
-void main() {
-  runApp(const ProviderScope(child: MyApp()));
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final diagnostics = await initializeAppDiagnostics();
+  installGlobalErrorHandlers(diagnostics);
+  await diagnostics.breadcrumb('app_started');
+
+  runApp(
+    AppLifecycleDiagnostics(
+      diagnostics: diagnostics,
+      child: ProviderScope(
+        overrides: [appDiagnosticsProvider.overrideWithValue(diagnostics)],
+        child: const MyApp(),
+      ),
+    ),
+  );
 }
 
 class MyApp extends ConsumerWidget {
@@ -26,6 +40,16 @@ class MyApp extends ConsumerWidget {
       if (session == null) {
         return;
       }
+
+      final diagnostics = ref.read(appDiagnosticsProvider);
+      final authState = session.isSignedIn ? 'signed_in' : 'signed_out';
+      unawaited(diagnostics.setContext('auth_state', authState));
+      unawaited(
+        diagnostics.breadcrumb(
+          'auth_state_changed',
+          attributes: {'signed_in': session.isSignedIn ? 1 : 0},
+        ),
+      );
 
       ref.invalidate(dailyPlanHistoryProvider);
       ref.invalidate(pomodoroControllerProvider);
@@ -63,6 +87,7 @@ class MyApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
+      navigatorObservers: ref.read(appDiagnosticsProvider).navigatorObservers,
       locale: preferences.localeCode.isEmpty
           ? null
           : Locale(preferences.localeCode),

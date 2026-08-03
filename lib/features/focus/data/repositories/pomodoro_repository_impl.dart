@@ -88,18 +88,38 @@ class PomodoroRepositoryImpl implements PomodoroRepository {
       return todayPlan;
     }
 
+    final recentPlans = <Pomodoro>[];
+    for (var back = 1; back <= 7; back += 1) {
+      final dateKey = _dateKey(now.subtract(Duration(days: back)));
+      final plan = await loadPlanForDate(dateKey, Pomodoro.initial());
+      if (plan != null) {
+        recentPlans.add(plan);
+      }
+    }
+
+    // 삭제 tombstone을 오늘 플랜으로 계속 전달한다. 반복 원본과 취소
+    // 기록이 모두 최근 플랜에 남으므로 로컬/클라우드 복원에서도 같은
+    // 시리즈가 다시 생성되지 않는다.
+    final cancelledKeys = <String>{
+      ...todayPlan.cancelledRecurrenceKeys,
+      for (final plan in recentPlans) ...plan.cancelledRecurrenceKeys,
+    };
     final weekday = now.weekday;
     final fingerprints = todayPlan.timeBoxes
         .map((box) => '${box.timeRange}.${box.title.trim()}')
         .toSet();
+    final seenRecurrenceIds = <String>{};
     final additions = <TimeBox>[];
-    for (var back = 1; back <= 7; back += 1) {
-      final dateKey = _dateKey(now.subtract(Duration(days: back)));
-      final plan = await loadPlanForDate(dateKey, Pomodoro.initial());
-      if (plan == null) {
-        continue;
-      }
+    for (final plan in recentPlans) {
       for (final box in plan.timeBoxes) {
+        // 같은 시리즈가 수정된 경우 가장 최근 플랜의 버전만 사용한다.
+        if (box.recurrenceId.isNotEmpty &&
+            !seenRecurrenceIds.add(box.recurrenceId)) {
+          continue;
+        }
+        if (cancelledKeys.contains(box.recurrenceCancellationKey)) {
+          continue;
+        }
         if (!box.repeatsOn(weekday)) {
           continue;
         }
@@ -119,7 +139,14 @@ class PomodoroRepositoryImpl implements PomodoroRepository {
     }
 
     await localDataSource.saveRecurringAppliedDateKey(todayKey);
-    if (additions.isEmpty) {
+    final mergedCancellationKeys = cancelledKeys.toList()..sort();
+    final cancellationKeysChanged =
+        mergedCancellationKeys.length !=
+            todayPlan.cancelledRecurrenceKeys.length ||
+        !todayPlan.cancelledRecurrenceKeys.toSet().containsAll(
+          mergedCancellationKeys,
+        );
+    if (additions.isEmpty && !cancellationKeysChanged) {
       return todayPlan;
     }
 
@@ -129,7 +156,10 @@ class PomodoroRepositoryImpl implements PomodoroRepository {
         final startB = b.startMinutes ?? (24 * 60);
         return startA.compareTo(startB);
       });
-    final merged = todayPlan.copyWith(timeBoxes: boxes);
+    final merged = todayPlan.copyWith(
+      timeBoxes: boxes,
+      cancelledRecurrenceKeys: mergedCancellationKeys,
+    );
     await _persistResolvedPlan(
       merged,
       _nextUpdatedAtEpochMs(),

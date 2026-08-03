@@ -480,7 +480,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get carryOverPreviousReminders => '이전 기억할 것 가져오기';
 
   @override
-  String get carryOverPreviousSchedule => '이전 스케줄 가져오기';
+  String get carryOverPreviousSchedule => '최근 타임박스 불러오기';
 
   @override
   String get importSelected => '선택 항목 가져오기';
@@ -607,10 +607,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get notificationBreakCompleteTitle => '휴식 완료';
 
   @override
-  String get notificationFocusCompleteBody => '다음 블록 전에 잠깐 쉬세요.';
+  String get notificationFocusCompleteBody => '다음 스케줄의 타이머가 시작됩니다.';
 
   @override
-  String get notificationBreakCompleteBody => '다음 집중 블록을 준비하세요.';
+  String get notificationBreakCompleteBody => '다음 스케줄의 타이머가 시작됩니다.';
 
   @override
   String get accountTitle => '계정';

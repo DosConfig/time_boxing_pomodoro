@@ -149,17 +149,15 @@ class TimeBoxBoard extends ConsumerWidget {
               fontWeight: FontWeight.w700,
             ),
           ),
-          if (pomodoro.timeBoxes.isEmpty) ...[
-            const SizedBox(height: 4),
-            DailyCarryOverButton(
-              label: context.l10n.carryOverPreviousSchedule,
-              onPressed: () => showCarryOverPickerSheet(
-                context,
-                notifier: notifier,
-                section: CarryOverSection.timeBox,
-              ),
+          const SizedBox(height: 4),
+          DailyCarryOverButton(
+            label: context.l10n.carryOverPreviousSchedule,
+            onPressed: () => showCarryOverPickerSheet(
+              context,
+              notifier: notifier,
+              section: CarryOverSection.timeBox,
             ),
-          ],
+          ),
           const SizedBox(height: 14),
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
@@ -839,25 +837,34 @@ class _DraggableTimeBoxCard extends StatelessWidget {
             data: payload,
             maxSimultaneousDrags: enabled ? 1 : 0,
             delay: const Duration(milliseconds: 220),
-            dragAnchorStrategy: childDragAnchorStrategy,
+            dragAnchorStrategy: (draggable, dragContext, globalPosition) {
+              final renderBox = dragContext.findRenderObject() as RenderBox;
+              final localPosition = renderBox.globalToLocal(globalPosition);
+              final sourceHeight = renderBox.size.height;
+              final verticalRatio = sourceHeight <= 0
+                  ? 0.5
+                  : (localPosition.dy / sourceHeight).clamp(0.0, 1.0);
+              // 실제 카드는 길어도 feedback은 최대 88px로 줄어든다. 원본
+              // 좌표를 그대로 anchor로 쓰면 feedback이 엄지에서 멀어지므로
+              // 잡은 비율을 축소된 preview 높이에 맞춰 다시 계산한다.
+              return Offset(
+                localPosition.dx.clamp(0.0, renderBox.size.width),
+                compactFeedbackHeight * verticalRatio,
+              );
+            },
             feedback: Material(
               color: Colors.transparent,
-              child: Transform.translate(
-                // Keep the compact preview above the finger. The drop target
-                // still follows the pointer, while the trash target remains
-                // visible instead of being hidden behind a tall card preview.
-                offset: Offset(0, -(compactFeedbackHeight + 20)),
-                child: Transform.rotate(
-                  angle: -0.025,
-                  child: SizedBox(
-                    width: feedbackWidth,
-                    height: compactFeedbackHeight,
-                    child: _TimeBoxBoardCardSurface(
-                      title: title,
-                      selected: selected,
-                      current: current,
-                      feedback: true,
-                    ),
+              child: Transform.rotate(
+                angle: -0.025,
+                child: SizedBox(
+                  key: ValueKey('timeBoxDragFeedback-${payload.id}'),
+                  width: feedbackWidth,
+                  height: compactFeedbackHeight,
+                  child: _TimeBoxBoardCardSurface(
+                    title: title,
+                    selected: selected,
+                    current: current,
+                    feedback: true,
                   ),
                 ),
               ),

@@ -496,7 +496,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get carryOverPreviousReminders => 'Vorige Merkpunkte übernehmen';
 
   @override
-  String get carryOverPreviousSchedule => 'Vorigen Plan übernehmen';
+  String get carryOverPreviousSchedule => 'Letzte Zeitblöcke übernehmen';
 
   @override
   String get importSelected => 'Auswahl übernehmen';
@@ -626,11 +626,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get notificationFocusCompleteBody =>
-      'Mach vor dem nächsten Block eine kurze Pause.';
+      'Der Timer für den nächsten Termin startet.';
 
   @override
   String get notificationBreakCompleteBody =>
-      'Dein nächster Fokusblock ist bereit.';
+      'Der Timer für den nächsten Termin startet.';
 
   @override
   String get accountTitle => 'Konto';

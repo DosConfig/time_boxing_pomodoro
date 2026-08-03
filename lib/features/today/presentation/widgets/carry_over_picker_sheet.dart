@@ -22,12 +22,21 @@ Future<void> showCarryOverPickerSheet(
   required CarryOverSection section,
 }) async {
   final l10n = context.l10n;
-  final previous = await notifier.loadPreviousPlanSnapshot();
+  final previous = section == CarryOverSection.timeBox
+      ? null
+      : await notifier.loadPreviousPlanSnapshot();
+  final recentTimeBoxes = section == CarryOverSection.timeBox
+      ? await notifier.loadRecentTimeBoxes(limit: 20)
+      : const <TimeBox>[];
   if (!context.mounted) {
     return;
   }
 
-  final entries = _entriesForSection(previous, section);
+  final entries = _entriesForSection(
+    previous,
+    section,
+    recentTimeBoxes: recentTimeBoxes,
+  );
   if (entries.isEmpty) {
     showAppSnack(context, l10n.noPreviousDailyItems);
     return;
@@ -51,6 +60,7 @@ Future<void> showCarryOverPickerSheet(
       return _CarryOverPickerSheet(
         title: title,
         entries: entries,
+        initiallySelected: section != CarryOverSection.timeBox,
         onImport: (selected) {
           final imported = _importSelection(notifier, section, selected);
           Navigator.of(sheetContext).pop();
@@ -81,40 +91,35 @@ class _CarryOverEntry {
 
 List<_CarryOverEntry> _entriesForSection(
   Pomodoro? previous,
-  CarryOverSection section,
-) {
-  if (previous == null) {
+  CarryOverSection section, {
+  List<TimeBox> recentTimeBoxes = const [],
+}) {
+  if (previous == null && section != CarryOverSection.timeBox) {
     return const [];
   }
 
   switch (section) {
     case CarryOverSection.topPriority:
-      return previous.topPriorities
+      return previous!.topPriorities
           .map((item) => item.trim())
           .where((item) => item.isNotEmpty)
           .take(3)
           .map((item) => _CarryOverEntry(label: item, textValue: item))
           .toList();
     case CarryOverSection.brainDump:
-      return previous.brainDump
+      return previous!.brainDump
           .map((item) => item.trim())
           .where((item) => item.isNotEmpty)
           .map((item) => _CarryOverEntry(label: item, textValue: item))
           .toList();
     case CarryOverSection.reminder:
-      return previous.reminders
+      return previous!.reminders
           .map((item) => item.trim())
           .where((item) => item.isNotEmpty)
           .map((item) => _CarryOverEntry(label: item, textValue: item))
           .toList();
     case CarryOverSection.timeBox:
-      final boxes = [...previous.timeBoxes]
-        ..sort((a, b) {
-          final startA = a.startMinutes ?? (24 * 60);
-          final startB = b.startMinutes ?? (24 * 60);
-          return startA.compareTo(startB);
-        });
-      return boxes
+      return recentTimeBoxes
           .map(
             (box) => _CarryOverEntry(
               label: displayTimeBoxTitle(box),
@@ -150,10 +155,7 @@ bool _importSelection(
       );
     case CarryOverSection.timeBox:
       return notifier.importTimeBoxes(
-        selected
-            .map((entry) => entry.timeBox)
-            .whereType<TimeBox>()
-            .toList(),
+        selected.map((entry) => entry.timeBox).whereType<TimeBox>().toList(),
       );
   }
 }
@@ -162,11 +164,13 @@ class _CarryOverPickerSheet extends StatefulWidget {
   final String title;
   final List<_CarryOverEntry> entries;
   final ValueChanged<List<_CarryOverEntry>> onImport;
+  final bool initiallySelected;
 
   const _CarryOverPickerSheet({
     required this.title,
     required this.entries,
     required this.onImport,
+    required this.initiallySelected,
   });
 
   @override
@@ -179,7 +183,10 @@ class _CarryOverPickerSheetState extends State<_CarryOverPickerSheet> {
   @override
   void initState() {
     super.initState();
-    _checked = List<bool>.filled(widget.entries.length, true);
+    _checked = List<bool>.filled(
+      widget.entries.length,
+      widget.initiallySelected,
+    );
   }
 
   @override
@@ -222,7 +229,9 @@ class _CarryOverPickerSheetState extends State<_CarryOverPickerSheet> {
                   final entry = widget.entries[index];
                   final checked = _checked[index];
                   return Material(
-                    color: Colors.white.withValues(alpha: checked ? 0.07 : 0.035),
+                    color: Colors.white.withValues(
+                      alpha: checked ? 0.07 : 0.035,
+                    ),
                     shape: RoundedRectangleBorder(
                       side: BorderSide(
                         color: checked
@@ -320,4 +329,3 @@ class _CarryOverPickerSheetState extends State<_CarryOverPickerSheet> {
     );
   }
 }
-

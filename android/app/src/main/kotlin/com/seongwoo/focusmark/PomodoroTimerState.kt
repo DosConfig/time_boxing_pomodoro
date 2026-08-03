@@ -90,12 +90,12 @@ data class PomodoroTimerState(
                     ?: "Break complete",
                 focusCompleteBody = prefs.getString(
                     FOCUS_COMPLETE_BODY,
-                    "Step away before the next block.",
-                ) ?: "Step away before the next block.",
+                    "The next scheduled timer is starting.",
+                ) ?: "The next scheduled timer is starting.",
                 breakCompleteBody = prefs.getString(
                     BREAK_COMPLETE_BODY,
-                    "Your next focus block is ready.",
-                ) ?: "Your next focus block is ready.",
+                    "The next scheduled timer is starting.",
+                ) ?: "The next scheduled timer is starting.",
             )
         }
 

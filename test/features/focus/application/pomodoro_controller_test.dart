@@ -55,6 +55,75 @@ void main() {
       );
     });
 
+    test('deleting a recurring card permanently cancels its series', () async {
+      final repository = _MemoryPomodoroRepository(
+        Pomodoro.initial().copyWith(
+          timeBoxes: const [
+            TimeBox(
+              id: 'daily-card',
+              title: 'Daily planning',
+              timeRange: '09:00-09:30',
+              durationSeconds: 30 * 60,
+              repeatWeekdays: [1, 2, 3, 4, 5, 6, 7],
+              recurrenceId: 'daily-planning-series',
+            ),
+          ],
+        ),
+      );
+      final container = ProviderContainer(
+        overrides: [pomodoroRepositoryProvider.overrideWithValue(repository)],
+      );
+      addTearDown(container.dispose);
+      final controller = container.read(pomodoroControllerProvider.notifier);
+      await _settleControllerRestore();
+
+      await controller.removeTimeBox('daily-card');
+
+      final state = container.read(pomodoroControllerProvider);
+      expect(state.timeBoxes, isEmpty);
+      expect(
+        state.cancelledRecurrenceKeys,
+        contains('id:daily-planning-series'),
+      );
+    });
+
+    test('loads at most 20 distinct recent time boxes newest first', () async {
+      final now = DateTime.now();
+      final plansByDate = <String, Pomodoro>{};
+      final history = <DailyPlanSummary>[];
+      for (var back = 1; back <= 25; back += 1) {
+        final dateKey = _dateKeyForTest(now.subtract(Duration(days: back)));
+        history.add(DailyPlanSummary(dateKey: dateKey, plannedBoxCount: 1));
+        plansByDate[dateKey] = Pomodoro.initial().copyWith(
+          timeBoxes: [
+            TimeBox(
+              id: 'box-$back',
+              title: 'Task $back',
+              timeRange: '09:00-09:30',
+              durationSeconds: 30 * 60,
+            ),
+          ],
+        );
+      }
+      final repository = _MemoryPomodoroRepository(
+        Pomodoro.initial(),
+        history: history,
+        plansByDate: plansByDate,
+      );
+      final container = ProviderContainer(
+        overrides: [pomodoroRepositoryProvider.overrideWithValue(repository)],
+      );
+      addTearDown(container.dispose);
+      final controller = container.read(pomodoroControllerProvider.notifier);
+      await _settleControllerRestore();
+
+      final recent = await controller.loadRecentTimeBoxes();
+
+      expect(recent, hasLength(20));
+      expect(recent.first.title, 'Task 1');
+      expect(recent.last.title, 'Task 20');
+    });
+
     test('resizes both edges using the selected interval', () async {
       final repository = _MemoryPomodoroRepository(
         Pomodoro.initial().copyWith(
@@ -972,6 +1041,8 @@ class _MemoryPomodoroRepository implements PomodoroRepository {
   final Pomodoro Function(Pomodoro fallback, int restoreCallCount)? onRestore;
   final Completer<Pomodoro>? restoreCompleter;
   final TimerSnapshot nativeSnapshot;
+  final List<DailyPlanSummary> history;
+  final Map<String, Pomodoro> plansByDate;
   int restoreCallCount = 0;
   int startTimerCalls = 0;
   int flushCallCount = 0;
@@ -982,6 +1053,8 @@ class _MemoryPomodoroRepository implements PomodoroRepository {
     this.onRestore,
     this.restoreCompleter,
     this.nativeSnapshot = const TimerSnapshot(status: 'idle'),
+    this.history = const [],
+    this.plansByDate = const {},
   });
 
   @override
@@ -1013,11 +1086,11 @@ class _MemoryPomodoroRepository implements PomodoroRepository {
 
   @override
   Future<Pomodoro?> loadPlanForDate(String dateKey, Pomodoro fallback) async =>
-      null;
+      plansByDate[dateKey];
 
   @override
   Future<List<DailyPlanSummary>> loadDailyPlanHistory({int days = 7}) async {
-    return const [];
+    return history;
   }
 
   @override
@@ -1079,4 +1152,11 @@ class _MemoryPomodoroRepository implements PomodoroRepository {
   Future<void> clearLocalPlanData() async {
     clearCallCount += 1;
   }
+}
+
+String _dateKeyForTest(DateTime date) {
+  final year = date.year.toString().padLeft(4, '0');
+  final month = date.month.toString().padLeft(2, '0');
+  final day = date.day.toString().padLeft(2, '0');
+  return '$year-$month-$day';
 }

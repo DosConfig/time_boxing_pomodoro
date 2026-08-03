@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../shared/diagnostics/app_diagnostics.dart';
 import '../../settings/application/app_preferences_controller.dart';
 import '../di/focus_providers.dart';
 import '../domain/entities/native_timer_copy.dart';
@@ -93,6 +94,7 @@ class PomodoroController extends _$PomodoroController
   static const int _slotDurationSeconds = 30 * 60;
 
   PomodoroRepository get repository => ref.read(pomodoroRepositoryProvider);
+  AppDiagnostics get diagnostics => ref.read(appDiagnosticsProvider);
   StartPomodoroUseCase get startUseCase =>
       ref.read(startPomodoroUseCaseProvider);
   PausePomodoroUseCase get pauseUseCase =>
@@ -140,13 +142,23 @@ class PomodoroController extends _$PomodoroController
     _liveActivityRegistrationSubscription = repository
         .liveActivityRegistrations()
         .listen((registration) {
-          unawaited(repository.registerLiveActivityPushToken(registration));
-        });
+          unawaited(
+            _captureNonFatal(
+              'live_activity_token_registration_failed',
+              () => repository.registerLiveActivityPushToken(registration),
+            ),
+          );
+        }, onError: _recordLiveActivityStreamError);
     _liveActivityEndedSubscription = repository.endedLiveActivityIds().listen((
       activityId,
     ) {
-      unawaited(repository.removeLiveActivityPushToken(activityId));
-    });
+      unawaited(
+        _captureNonFatal(
+          'live_activity_token_removal_failed',
+          () => repository.removeLiveActivityPushToken(activityId),
+        ),
+      );
+    }, onError: _recordLiveActivityStreamError);
     ref.onDispose(() {
       WidgetsBinding.instance.removeObserver(this);
       _timerSubscription?.cancel();
@@ -155,9 +167,18 @@ class PomodoroController extends _$PomodoroController
       _clockSyncTimer?.cancel();
     });
     Future.microtask(() async {
-      await repository.syncLiveActivityPushTokens();
-      await _restoreFromLocalPlan();
-      await _restoreFromNative();
+      await _captureNonFatal(
+        'initial_live_activity_token_sync_failed',
+        repository.syncLiveActivityPushTokens,
+      );
+      await _captureNonFatal(
+        'initial_local_plan_restore_failed',
+        _restoreFromLocalPlan,
+      );
+      await _captureNonFatal(
+        'initial_native_timer_restore_failed',
+        _restoreFromNative,
+      );
       _completeInitialRestore();
     });
     return Pomodoro.initial();
@@ -220,6 +241,48 @@ class PomodoroController extends _$PomodoroController
 
   Future<void> _restoreFromNative() => _nativeRestore.run(_doRestoreFromNative);
 
+  Future<void> _captureNonFatal(
+    String reason,
+    Future<void> Function() operation, {
+    Map<String, Object> attributes = const {},
+  }) async {
+    try {
+      await operation();
+    } catch (error, stackTrace) {
+      await diagnostics.recordNonFatal(
+        error,
+        stackTrace,
+        reason: reason,
+        attributes: attributes,
+      );
+    }
+  }
+
+  void _recordLiveActivityStreamError(Object error, StackTrace stackTrace) {
+    unawaited(
+      diagnostics.recordNonFatal(
+        error,
+        stackTrace,
+        reason: 'live_activity_platform_stream_failed',
+      ),
+    );
+  }
+
+  void _recordTimerBreadcrumb(String event) {
+    unawaited(diagnostics.setContext('timer_status', state.status.name));
+    unawaited(diagnostics.setContext('timer_phase', state.phase.name));
+    unawaited(
+      diagnostics.breadcrumb(
+        event,
+        attributes: {
+          'timer_status': state.status.name,
+          'timer_phase': state.phase.name,
+          'schedule_tracking': state.autoStartFocus ? 1 : 0,
+        },
+      ),
+    );
+  }
+
   Future<void> _doRestoreFromNative() async {
     final restored = await restoreUseCase(state);
     state = state.copyWith(
@@ -281,16 +344,29 @@ class PomodoroController extends _$PomodoroController
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      unawaited(repository.syncLiveActivityPushTokens());
-      Future.microtask(() async {
-        await _restoreFromNative();
-        syncDayBoundaryAndFocus();
-      });
+      unawaited(_reconcileAfterResume());
     } else if (state == AppLifecycleState.inactive ||
         state == AppLifecycleState.paused ||
         state == AppLifecycleState.detached) {
-      unawaited(repository.flushPendingWrites());
+      unawaited(
+        _captureNonFatal(
+          'background_pending_write_flush_failed',
+          repository.flushPendingWrites,
+        ),
+      );
     }
+  }
+
+  Future<void> _reconcileAfterResume() async {
+    await _captureNonFatal(
+      'resume_live_activity_token_sync_failed',
+      repository.syncLiveActivityPushTokens,
+    );
+    await _captureNonFatal(
+      'resume_native_timer_restore_failed',
+      _restoreFromNative,
+    );
+    syncDayBoundaryAndFocus();
   }
 
   void _startClockSyncTimer() {
@@ -347,12 +423,23 @@ class PomodoroController extends _$PomodoroController
 
   void _subscribeTicks() {
     _timerSubscription?.cancel();
-    _timerSubscription = repository.ticks().listen((remainingTime) {
-      state = state.copyWith(remainingTime: remainingTime);
-      if (remainingTime == 0) {
-        _onTimerComplete();
-      }
-    });
+    _timerSubscription = repository.ticks().listen(
+      (remainingTime) {
+        state = state.copyWith(remainingTime: remainingTime);
+        if (remainingTime == 0) {
+          _onTimerComplete();
+        }
+      },
+      onError: (Object error, StackTrace stackTrace) {
+        unawaited(
+          diagnostics.recordNonFatal(
+            error,
+            stackTrace,
+            reason: 'native_timer_tick_stream_failed',
+          ),
+        );
+      },
+    );
   }
 
   StreamSubscription<int> _startNativeTimer(NativeTimerCopy nativeCopy) {
@@ -364,13 +451,24 @@ class PomodoroController extends _$PomodoroController
       currentTimeBoxTitle: state.liveActivityTimeBoxTitle,
       currentTimeBoxTimeRange: state.liveActivityTimeBoxRange,
       nativeCopy: nativeCopy,
-    ).listen((remainingTime) {
-      state = state.copyWith(remainingTime: remainingTime);
+    ).listen(
+      (remainingTime) {
+        state = state.copyWith(remainingTime: remainingTime);
 
-      if (remainingTime == 0) {
-        _onTimerComplete();
-      }
-    });
+        if (remainingTime == 0) {
+          _onTimerComplete();
+        }
+      },
+      onError: (Object error, StackTrace stackTrace) {
+        unawaited(
+          diagnostics.recordNonFatal(
+            error,
+            stackTrace,
+            reason: 'native_timer_start_stream_failed',
+          ),
+        );
+      },
+    );
   }
 
   Future<void> start(NativeTimerCopy nativeCopy) async {
@@ -385,6 +483,7 @@ class PomodoroController extends _$PomodoroController
       state = state.copyWith(status: PomodoroStatus.running);
       repository.updatePomodoro(state);
       _subscribeTicks();
+      _recordTimerBreadcrumb('focus_resumed');
       return;
     }
 
@@ -422,6 +521,7 @@ class PomodoroController extends _$PomodoroController
 
       _timerSubscription?.cancel();
       _timerSubscription = _startNativeTimer(nativeCopy);
+      _recordTimerBreadcrumb('focus_started');
     }
   }
 
@@ -433,6 +533,7 @@ class PomodoroController extends _$PomodoroController
     await pauseUseCase();
     state = state.copyWith(status: PomodoroStatus.paused);
     repository.updatePomodoro(state);
+    _recordTimerBreadcrumb('focus_paused');
   }
 
   Future<void> reset() async {
@@ -465,6 +566,7 @@ class PomodoroController extends _$PomodoroController
       activeTimeBoxId: previous.activeTimeBoxId,
     );
     repository.updatePomodoro(state);
+    _recordTimerBreadcrumb('focus_reset');
   }
 
   Future<void> applyPreset(PomodoroPreset preset) async {
@@ -962,12 +1064,17 @@ class PomodoroController extends _$PomodoroController
       durationSeconds,
       stepMinutes: durationStepMinutes,
     );
+    final uniqueId = DateTime.now().microsecondsSinceEpoch;
+    final normalizedRepeatWeekdays = _normalizedWeekdays(repeatWeekdays);
     final nextBox = TimeBox(
-      id: 'box-${DateTime.now().microsecondsSinceEpoch}',
+      id: 'box-$uniqueId',
       title: title.trim().isEmpty ? 'New time box' : title.trim(),
       timeRange: _formatTimeRange(startMinutes, normalizedDuration),
       durationSeconds: normalizedDuration,
-      repeatWeekdays: _normalizedWeekdays(repeatWeekdays),
+      repeatWeekdays: normalizedRepeatWeekdays,
+      recurrenceId: normalizedRepeatWeekdays.isEmpty
+          ? ''
+          : 'recurrence-$uniqueId',
     );
     boxes.add(nextBox);
     _sortTimeBoxes(boxes);
@@ -1009,6 +1116,7 @@ class PomodoroController extends _$PomodoroController
       return;
     }
 
+    final removingBox = boxes[removeIndex];
     final removingActiveBox = id == state.activeTimeBoxId;
     if (removingActiveBox &&
         (state.status == PomodoroStatus.running ||
@@ -1017,6 +1125,12 @@ class PomodoroController extends _$PomodoroController
     }
 
     boxes.removeAt(removeIndex);
+    final cancelledRecurrenceKeys = <String>{
+      ...state.cancelledRecurrenceKeys,
+      if (removingBox.repeatWeekdays.isNotEmpty ||
+          removingBox.recurrenceId.isNotEmpty)
+        removingBox.recurrenceCancellationKey,
+    }.toList()..sort();
 
     if (boxes.isEmpty) {
       state = state.copyWith(
@@ -1028,13 +1142,17 @@ class PomodoroController extends _$PomodoroController
         remainingTime: 0,
         status: PomodoroStatus.idle,
         phase: PomodoroPhase.focus,
+        cancelledRecurrenceKeys: cancelledRecurrenceKeys,
       );
       repository.updatePomodoro(state);
       return;
     }
 
     if (!removingActiveBox) {
-      state = state.copyWith(timeBoxes: boxes);
+      state = state.copyWith(
+        timeBoxes: boxes,
+        cancelledRecurrenceKeys: cancelledRecurrenceKeys,
+      );
       repository.updatePomodoro(state);
       return;
     }
@@ -1051,6 +1169,7 @@ class PomodoroController extends _$PomodoroController
       remainingTime: remainingTime,
       status: PomodoroStatus.idle,
       phase: PomodoroPhase.focus,
+      cancelledRecurrenceKeys: cancelledRecurrenceKeys,
     );
     repository.updatePomodoro(state);
   }
@@ -1095,7 +1214,16 @@ class PomodoroController extends _$PomodoroController
           ).startMinutes;
     final trimmedTitle = title?.trim();
     final currentDuration = _durationForTimeBox(boxes[index]);
-    final nextBox = boxes[index].copyWith(
+    final previousBox = boxes[index];
+    final normalizedRepeatWeekdays = repeatWeekdays == null
+        ? previousBox.repeatWeekdays
+        : _normalizedWeekdays(repeatWeekdays);
+    final recurrenceStopped =
+        previousBox.repeatWeekdays.isNotEmpty &&
+        normalizedRepeatWeekdays.isEmpty;
+    final recurrenceStarted =
+        previousBox.recurrenceId.isEmpty && normalizedRepeatWeekdays.isNotEmpty;
+    final nextBox = previousBox.copyWith(
       title: trimmedTitle == null || trimmedTitle.isEmpty
           ? boxes[index].title
           : trimmedTitle,
@@ -1103,9 +1231,12 @@ class PomodoroController extends _$PomodoroController
           ? boxes[index].timeRange
           : _formatTimeRange(nextStart, currentDuration),
       durationSeconds: currentDuration,
-      repeatWeekdays: repeatWeekdays == null
-          ? boxes[index].repeatWeekdays
-          : _normalizedWeekdays(repeatWeekdays),
+      repeatWeekdays: normalizedRepeatWeekdays,
+      recurrenceId: recurrenceStopped
+          ? ''
+          : recurrenceStarted
+          ? 'recurrence-${DateTime.now().microsecondsSinceEpoch}'
+          : previousBox.recurrenceId,
     );
     boxes[index] = nextBox;
     if (_timeBoxOverlapsAny(boxes, box: nextBox, ignoreId: id)) {
@@ -1115,8 +1246,13 @@ class PomodoroController extends _$PomodoroController
     final remainingTime = _remainingForTimeBox(nextBox);
 
     final updatingActiveBox = id == state.activeTimeBoxId;
+    final cancelledRecurrenceKeys = <String>{
+      ...state.cancelledRecurrenceKeys,
+      if (recurrenceStopped) previousBox.recurrenceCancellationKey,
+    }.toList()..sort();
     state = state.copyWith(
       timeBoxes: boxes,
+      cancelledRecurrenceKeys: cancelledRecurrenceKeys,
       currentTimeBoxTitle: updatingActiveBox
           ? _titleForTimeBox(nextBox)
           : state.currentTimeBoxTitle,
@@ -1364,6 +1500,56 @@ class PomodoroController extends _$PomodoroController
     return loadPlanForDateUseCase(dateKey, Pomodoro.initial());
   }
 
+  /// 최근 날짜부터 역순으로 조회해 중복되지 않는 타임박스를 최대 [limit]개
+  /// 반환한다. 오늘 일정은 제외하고 제목+시간대가 같은 카드는 한 번만 보인다.
+  Future<List<TimeBox>> loadRecentTimeBoxes({
+    int limit = 20,
+    int days = 30,
+  }) async {
+    if (limit <= 0 || days <= 0) {
+      return const [];
+    }
+
+    final summaries = await repository.loadDailyPlanHistory(days: days);
+    final todayKey = _dateKey(DateTime.now());
+    final dateKeys =
+        summaries
+            .map((summary) => summary.dateKey)
+            .where((dateKey) => dateKey.compareTo(todayKey) < 0)
+            .toSet()
+            .toList()
+          ..sort((a, b) => b.compareTo(a));
+    final recent = <TimeBox>[];
+    final seen = <String>{};
+
+    for (final dateKey in dateKeys) {
+      final plan = await repository.loadPlanForDate(
+        dateKey,
+        Pomodoro.initial(),
+      );
+      if (plan == null) {
+        continue;
+      }
+      final boxes = [...plan.timeBoxes]
+        ..sort((a, b) {
+          final startA = a.startMinutes ?? -1;
+          final startB = b.startMinutes ?? -1;
+          return startB.compareTo(startA);
+        });
+      for (final box in boxes) {
+        final fingerprint = '${box.timeRange}.${box.title.trim()}';
+        if (!seen.add(fingerprint)) {
+          continue;
+        }
+        recent.add(box);
+        if (recent.length >= limit) {
+          return recent;
+        }
+      }
+    }
+    return recent;
+  }
+
   /// 선택형 가져오기: 텍스트 항목들을 카테고리 규칙에 맞게 병합한다.
   /// 우선순위는 빈 슬롯 채움(최대 3개), 덤프/기억할 것은 중복 없는 병합.
   bool importDailyPlanItems(
@@ -1432,7 +1618,17 @@ class PomodoroController extends _$PomodoroController
         continue;
       }
       existingFingerprints.add(fingerprint);
-      nextBoxes.add(box.copyWith(id: _copiedTimeBoxId(box.id)));
+      final copiedId = _copiedTimeBoxId(box.id);
+      final copied = box.copyWith(
+        id: copiedId,
+        recurrenceId: box.repeatWeekdays.isEmpty
+            ? ''
+            : 'recurrence-${DateTime.now().microsecondsSinceEpoch}-${nextBoxes.length}',
+      );
+      if (_timeBoxOverlapsAny(nextBoxes, box: copied, ignoreId: copied.id)) {
+        continue;
+      }
+      nextBoxes.add(copied);
     }
     if (nextBoxes.length == state.timeBoxes.length) {
       return false;
@@ -1613,6 +1809,7 @@ class PomodoroController extends _$PomodoroController
     repository.updatePomodoro(state);
     await _timerSubscription?.cancel();
     _timerSubscription = _startNativeTimer(_nativeCopy);
+    _recordTimerBreadcrumb('scheduled_focus_started');
   }
 
   /// 슬롯 휴식 정책(설정 기반). 간격별 휴식 길이는
@@ -1978,6 +2175,7 @@ class PomodoroController extends _$PomodoroController
 
   void _onTimerComplete() {
     _timerSubscription?.cancel();
+    _recordTimerBreadcrumb('timer_segment_completed');
 
     if (state.phase == PomodoroPhase.focus) {
       // 슬롯 휴식: 박스가 아직 안 끝났으면 세션 완료가 아니라

@@ -5,7 +5,7 @@ advice.
 
 ## Timebox Mark Privacy Policy
 
-Effective date: TBD
+Effective date: July 31, 2026
 
 Timebox Mark helps you plan daily time boxes, run focus timers, receive local
 alerts, and optionally export your plan to your calendar.
@@ -39,8 +39,9 @@ and connecting calendar providers.
 ## Notifications
 
 Timebox Mark uses local notifications to alert you when a focus block or break
-ends. These notifications are scheduled on your device. The current build does
-not use a remote push notification server.
+ends. These notifications are scheduled on your device. On iOS, a Live Activity
+update token may be stored under your signed-in account and used only to update
+or end the current Live Activity. It is not used for marketing notifications.
 
 ## Live Activity
 
@@ -67,6 +68,20 @@ Timebox Mark's use of Google user data is limited to providing sign-in and
 calendar export functionality. The app's use and transfer of information
 received from Google APIs will adhere to the Google API Services User Data
 Policy, including the Limited Use requirements.
+
+## Diagnostics and Analytics
+
+Timebox Mark uses Firebase Crashlytics and Firebase Analytics to detect crashes,
+measure release stability, and understand the limited sequence of app actions
+immediately before a failure. This may include stack traces, app lifecycle and
+timer state, app version, device model, OS version, and Firebase-generated
+installation or session identifiers.
+
+Crash reports and analytics events do not include your email address, account
+identifier, timebox titles, brain dump or reminder text, authentication
+credentials, or Live Activity push tokens. The data is used only for app
+functionality, analytics, and stability improvements, not advertising or
+cross-app tracking.
 
 ## Data We Do Not Collect
 

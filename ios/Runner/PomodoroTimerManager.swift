@@ -39,8 +39,8 @@ struct NativeTimerCopy {
         remainingTimeFormat = value("remainingTimeFormat", fallback: "%@ remaining")
         focusCompleteTitle = value("focusCompleteTitle", fallback: "Focus complete")
         breakCompleteTitle = value("breakCompleteTitle", fallback: "Break complete")
-        focusCompleteBody = value("focusCompleteBody", fallback: "Step away before the next block.")
-        breakCompleteBody = value("breakCompleteBody", fallback: "Your next focus block is ready.")
+        focusCompleteBody = value("focusCompleteBody", fallback: "The next scheduled timer is starting.")
+        breakCompleteBody = value("breakCompleteBody", fallback: "The next scheduled timer is starting.")
     }
 
     var dictionary: [String: String] {

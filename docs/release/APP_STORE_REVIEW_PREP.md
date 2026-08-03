@@ -74,8 +74,9 @@ and the synced Timebox Mark plan data stored under `users/{uid}`.
 
 ### Notifications
 
-Local notifications are used for focus completion and break completion. No
-remote push server is used in the current build.
+Local notifications are used for focus completion and break completion. On
+iOS, the backend may send ActivityKit APNs updates only for the currently
+active Live Activity; these are not marketing notifications.
 
 Purpose copy:
 
@@ -113,8 +114,19 @@ submitted build:
 Do not declare location, contacts, photos, browsing history, advertising ID, or
 tracking unless those features are added later.
 
-Crashlytics is not part of the current checklist. If added later, update the
-privacy label and privacy policy before submission.
+Crashlytics and Analytics are included for stability monitoring and crash
+breadcrumbs. Also declare:
+
+- Diagnostics > Crash Data: app functionality/analytics, not linked to the
+  account, not tracking
+- Usage Data > Product Interaction: limited screen/lifecycle/timer actions for
+  crash reproduction and release stability, not linked to the account, not
+  tracking
+- Identifiers > Device ID: Firebase installation/session identifier for
+  stability measurement, not linked to the account, not tracking
+
+The implementation deliberately excludes email, Firebase UID, user-entered
+plan text, credentials, and Live Activity push tokens from diagnostic context.
 
 ## Review Notes Draft
 
@@ -128,8 +140,8 @@ Dynamic Island to verify the running timer.
 Apple Calendar access is requested only when the user exports today's timeboxes.
 On iOS 17 and later the app requests write-only calendar access and creates
 only the exported events. Google Calendar export uses the calendar.events scope
-to create events in the user's primary calendar. The app does not send remote
-push notifications in this build.
+to create events in the user's primary calendar. Remote push is limited to
+updating the active iOS Live Activity and is not used for marketing.
 ```
 
 ## Human Tasks

@@ -475,7 +475,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get carryOverPreviousReminders => '导入上次提醒';
 
   @override
-  String get carryOverPreviousSchedule => '导入上次日程';
+  String get carryOverPreviousSchedule => '导入最近的时间块';
 
   @override
   String get importSelected => '导入所选';
@@ -602,10 +602,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get notificationBreakCompleteTitle => '休息完成';
 
   @override
-  String get notificationFocusCompleteBody => '下一个时段前先休息一下。';
+  String get notificationFocusCompleteBody => '下一个日程的计时器即将开始。';
 
   @override
-  String get notificationBreakCompleteBody => '下一个专注时段已准备好。';
+  String get notificationBreakCompleteBody => '下一个日程的计时器即将开始。';
 
   @override
   String get accountTitle => '账户';

@@ -496,7 +496,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get carryOverPreviousReminders => 'Reprendre les rappels';
 
   @override
-  String get carryOverPreviousSchedule => 'Reprendre le planning';
+  String get carryOverPreviousSchedule => 'Importer les blocs de temps récents';
 
   @override
   String get importSelected => 'Importer la sélection';
@@ -625,11 +625,11 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get notificationFocusCompleteBody =>
-      'Faites une pause avant le prochain bloc.';
+      'Le minuteur du prochain créneau démarre.';
 
   @override
   String get notificationBreakCompleteBody =>
-      'Votre prochain bloc de concentration est prêt.';
+      'Le minuteur du prochain créneau démarre.';
 
   @override
   String get accountTitle => 'Compte';

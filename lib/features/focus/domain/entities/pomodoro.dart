@@ -18,6 +18,7 @@ abstract class TimeBox with _$TimeBox {
     required String timeRange,
     required int durationSeconds,
     @Default(<int>[]) List<int> repeatWeekdays,
+    @Default('') String recurrenceId,
   }) = _TimeBox;
 
   static const List<TimeBox> defaultDay = [
@@ -79,6 +80,19 @@ abstract class TimeBox with _$TimeBox {
   }
 
   bool repeatsOn(int weekday) => repeatWeekdays.contains(weekday);
+
+  /// 반복 시리즈를 영구 중단할 때 저장하는 안정적인 키.
+  ///
+  /// recurrenceId가 없던 구버전 데이터는 제목/시간/요일 지문으로
+  /// 식별한다. 새로 만드는 반복 카드는 recurrenceId를 가지므로 같은
+  /// 내용의 카드를 나중에 다시 만들어도 과거 삭제 기록과 충돌하지 않는다.
+  String get recurrenceCancellationKey {
+    if (recurrenceId.isNotEmpty) {
+      return 'id:$recurrenceId';
+    }
+    final weekdays = [...repeatWeekdays]..sort();
+    return 'legacy:${title.trim().toLowerCase()}|$timeRange|${weekdays.join(',')}';
+  }
 
   static int? _clockMinutes(String value) {
     final match = RegExp(r'^\s*(\d{1,2}):(\d{2})\s*$').firstMatch(value);
@@ -150,6 +164,7 @@ abstract class Pomodoro with _$Pomodoro {
     @Default('') String currentTimeBoxTimeRange,
     @Default(<TimeBox>[]) List<TimeBox> timeBoxes,
     @Default('') String activeTimeBoxId,
+    @Default(<String>[]) List<String> cancelledRecurrenceKeys,
   }) = _Pomodoro;
 
   factory Pomodoro.initial() => const Pomodoro(remainingTime: 0);

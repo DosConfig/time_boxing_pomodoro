@@ -140,6 +140,16 @@ void main() {
     await tester.pump();
 
     expect(dragStarted, isTrue);
+    final feedbackRect = tester.getRect(
+      find.byKey(const ValueKey('timeBoxDragFeedback-deep-work')),
+    );
+    final pointerPosition =
+        tester.getCenter(find.text('Deep work').first) + const Offset(0, 30);
+    expect(
+      feedbackRect.contains(pointerPosition),
+      isTrue,
+      reason: 'the compact drag preview should stay under the thumb',
+    );
     await gesture.up();
     await tester.pumpAndSettle();
   });

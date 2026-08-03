@@ -254,7 +254,7 @@ final class PomodoroControllerProvider
 }
 
 String _$pomodoroControllerHash() =>
-    r'73449706cdf5b60461308c52d8e400e53ea124f3';
+    r'f8f133c4ca6be68c0e3d6578c350d0ad38f7d288';
 
 abstract class _$PomodoroController extends $Notifier<Pomodoro> {
   Pomodoro build();
