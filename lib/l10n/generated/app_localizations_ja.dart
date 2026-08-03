@@ -475,7 +475,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get carryOverPreviousReminders => '前回のリマインダーを取り込む';
 
   @override
-  String get carryOverPreviousSchedule => '前回の予定を取り込む';
+  String get carryOverPreviousSchedule => '最近のタイムボックスを読み込む';
 
   @override
   String get importSelected => '選択した項目を取り込む';

@@ -222,48 +222,51 @@ void main() {
       expect(cloudDataSource.savedPlans.last, restored);
     });
 
-    test('injects recurring boxes even when today already has content', () async {
-      final fallback = Pomodoro.initial();
-      final todayPlan = Pomodoro.initial().copyWith(
-        brainDump: const ['Existing note'],
-        timeBoxes: const [
-          TimeBox(
-            id: 'today-box',
-            title: 'Existing box',
-            timeRange: '11:00-11:30',
-            durationSeconds: 30 * 60,
-          ),
-        ],
-      );
-      final previousPlan = Pomodoro.initial().copyWith(
-        timeBoxes: [
-          TimeBox(
-            id: 'box-standup',
-            title: 'Standup',
-            timeRange: '09:00-09:30',
-            durationSeconds: 30 * 60,
-            repeatWeekdays: [DateTime.now().weekday],
-          ),
-        ],
-      );
-      final localDataSource = _FakeLocalDataSource(
-        todayPlan,
-        previousPlan: previousPlan,
-      );
-      final cloudDataSource = _FakeCloudDataSource();
-      final repository = PomodoroRepositoryImpl(
-        localDataSource,
-        cloudDataSource,
-      );
+    test(
+      'injects recurring boxes even when today already has content',
+      () async {
+        final fallback = Pomodoro.initial();
+        final todayPlan = Pomodoro.initial().copyWith(
+          brainDump: const ['Existing note'],
+          timeBoxes: const [
+            TimeBox(
+              id: 'today-box',
+              title: 'Existing box',
+              timeRange: '11:00-11:30',
+              durationSeconds: 30 * 60,
+            ),
+          ],
+        );
+        final previousPlan = Pomodoro.initial().copyWith(
+          timeBoxes: [
+            TimeBox(
+              id: 'box-standup',
+              title: 'Standup',
+              timeRange: '09:00-09:30',
+              durationSeconds: 30 * 60,
+              repeatWeekdays: [DateTime.now().weekday],
+            ),
+          ],
+        );
+        final localDataSource = _FakeLocalDataSource(
+          todayPlan,
+          previousPlan: previousPlan,
+        );
+        final cloudDataSource = _FakeCloudDataSource();
+        final repository = PomodoroRepositoryImpl(
+          localDataSource,
+          cloudDataSource,
+        );
 
-      final restored = await repository.restoreTodayPlan(fallback);
+        final restored = await repository.restoreTodayPlan(fallback);
 
-      expect(restored.brainDump, ['Existing note']);
-      expect(
-        restored.timeBoxes.map((box) => box.title).toList(),
-        containsAll(['Existing box', 'Standup']),
-      );
-    });
+        expect(restored.brainDump, ['Existing note']);
+        expect(
+          restored.timeBoxes.map((box) => box.title).toList(),
+          containsAll(['Existing box', 'Standup']),
+        );
+      },
+    );
 
     test('injects recurring boxes when the device is offline', () async {
       final fallback = Pomodoro.initial();
@@ -330,6 +333,41 @@ void main() {
       expect(localDataSource.recurringAppliedDateKey, isNotNull);
       expect(second.timeBoxes.where((box) => box.title == 'Standup'), isEmpty);
     });
+
+    test(
+      'does not revive a recurring series after permanent deletion',
+      () async {
+        final fallback = Pomodoro.initial();
+        final todayPlan = fallback.copyWith(
+          cancelledRecurrenceKeys: const ['id:daily-standup'],
+        );
+        final previousPlan = fallback.copyWith(
+          timeBoxes: [
+            TimeBox(
+              id: 'box-standup',
+              title: 'Standup',
+              timeRange: '09:00-09:30',
+              durationSeconds: 30 * 60,
+              repeatWeekdays: [DateTime.now().weekday],
+              recurrenceId: 'daily-standup',
+            ),
+          ],
+        );
+        final localDataSource = _FakeLocalDataSource(
+          todayPlan,
+          previousPlan: previousPlan,
+        );
+        final repository = PomodoroRepositoryImpl(
+          localDataSource,
+          _FakeCloudDataSource(),
+        );
+
+        final restored = await repository.restoreTodayPlan(fallback);
+
+        expect(restored.timeBoxes, isEmpty);
+        expect(restored.cancelledRecurrenceKeys, contains('id:daily-standup'));
+      },
+    );
 
     test(
       'does not create an empty plan when cloud cannot be checked',

@@ -1064,12 +1064,17 @@ class PomodoroController extends _$PomodoroController
       durationSeconds,
       stepMinutes: durationStepMinutes,
     );
+    final uniqueId = DateTime.now().microsecondsSinceEpoch;
+    final normalizedRepeatWeekdays = _normalizedWeekdays(repeatWeekdays);
     final nextBox = TimeBox(
-      id: 'box-${DateTime.now().microsecondsSinceEpoch}',
+      id: 'box-$uniqueId',
       title: title.trim().isEmpty ? 'New time box' : title.trim(),
       timeRange: _formatTimeRange(startMinutes, normalizedDuration),
       durationSeconds: normalizedDuration,
-      repeatWeekdays: _normalizedWeekdays(repeatWeekdays),
+      repeatWeekdays: normalizedRepeatWeekdays,
+      recurrenceId: normalizedRepeatWeekdays.isEmpty
+          ? ''
+          : 'recurrence-$uniqueId',
     );
     boxes.add(nextBox);
     _sortTimeBoxes(boxes);
@@ -1111,6 +1116,7 @@ class PomodoroController extends _$PomodoroController
       return;
     }
 
+    final removingBox = boxes[removeIndex];
     final removingActiveBox = id == state.activeTimeBoxId;
     if (removingActiveBox &&
         (state.status == PomodoroStatus.running ||
@@ -1119,6 +1125,12 @@ class PomodoroController extends _$PomodoroController
     }
 
     boxes.removeAt(removeIndex);
+    final cancelledRecurrenceKeys = <String>{
+      ...state.cancelledRecurrenceKeys,
+      if (removingBox.repeatWeekdays.isNotEmpty ||
+          removingBox.recurrenceId.isNotEmpty)
+        removingBox.recurrenceCancellationKey,
+    }.toList()..sort();
 
     if (boxes.isEmpty) {
       state = state.copyWith(
@@ -1130,13 +1142,17 @@ class PomodoroController extends _$PomodoroController
         remainingTime: 0,
         status: PomodoroStatus.idle,
         phase: PomodoroPhase.focus,
+        cancelledRecurrenceKeys: cancelledRecurrenceKeys,
       );
       repository.updatePomodoro(state);
       return;
     }
 
     if (!removingActiveBox) {
-      state = state.copyWith(timeBoxes: boxes);
+      state = state.copyWith(
+        timeBoxes: boxes,
+        cancelledRecurrenceKeys: cancelledRecurrenceKeys,
+      );
       repository.updatePomodoro(state);
       return;
     }
@@ -1153,6 +1169,7 @@ class PomodoroController extends _$PomodoroController
       remainingTime: remainingTime,
       status: PomodoroStatus.idle,
       phase: PomodoroPhase.focus,
+      cancelledRecurrenceKeys: cancelledRecurrenceKeys,
     );
     repository.updatePomodoro(state);
   }
@@ -1197,7 +1214,16 @@ class PomodoroController extends _$PomodoroController
           ).startMinutes;
     final trimmedTitle = title?.trim();
     final currentDuration = _durationForTimeBox(boxes[index]);
-    final nextBox = boxes[index].copyWith(
+    final previousBox = boxes[index];
+    final normalizedRepeatWeekdays = repeatWeekdays == null
+        ? previousBox.repeatWeekdays
+        : _normalizedWeekdays(repeatWeekdays);
+    final recurrenceStopped =
+        previousBox.repeatWeekdays.isNotEmpty &&
+        normalizedRepeatWeekdays.isEmpty;
+    final recurrenceStarted =
+        previousBox.recurrenceId.isEmpty && normalizedRepeatWeekdays.isNotEmpty;
+    final nextBox = previousBox.copyWith(
       title: trimmedTitle == null || trimmedTitle.isEmpty
           ? boxes[index].title
           : trimmedTitle,
@@ -1205,9 +1231,12 @@ class PomodoroController extends _$PomodoroController
           ? boxes[index].timeRange
           : _formatTimeRange(nextStart, currentDuration),
       durationSeconds: currentDuration,
-      repeatWeekdays: repeatWeekdays == null
-          ? boxes[index].repeatWeekdays
-          : _normalizedWeekdays(repeatWeekdays),
+      repeatWeekdays: normalizedRepeatWeekdays,
+      recurrenceId: recurrenceStopped
+          ? ''
+          : recurrenceStarted
+          ? 'recurrence-${DateTime.now().microsecondsSinceEpoch}'
+          : previousBox.recurrenceId,
     );
     boxes[index] = nextBox;
     if (_timeBoxOverlapsAny(boxes, box: nextBox, ignoreId: id)) {
@@ -1217,8 +1246,13 @@ class PomodoroController extends _$PomodoroController
     final remainingTime = _remainingForTimeBox(nextBox);
 
     final updatingActiveBox = id == state.activeTimeBoxId;
+    final cancelledRecurrenceKeys = <String>{
+      ...state.cancelledRecurrenceKeys,
+      if (recurrenceStopped) previousBox.recurrenceCancellationKey,
+    }.toList()..sort();
     state = state.copyWith(
       timeBoxes: boxes,
+      cancelledRecurrenceKeys: cancelledRecurrenceKeys,
       currentTimeBoxTitle: updatingActiveBox
           ? _titleForTimeBox(nextBox)
           : state.currentTimeBoxTitle,
@@ -1466,6 +1500,56 @@ class PomodoroController extends _$PomodoroController
     return loadPlanForDateUseCase(dateKey, Pomodoro.initial());
   }
 
+  /// 최근 날짜부터 역순으로 조회해 중복되지 않는 타임박스를 최대 [limit]개
+  /// 반환한다. 오늘 일정은 제외하고 제목+시간대가 같은 카드는 한 번만 보인다.
+  Future<List<TimeBox>> loadRecentTimeBoxes({
+    int limit = 20,
+    int days = 30,
+  }) async {
+    if (limit <= 0 || days <= 0) {
+      return const [];
+    }
+
+    final summaries = await repository.loadDailyPlanHistory(days: days);
+    final todayKey = _dateKey(DateTime.now());
+    final dateKeys =
+        summaries
+            .map((summary) => summary.dateKey)
+            .where((dateKey) => dateKey.compareTo(todayKey) < 0)
+            .toSet()
+            .toList()
+          ..sort((a, b) => b.compareTo(a));
+    final recent = <TimeBox>[];
+    final seen = <String>{};
+
+    for (final dateKey in dateKeys) {
+      final plan = await repository.loadPlanForDate(
+        dateKey,
+        Pomodoro.initial(),
+      );
+      if (plan == null) {
+        continue;
+      }
+      final boxes = [...plan.timeBoxes]
+        ..sort((a, b) {
+          final startA = a.startMinutes ?? -1;
+          final startB = b.startMinutes ?? -1;
+          return startB.compareTo(startA);
+        });
+      for (final box in boxes) {
+        final fingerprint = '${box.timeRange}.${box.title.trim()}';
+        if (!seen.add(fingerprint)) {
+          continue;
+        }
+        recent.add(box);
+        if (recent.length >= limit) {
+          return recent;
+        }
+      }
+    }
+    return recent;
+  }
+
   /// 선택형 가져오기: 텍스트 항목들을 카테고리 규칙에 맞게 병합한다.
   /// 우선순위는 빈 슬롯 채움(최대 3개), 덤프/기억할 것은 중복 없는 병합.
   bool importDailyPlanItems(
@@ -1534,7 +1618,17 @@ class PomodoroController extends _$PomodoroController
         continue;
       }
       existingFingerprints.add(fingerprint);
-      nextBoxes.add(box.copyWith(id: _copiedTimeBoxId(box.id)));
+      final copiedId = _copiedTimeBoxId(box.id);
+      final copied = box.copyWith(
+        id: copiedId,
+        recurrenceId: box.repeatWeekdays.isEmpty
+            ? ''
+            : 'recurrence-${DateTime.now().microsecondsSinceEpoch}-${nextBoxes.length}',
+      );
+      if (_timeBoxOverlapsAny(nextBoxes, box: copied, ignoreId: copied.id)) {
+        continue;
+      }
+      nextBoxes.add(copied);
     }
     if (nextBoxes.length == state.timeBoxes.length) {
       return false;

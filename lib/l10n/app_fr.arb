@@ -147,7 +147,7 @@
   "carryOverPreviousPriorities": "Reprendre les priorités",
   "carryOverPreviousBrainDump": "Reprendre le brain dump",
   "carryOverPreviousReminders": "Reprendre les rappels",
-  "carryOverPreviousSchedule": "Reprendre le planning",
+  "carryOverPreviousSchedule": "Importer les blocs de temps récents",
   "importSelected": "Importer la sélection",
   "nothingToImport": "Rien de nouveau à importer.",
   "noItemsForDay": "Aucun enregistrement pour ce jour.",

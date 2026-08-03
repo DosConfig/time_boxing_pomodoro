@@ -147,7 +147,7 @@
   "carryOverPreviousPriorities": "导入上次优先级",
   "carryOverPreviousBrainDump": "导入上次脑内清单",
   "carryOverPreviousReminders": "导入上次提醒",
-  "carryOverPreviousSchedule": "导入上次日程",
+  "carryOverPreviousSchedule": "导入最近的时间块",
   "importSelected": "导入所选",
   "nothingToImport": "没有可导入的新项目。",
   "noItemsForDay": "这一天没有记录。",

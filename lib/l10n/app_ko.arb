@@ -147,7 +147,7 @@
   "carryOverPreviousPriorities": "이전 우선순위 가져오기",
   "carryOverPreviousBrainDump": "이전 브레인덤프 가져오기",
   "carryOverPreviousReminders": "이전 기억할 것 가져오기",
-  "carryOverPreviousSchedule": "이전 스케줄 가져오기",
+  "carryOverPreviousSchedule": "최근 타임박스 불러오기",
   "importSelected": "선택 항목 가져오기",
   "nothingToImport": "가져올 새 항목이 없습니다.",
   "noItemsForDay": "이 날의 기록이 없습니다.",

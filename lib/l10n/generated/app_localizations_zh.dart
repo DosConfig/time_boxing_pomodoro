@@ -475,7 +475,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get carryOverPreviousReminders => '导入上次提醒';
 
   @override
-  String get carryOverPreviousSchedule => '导入上次日程';
+  String get carryOverPreviousSchedule => '导入最近的时间块';
 
   @override
   String get importSelected => '导入所选';

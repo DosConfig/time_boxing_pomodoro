@@ -496,7 +496,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get carryOverPreviousReminders => 'Reprendre les rappels';
 
   @override
-  String get carryOverPreviousSchedule => 'Reprendre le planning';
+  String get carryOverPreviousSchedule => 'Importer les blocs de temps récents';
 
   @override
   String get importSelected => 'Importer la sélection';

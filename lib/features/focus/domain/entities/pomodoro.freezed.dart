@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$TimeBox {
 
- String get id; String get title; String get timeRange; int get durationSeconds; List<int> get repeatWeekdays;
+ String get id; String get title; String get timeRange; int get durationSeconds; List<int> get repeatWeekdays; String get recurrenceId;
 /// Create a copy of TimeBox
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $TimeBoxCopyWith<TimeBox> get copyWith => _$TimeBoxCopyWithImpl<TimeBox>(this as
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is TimeBox&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.timeRange, timeRange) || other.timeRange == timeRange)&&(identical(other.durationSeconds, durationSeconds) || other.durationSeconds == durationSeconds)&&const DeepCollectionEquality().equals(other.repeatWeekdays, repeatWeekdays));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TimeBox&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.timeRange, timeRange) || other.timeRange == timeRange)&&(identical(other.durationSeconds, durationSeconds) || other.durationSeconds == durationSeconds)&&const DeepCollectionEquality().equals(other.repeatWeekdays, repeatWeekdays)&&(identical(other.recurrenceId, recurrenceId) || other.recurrenceId == recurrenceId));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,title,timeRange,durationSeconds,const DeepCollectionEquality().hash(repeatWeekdays));
+int get hashCode => Object.hash(runtimeType,id,title,timeRange,durationSeconds,const DeepCollectionEquality().hash(repeatWeekdays),recurrenceId);
 
 @override
 String toString() {
-  return 'TimeBox(id: $id, title: $title, timeRange: $timeRange, durationSeconds: $durationSeconds, repeatWeekdays: $repeatWeekdays)';
+  return 'TimeBox(id: $id, title: $title, timeRange: $timeRange, durationSeconds: $durationSeconds, repeatWeekdays: $repeatWeekdays, recurrenceId: $recurrenceId)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $TimeBoxCopyWith<$Res>  {
   factory $TimeBoxCopyWith(TimeBox value, $Res Function(TimeBox) _then) = _$TimeBoxCopyWithImpl;
 @useResult
 $Res call({
- String id, String title, String timeRange, int durationSeconds, List<int> repeatWeekdays
+ String id, String title, String timeRange, int durationSeconds, List<int> repeatWeekdays, String recurrenceId
 });
 
 
@@ -62,14 +62,15 @@ class _$TimeBoxCopyWithImpl<$Res>
 
 /// Create a copy of TimeBox
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? timeRange = null,Object? durationSeconds = null,Object? repeatWeekdays = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? timeRange = null,Object? durationSeconds = null,Object? repeatWeekdays = null,Object? recurrenceId = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String,timeRange: null == timeRange ? _self.timeRange : timeRange // ignore: cast_nullable_to_non_nullable
 as String,durationSeconds: null == durationSeconds ? _self.durationSeconds : durationSeconds // ignore: cast_nullable_to_non_nullable
 as int,repeatWeekdays: null == repeatWeekdays ? _self.repeatWeekdays : repeatWeekdays // ignore: cast_nullable_to_non_nullable
-as List<int>,
+as List<int>,recurrenceId: null == recurrenceId ? _self.recurrenceId : recurrenceId // ignore: cast_nullable_to_non_nullable
+as String,
   ));
 }
 
@@ -154,10 +155,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String title,  String timeRange,  int durationSeconds,  List<int> repeatWeekdays)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String title,  String timeRange,  int durationSeconds,  List<int> repeatWeekdays,  String recurrenceId)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _TimeBox() when $default != null:
-return $default(_that.id,_that.title,_that.timeRange,_that.durationSeconds,_that.repeatWeekdays);case _:
+return $default(_that.id,_that.title,_that.timeRange,_that.durationSeconds,_that.repeatWeekdays,_that.recurrenceId);case _:
   return orElse();
 
 }
@@ -175,10 +176,10 @@ return $default(_that.id,_that.title,_that.timeRange,_that.durationSeconds,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String title,  String timeRange,  int durationSeconds,  List<int> repeatWeekdays)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String title,  String timeRange,  int durationSeconds,  List<int> repeatWeekdays,  String recurrenceId)  $default,) {final _that = this;
 switch (_that) {
 case _TimeBox():
-return $default(_that.id,_that.title,_that.timeRange,_that.durationSeconds,_that.repeatWeekdays);case _:
+return $default(_that.id,_that.title,_that.timeRange,_that.durationSeconds,_that.repeatWeekdays,_that.recurrenceId);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -195,10 +196,10 @@ return $default(_that.id,_that.title,_that.timeRange,_that.durationSeconds,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String title,  String timeRange,  int durationSeconds,  List<int> repeatWeekdays)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String title,  String timeRange,  int durationSeconds,  List<int> repeatWeekdays,  String recurrenceId)?  $default,) {final _that = this;
 switch (_that) {
 case _TimeBox() when $default != null:
-return $default(_that.id,_that.title,_that.timeRange,_that.durationSeconds,_that.repeatWeekdays);case _:
+return $default(_that.id,_that.title,_that.timeRange,_that.durationSeconds,_that.repeatWeekdays,_that.recurrenceId);case _:
   return null;
 
 }
@@ -210,7 +211,7 @@ return $default(_that.id,_that.title,_that.timeRange,_that.durationSeconds,_that
 
 
 class _TimeBox extends TimeBox {
-  const _TimeBox({required this.id, required this.title, required this.timeRange, required this.durationSeconds, final  List<int> repeatWeekdays = const <int>[]}): _repeatWeekdays = repeatWeekdays,super._();
+  const _TimeBox({required this.id, required this.title, required this.timeRange, required this.durationSeconds, final  List<int> repeatWeekdays = const <int>[], this.recurrenceId = ''}): _repeatWeekdays = repeatWeekdays,super._();
   
 
 @override final  String id;
@@ -224,6 +225,7 @@ class _TimeBox extends TimeBox {
   return EqualUnmodifiableListView(_repeatWeekdays);
 }
 
+@override@JsonKey() final  String recurrenceId;
 
 /// Create a copy of TimeBox
 /// with the given fields replaced by the non-null parameter values.
@@ -235,16 +237,16 @@ _$TimeBoxCopyWith<_TimeBox> get copyWith => __$TimeBoxCopyWithImpl<_TimeBox>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _TimeBox&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.timeRange, timeRange) || other.timeRange == timeRange)&&(identical(other.durationSeconds, durationSeconds) || other.durationSeconds == durationSeconds)&&const DeepCollectionEquality().equals(other._repeatWeekdays, _repeatWeekdays));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _TimeBox&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.timeRange, timeRange) || other.timeRange == timeRange)&&(identical(other.durationSeconds, durationSeconds) || other.durationSeconds == durationSeconds)&&const DeepCollectionEquality().equals(other._repeatWeekdays, _repeatWeekdays)&&(identical(other.recurrenceId, recurrenceId) || other.recurrenceId == recurrenceId));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,title,timeRange,durationSeconds,const DeepCollectionEquality().hash(_repeatWeekdays));
+int get hashCode => Object.hash(runtimeType,id,title,timeRange,durationSeconds,const DeepCollectionEquality().hash(_repeatWeekdays),recurrenceId);
 
 @override
 String toString() {
-  return 'TimeBox(id: $id, title: $title, timeRange: $timeRange, durationSeconds: $durationSeconds, repeatWeekdays: $repeatWeekdays)';
+  return 'TimeBox(id: $id, title: $title, timeRange: $timeRange, durationSeconds: $durationSeconds, repeatWeekdays: $repeatWeekdays, recurrenceId: $recurrenceId)';
 }
 
 
@@ -255,7 +257,7 @@ abstract mixin class _$TimeBoxCopyWith<$Res> implements $TimeBoxCopyWith<$Res> {
   factory _$TimeBoxCopyWith(_TimeBox value, $Res Function(_TimeBox) _then) = __$TimeBoxCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String title, String timeRange, int durationSeconds, List<int> repeatWeekdays
+ String id, String title, String timeRange, int durationSeconds, List<int> repeatWeekdays, String recurrenceId
 });
 
 
@@ -272,14 +274,15 @@ class __$TimeBoxCopyWithImpl<$Res>
 
 /// Create a copy of TimeBox
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? timeRange = null,Object? durationSeconds = null,Object? repeatWeekdays = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? timeRange = null,Object? durationSeconds = null,Object? repeatWeekdays = null,Object? recurrenceId = null,}) {
   return _then(_TimeBox(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String,timeRange: null == timeRange ? _self.timeRange : timeRange // ignore: cast_nullable_to_non_nullable
 as String,durationSeconds: null == durationSeconds ? _self.durationSeconds : durationSeconds // ignore: cast_nullable_to_non_nullable
 as int,repeatWeekdays: null == repeatWeekdays ? _self._repeatWeekdays : repeatWeekdays // ignore: cast_nullable_to_non_nullable
-as List<int>,
+as List<int>,recurrenceId: null == recurrenceId ? _self.recurrenceId : recurrenceId // ignore: cast_nullable_to_non_nullable
+as String,
   ));
 }
 
@@ -579,7 +582,7 @@ as String,
 /// @nodoc
 mixin _$Pomodoro {
 
- int get workDuration; int get breakDuration; int get longBreakDuration; int get sessionsUntilLongBreak; int get remainingTime; int get completedSessions; PomodoroStatus get status; PomodoroPhase get phase; PomodoroPreset get preset; bool get autoStartBreaks; bool get autoStartFocus; bool get notificationsEnabled; bool get soundEnabled; List<String> get brainDump; List<String> get reminders; List<String> get topPriorities; String get currentTimeBoxTitle; String get currentTimeBoxTimeRange; List<TimeBox> get timeBoxes; String get activeTimeBoxId;
+ int get workDuration; int get breakDuration; int get longBreakDuration; int get sessionsUntilLongBreak; int get remainingTime; int get completedSessions; PomodoroStatus get status; PomodoroPhase get phase; PomodoroPreset get preset; bool get autoStartBreaks; bool get autoStartFocus; bool get notificationsEnabled; bool get soundEnabled; List<String> get brainDump; List<String> get reminders; List<String> get topPriorities; String get currentTimeBoxTitle; String get currentTimeBoxTimeRange; List<TimeBox> get timeBoxes; String get activeTimeBoxId; List<String> get cancelledRecurrenceKeys;
 /// Create a copy of Pomodoro
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -590,16 +593,16 @@ $PomodoroCopyWith<Pomodoro> get copyWith => _$PomodoroCopyWithImpl<Pomodoro>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Pomodoro&&(identical(other.workDuration, workDuration) || other.workDuration == workDuration)&&(identical(other.breakDuration, breakDuration) || other.breakDuration == breakDuration)&&(identical(other.longBreakDuration, longBreakDuration) || other.longBreakDuration == longBreakDuration)&&(identical(other.sessionsUntilLongBreak, sessionsUntilLongBreak) || other.sessionsUntilLongBreak == sessionsUntilLongBreak)&&(identical(other.remainingTime, remainingTime) || other.remainingTime == remainingTime)&&(identical(other.completedSessions, completedSessions) || other.completedSessions == completedSessions)&&(identical(other.status, status) || other.status == status)&&(identical(other.phase, phase) || other.phase == phase)&&(identical(other.preset, preset) || other.preset == preset)&&(identical(other.autoStartBreaks, autoStartBreaks) || other.autoStartBreaks == autoStartBreaks)&&(identical(other.autoStartFocus, autoStartFocus) || other.autoStartFocus == autoStartFocus)&&(identical(other.notificationsEnabled, notificationsEnabled) || other.notificationsEnabled == notificationsEnabled)&&(identical(other.soundEnabled, soundEnabled) || other.soundEnabled == soundEnabled)&&const DeepCollectionEquality().equals(other.brainDump, brainDump)&&const DeepCollectionEquality().equals(other.reminders, reminders)&&const DeepCollectionEquality().equals(other.topPriorities, topPriorities)&&(identical(other.currentTimeBoxTitle, currentTimeBoxTitle) || other.currentTimeBoxTitle == currentTimeBoxTitle)&&(identical(other.currentTimeBoxTimeRange, currentTimeBoxTimeRange) || other.currentTimeBoxTimeRange == currentTimeBoxTimeRange)&&const DeepCollectionEquality().equals(other.timeBoxes, timeBoxes)&&(identical(other.activeTimeBoxId, activeTimeBoxId) || other.activeTimeBoxId == activeTimeBoxId));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Pomodoro&&(identical(other.workDuration, workDuration) || other.workDuration == workDuration)&&(identical(other.breakDuration, breakDuration) || other.breakDuration == breakDuration)&&(identical(other.longBreakDuration, longBreakDuration) || other.longBreakDuration == longBreakDuration)&&(identical(other.sessionsUntilLongBreak, sessionsUntilLongBreak) || other.sessionsUntilLongBreak == sessionsUntilLongBreak)&&(identical(other.remainingTime, remainingTime) || other.remainingTime == remainingTime)&&(identical(other.completedSessions, completedSessions) || other.completedSessions == completedSessions)&&(identical(other.status, status) || other.status == status)&&(identical(other.phase, phase) || other.phase == phase)&&(identical(other.preset, preset) || other.preset == preset)&&(identical(other.autoStartBreaks, autoStartBreaks) || other.autoStartBreaks == autoStartBreaks)&&(identical(other.autoStartFocus, autoStartFocus) || other.autoStartFocus == autoStartFocus)&&(identical(other.notificationsEnabled, notificationsEnabled) || other.notificationsEnabled == notificationsEnabled)&&(identical(other.soundEnabled, soundEnabled) || other.soundEnabled == soundEnabled)&&const DeepCollectionEquality().equals(other.brainDump, brainDump)&&const DeepCollectionEquality().equals(other.reminders, reminders)&&const DeepCollectionEquality().equals(other.topPriorities, topPriorities)&&(identical(other.currentTimeBoxTitle, currentTimeBoxTitle) || other.currentTimeBoxTitle == currentTimeBoxTitle)&&(identical(other.currentTimeBoxTimeRange, currentTimeBoxTimeRange) || other.currentTimeBoxTimeRange == currentTimeBoxTimeRange)&&const DeepCollectionEquality().equals(other.timeBoxes, timeBoxes)&&(identical(other.activeTimeBoxId, activeTimeBoxId) || other.activeTimeBoxId == activeTimeBoxId)&&const DeepCollectionEquality().equals(other.cancelledRecurrenceKeys, cancelledRecurrenceKeys));
 }
 
 
 @override
-int get hashCode => Object.hashAll([runtimeType,workDuration,breakDuration,longBreakDuration,sessionsUntilLongBreak,remainingTime,completedSessions,status,phase,preset,autoStartBreaks,autoStartFocus,notificationsEnabled,soundEnabled,const DeepCollectionEquality().hash(brainDump),const DeepCollectionEquality().hash(reminders),const DeepCollectionEquality().hash(topPriorities),currentTimeBoxTitle,currentTimeBoxTimeRange,const DeepCollectionEquality().hash(timeBoxes),activeTimeBoxId]);
+int get hashCode => Object.hashAll([runtimeType,workDuration,breakDuration,longBreakDuration,sessionsUntilLongBreak,remainingTime,completedSessions,status,phase,preset,autoStartBreaks,autoStartFocus,notificationsEnabled,soundEnabled,const DeepCollectionEquality().hash(brainDump),const DeepCollectionEquality().hash(reminders),const DeepCollectionEquality().hash(topPriorities),currentTimeBoxTitle,currentTimeBoxTimeRange,const DeepCollectionEquality().hash(timeBoxes),activeTimeBoxId,const DeepCollectionEquality().hash(cancelledRecurrenceKeys)]);
 
 @override
 String toString() {
-  return 'Pomodoro(workDuration: $workDuration, breakDuration: $breakDuration, longBreakDuration: $longBreakDuration, sessionsUntilLongBreak: $sessionsUntilLongBreak, remainingTime: $remainingTime, completedSessions: $completedSessions, status: $status, phase: $phase, preset: $preset, autoStartBreaks: $autoStartBreaks, autoStartFocus: $autoStartFocus, notificationsEnabled: $notificationsEnabled, soundEnabled: $soundEnabled, brainDump: $brainDump, reminders: $reminders, topPriorities: $topPriorities, currentTimeBoxTitle: $currentTimeBoxTitle, currentTimeBoxTimeRange: $currentTimeBoxTimeRange, timeBoxes: $timeBoxes, activeTimeBoxId: $activeTimeBoxId)';
+  return 'Pomodoro(workDuration: $workDuration, breakDuration: $breakDuration, longBreakDuration: $longBreakDuration, sessionsUntilLongBreak: $sessionsUntilLongBreak, remainingTime: $remainingTime, completedSessions: $completedSessions, status: $status, phase: $phase, preset: $preset, autoStartBreaks: $autoStartBreaks, autoStartFocus: $autoStartFocus, notificationsEnabled: $notificationsEnabled, soundEnabled: $soundEnabled, brainDump: $brainDump, reminders: $reminders, topPriorities: $topPriorities, currentTimeBoxTitle: $currentTimeBoxTitle, currentTimeBoxTimeRange: $currentTimeBoxTimeRange, timeBoxes: $timeBoxes, activeTimeBoxId: $activeTimeBoxId, cancelledRecurrenceKeys: $cancelledRecurrenceKeys)';
 }
 
 
@@ -610,7 +613,7 @@ abstract mixin class $PomodoroCopyWith<$Res>  {
   factory $PomodoroCopyWith(Pomodoro value, $Res Function(Pomodoro) _then) = _$PomodoroCopyWithImpl;
 @useResult
 $Res call({
- int workDuration, int breakDuration, int longBreakDuration, int sessionsUntilLongBreak, int remainingTime, int completedSessions, PomodoroStatus status, PomodoroPhase phase, PomodoroPreset preset, bool autoStartBreaks, bool autoStartFocus, bool notificationsEnabled, bool soundEnabled, List<String> brainDump, List<String> reminders, List<String> topPriorities, String currentTimeBoxTitle, String currentTimeBoxTimeRange, List<TimeBox> timeBoxes, String activeTimeBoxId
+ int workDuration, int breakDuration, int longBreakDuration, int sessionsUntilLongBreak, int remainingTime, int completedSessions, PomodoroStatus status, PomodoroPhase phase, PomodoroPreset preset, bool autoStartBreaks, bool autoStartFocus, bool notificationsEnabled, bool soundEnabled, List<String> brainDump, List<String> reminders, List<String> topPriorities, String currentTimeBoxTitle, String currentTimeBoxTimeRange, List<TimeBox> timeBoxes, String activeTimeBoxId, List<String> cancelledRecurrenceKeys
 });
 
 
@@ -627,7 +630,7 @@ class _$PomodoroCopyWithImpl<$Res>
 
 /// Create a copy of Pomodoro
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? workDuration = null,Object? breakDuration = null,Object? longBreakDuration = null,Object? sessionsUntilLongBreak = null,Object? remainingTime = null,Object? completedSessions = null,Object? status = null,Object? phase = null,Object? preset = null,Object? autoStartBreaks = null,Object? autoStartFocus = null,Object? notificationsEnabled = null,Object? soundEnabled = null,Object? brainDump = null,Object? reminders = null,Object? topPriorities = null,Object? currentTimeBoxTitle = null,Object? currentTimeBoxTimeRange = null,Object? timeBoxes = null,Object? activeTimeBoxId = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? workDuration = null,Object? breakDuration = null,Object? longBreakDuration = null,Object? sessionsUntilLongBreak = null,Object? remainingTime = null,Object? completedSessions = null,Object? status = null,Object? phase = null,Object? preset = null,Object? autoStartBreaks = null,Object? autoStartFocus = null,Object? notificationsEnabled = null,Object? soundEnabled = null,Object? brainDump = null,Object? reminders = null,Object? topPriorities = null,Object? currentTimeBoxTitle = null,Object? currentTimeBoxTimeRange = null,Object? timeBoxes = null,Object? activeTimeBoxId = null,Object? cancelledRecurrenceKeys = null,}) {
   return _then(_self.copyWith(
 workDuration: null == workDuration ? _self.workDuration : workDuration // ignore: cast_nullable_to_non_nullable
 as int,breakDuration: null == breakDuration ? _self.breakDuration : breakDuration // ignore: cast_nullable_to_non_nullable
@@ -649,7 +652,8 @@ as List<String>,currentTimeBoxTitle: null == currentTimeBoxTitle ? _self.current
 as String,currentTimeBoxTimeRange: null == currentTimeBoxTimeRange ? _self.currentTimeBoxTimeRange : currentTimeBoxTimeRange // ignore: cast_nullable_to_non_nullable
 as String,timeBoxes: null == timeBoxes ? _self.timeBoxes : timeBoxes // ignore: cast_nullable_to_non_nullable
 as List<TimeBox>,activeTimeBoxId: null == activeTimeBoxId ? _self.activeTimeBoxId : activeTimeBoxId // ignore: cast_nullable_to_non_nullable
-as String,
+as String,cancelledRecurrenceKeys: null == cancelledRecurrenceKeys ? _self.cancelledRecurrenceKeys : cancelledRecurrenceKeys // ignore: cast_nullable_to_non_nullable
+as List<String>,
   ));
 }
 
@@ -734,10 +738,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int workDuration,  int breakDuration,  int longBreakDuration,  int sessionsUntilLongBreak,  int remainingTime,  int completedSessions,  PomodoroStatus status,  PomodoroPhase phase,  PomodoroPreset preset,  bool autoStartBreaks,  bool autoStartFocus,  bool notificationsEnabled,  bool soundEnabled,  List<String> brainDump,  List<String> reminders,  List<String> topPriorities,  String currentTimeBoxTitle,  String currentTimeBoxTimeRange,  List<TimeBox> timeBoxes,  String activeTimeBoxId)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int workDuration,  int breakDuration,  int longBreakDuration,  int sessionsUntilLongBreak,  int remainingTime,  int completedSessions,  PomodoroStatus status,  PomodoroPhase phase,  PomodoroPreset preset,  bool autoStartBreaks,  bool autoStartFocus,  bool notificationsEnabled,  bool soundEnabled,  List<String> brainDump,  List<String> reminders,  List<String> topPriorities,  String currentTimeBoxTitle,  String currentTimeBoxTimeRange,  List<TimeBox> timeBoxes,  String activeTimeBoxId,  List<String> cancelledRecurrenceKeys)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Pomodoro() when $default != null:
-return $default(_that.workDuration,_that.breakDuration,_that.longBreakDuration,_that.sessionsUntilLongBreak,_that.remainingTime,_that.completedSessions,_that.status,_that.phase,_that.preset,_that.autoStartBreaks,_that.autoStartFocus,_that.notificationsEnabled,_that.soundEnabled,_that.brainDump,_that.reminders,_that.topPriorities,_that.currentTimeBoxTitle,_that.currentTimeBoxTimeRange,_that.timeBoxes,_that.activeTimeBoxId);case _:
+return $default(_that.workDuration,_that.breakDuration,_that.longBreakDuration,_that.sessionsUntilLongBreak,_that.remainingTime,_that.completedSessions,_that.status,_that.phase,_that.preset,_that.autoStartBreaks,_that.autoStartFocus,_that.notificationsEnabled,_that.soundEnabled,_that.brainDump,_that.reminders,_that.topPriorities,_that.currentTimeBoxTitle,_that.currentTimeBoxTimeRange,_that.timeBoxes,_that.activeTimeBoxId,_that.cancelledRecurrenceKeys);case _:
   return orElse();
 
 }
@@ -755,10 +759,10 @@ return $default(_that.workDuration,_that.breakDuration,_that.longBreakDuration,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int workDuration,  int breakDuration,  int longBreakDuration,  int sessionsUntilLongBreak,  int remainingTime,  int completedSessions,  PomodoroStatus status,  PomodoroPhase phase,  PomodoroPreset preset,  bool autoStartBreaks,  bool autoStartFocus,  bool notificationsEnabled,  bool soundEnabled,  List<String> brainDump,  List<String> reminders,  List<String> topPriorities,  String currentTimeBoxTitle,  String currentTimeBoxTimeRange,  List<TimeBox> timeBoxes,  String activeTimeBoxId)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int workDuration,  int breakDuration,  int longBreakDuration,  int sessionsUntilLongBreak,  int remainingTime,  int completedSessions,  PomodoroStatus status,  PomodoroPhase phase,  PomodoroPreset preset,  bool autoStartBreaks,  bool autoStartFocus,  bool notificationsEnabled,  bool soundEnabled,  List<String> brainDump,  List<String> reminders,  List<String> topPriorities,  String currentTimeBoxTitle,  String currentTimeBoxTimeRange,  List<TimeBox> timeBoxes,  String activeTimeBoxId,  List<String> cancelledRecurrenceKeys)  $default,) {final _that = this;
 switch (_that) {
 case _Pomodoro():
-return $default(_that.workDuration,_that.breakDuration,_that.longBreakDuration,_that.sessionsUntilLongBreak,_that.remainingTime,_that.completedSessions,_that.status,_that.phase,_that.preset,_that.autoStartBreaks,_that.autoStartFocus,_that.notificationsEnabled,_that.soundEnabled,_that.brainDump,_that.reminders,_that.topPriorities,_that.currentTimeBoxTitle,_that.currentTimeBoxTimeRange,_that.timeBoxes,_that.activeTimeBoxId);case _:
+return $default(_that.workDuration,_that.breakDuration,_that.longBreakDuration,_that.sessionsUntilLongBreak,_that.remainingTime,_that.completedSessions,_that.status,_that.phase,_that.preset,_that.autoStartBreaks,_that.autoStartFocus,_that.notificationsEnabled,_that.soundEnabled,_that.brainDump,_that.reminders,_that.topPriorities,_that.currentTimeBoxTitle,_that.currentTimeBoxTimeRange,_that.timeBoxes,_that.activeTimeBoxId,_that.cancelledRecurrenceKeys);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -775,10 +779,10 @@ return $default(_that.workDuration,_that.breakDuration,_that.longBreakDuration,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int workDuration,  int breakDuration,  int longBreakDuration,  int sessionsUntilLongBreak,  int remainingTime,  int completedSessions,  PomodoroStatus status,  PomodoroPhase phase,  PomodoroPreset preset,  bool autoStartBreaks,  bool autoStartFocus,  bool notificationsEnabled,  bool soundEnabled,  List<String> brainDump,  List<String> reminders,  List<String> topPriorities,  String currentTimeBoxTitle,  String currentTimeBoxTimeRange,  List<TimeBox> timeBoxes,  String activeTimeBoxId)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int workDuration,  int breakDuration,  int longBreakDuration,  int sessionsUntilLongBreak,  int remainingTime,  int completedSessions,  PomodoroStatus status,  PomodoroPhase phase,  PomodoroPreset preset,  bool autoStartBreaks,  bool autoStartFocus,  bool notificationsEnabled,  bool soundEnabled,  List<String> brainDump,  List<String> reminders,  List<String> topPriorities,  String currentTimeBoxTitle,  String currentTimeBoxTimeRange,  List<TimeBox> timeBoxes,  String activeTimeBoxId,  List<String> cancelledRecurrenceKeys)?  $default,) {final _that = this;
 switch (_that) {
 case _Pomodoro() when $default != null:
-return $default(_that.workDuration,_that.breakDuration,_that.longBreakDuration,_that.sessionsUntilLongBreak,_that.remainingTime,_that.completedSessions,_that.status,_that.phase,_that.preset,_that.autoStartBreaks,_that.autoStartFocus,_that.notificationsEnabled,_that.soundEnabled,_that.brainDump,_that.reminders,_that.topPriorities,_that.currentTimeBoxTitle,_that.currentTimeBoxTimeRange,_that.timeBoxes,_that.activeTimeBoxId);case _:
+return $default(_that.workDuration,_that.breakDuration,_that.longBreakDuration,_that.sessionsUntilLongBreak,_that.remainingTime,_that.completedSessions,_that.status,_that.phase,_that.preset,_that.autoStartBreaks,_that.autoStartFocus,_that.notificationsEnabled,_that.soundEnabled,_that.brainDump,_that.reminders,_that.topPriorities,_that.currentTimeBoxTitle,_that.currentTimeBoxTimeRange,_that.timeBoxes,_that.activeTimeBoxId,_that.cancelledRecurrenceKeys);case _:
   return null;
 
 }
@@ -790,7 +794,7 @@ return $default(_that.workDuration,_that.breakDuration,_that.longBreakDuration,_
 
 
 class _Pomodoro extends Pomodoro {
-  const _Pomodoro({this.workDuration = 25 * 60, this.breakDuration = 5 * 60, this.longBreakDuration = 15 * 60, this.sessionsUntilLongBreak = 5, this.remainingTime = 25 * 60, this.completedSessions = 0, this.status = PomodoroStatus.idle, this.phase = PomodoroPhase.focus, this.preset = PomodoroPreset.classic, this.autoStartBreaks = true, this.autoStartFocus = false, this.notificationsEnabled = true, this.soundEnabled = true, final  List<String> brainDump = const [], final  List<String> reminders = const [], final  List<String> topPriorities = const ['', '', ''], this.currentTimeBoxTitle = '', this.currentTimeBoxTimeRange = '', final  List<TimeBox> timeBoxes = const <TimeBox>[], this.activeTimeBoxId = ''}): _brainDump = brainDump,_reminders = reminders,_topPriorities = topPriorities,_timeBoxes = timeBoxes,super._();
+  const _Pomodoro({this.workDuration = 25 * 60, this.breakDuration = 5 * 60, this.longBreakDuration = 15 * 60, this.sessionsUntilLongBreak = 5, this.remainingTime = 25 * 60, this.completedSessions = 0, this.status = PomodoroStatus.idle, this.phase = PomodoroPhase.focus, this.preset = PomodoroPreset.classic, this.autoStartBreaks = true, this.autoStartFocus = false, this.notificationsEnabled = true, this.soundEnabled = true, final  List<String> brainDump = const [], final  List<String> reminders = const [], final  List<String> topPriorities = const ['', '', ''], this.currentTimeBoxTitle = '', this.currentTimeBoxTimeRange = '', final  List<TimeBox> timeBoxes = const <TimeBox>[], this.activeTimeBoxId = '', final  List<String> cancelledRecurrenceKeys = const <String>[]}): _brainDump = brainDump,_reminders = reminders,_topPriorities = topPriorities,_timeBoxes = timeBoxes,_cancelledRecurrenceKeys = cancelledRecurrenceKeys,super._();
   
 
 @override@JsonKey() final  int workDuration;
@@ -837,6 +841,13 @@ class _Pomodoro extends Pomodoro {
 }
 
 @override@JsonKey() final  String activeTimeBoxId;
+ final  List<String> _cancelledRecurrenceKeys;
+@override@JsonKey() List<String> get cancelledRecurrenceKeys {
+  if (_cancelledRecurrenceKeys is EqualUnmodifiableListView) return _cancelledRecurrenceKeys;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_cancelledRecurrenceKeys);
+}
+
 
 /// Create a copy of Pomodoro
 /// with the given fields replaced by the non-null parameter values.
@@ -848,16 +859,16 @@ _$PomodoroCopyWith<_Pomodoro> get copyWith => __$PomodoroCopyWithImpl<_Pomodoro>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Pomodoro&&(identical(other.workDuration, workDuration) || other.workDuration == workDuration)&&(identical(other.breakDuration, breakDuration) || other.breakDuration == breakDuration)&&(identical(other.longBreakDuration, longBreakDuration) || other.longBreakDuration == longBreakDuration)&&(identical(other.sessionsUntilLongBreak, sessionsUntilLongBreak) || other.sessionsUntilLongBreak == sessionsUntilLongBreak)&&(identical(other.remainingTime, remainingTime) || other.remainingTime == remainingTime)&&(identical(other.completedSessions, completedSessions) || other.completedSessions == completedSessions)&&(identical(other.status, status) || other.status == status)&&(identical(other.phase, phase) || other.phase == phase)&&(identical(other.preset, preset) || other.preset == preset)&&(identical(other.autoStartBreaks, autoStartBreaks) || other.autoStartBreaks == autoStartBreaks)&&(identical(other.autoStartFocus, autoStartFocus) || other.autoStartFocus == autoStartFocus)&&(identical(other.notificationsEnabled, notificationsEnabled) || other.notificationsEnabled == notificationsEnabled)&&(identical(other.soundEnabled, soundEnabled) || other.soundEnabled == soundEnabled)&&const DeepCollectionEquality().equals(other._brainDump, _brainDump)&&const DeepCollectionEquality().equals(other._reminders, _reminders)&&const DeepCollectionEquality().equals(other._topPriorities, _topPriorities)&&(identical(other.currentTimeBoxTitle, currentTimeBoxTitle) || other.currentTimeBoxTitle == currentTimeBoxTitle)&&(identical(other.currentTimeBoxTimeRange, currentTimeBoxTimeRange) || other.currentTimeBoxTimeRange == currentTimeBoxTimeRange)&&const DeepCollectionEquality().equals(other._timeBoxes, _timeBoxes)&&(identical(other.activeTimeBoxId, activeTimeBoxId) || other.activeTimeBoxId == activeTimeBoxId));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Pomodoro&&(identical(other.workDuration, workDuration) || other.workDuration == workDuration)&&(identical(other.breakDuration, breakDuration) || other.breakDuration == breakDuration)&&(identical(other.longBreakDuration, longBreakDuration) || other.longBreakDuration == longBreakDuration)&&(identical(other.sessionsUntilLongBreak, sessionsUntilLongBreak) || other.sessionsUntilLongBreak == sessionsUntilLongBreak)&&(identical(other.remainingTime, remainingTime) || other.remainingTime == remainingTime)&&(identical(other.completedSessions, completedSessions) || other.completedSessions == completedSessions)&&(identical(other.status, status) || other.status == status)&&(identical(other.phase, phase) || other.phase == phase)&&(identical(other.preset, preset) || other.preset == preset)&&(identical(other.autoStartBreaks, autoStartBreaks) || other.autoStartBreaks == autoStartBreaks)&&(identical(other.autoStartFocus, autoStartFocus) || other.autoStartFocus == autoStartFocus)&&(identical(other.notificationsEnabled, notificationsEnabled) || other.notificationsEnabled == notificationsEnabled)&&(identical(other.soundEnabled, soundEnabled) || other.soundEnabled == soundEnabled)&&const DeepCollectionEquality().equals(other._brainDump, _brainDump)&&const DeepCollectionEquality().equals(other._reminders, _reminders)&&const DeepCollectionEquality().equals(other._topPriorities, _topPriorities)&&(identical(other.currentTimeBoxTitle, currentTimeBoxTitle) || other.currentTimeBoxTitle == currentTimeBoxTitle)&&(identical(other.currentTimeBoxTimeRange, currentTimeBoxTimeRange) || other.currentTimeBoxTimeRange == currentTimeBoxTimeRange)&&const DeepCollectionEquality().equals(other._timeBoxes, _timeBoxes)&&(identical(other.activeTimeBoxId, activeTimeBoxId) || other.activeTimeBoxId == activeTimeBoxId)&&const DeepCollectionEquality().equals(other._cancelledRecurrenceKeys, _cancelledRecurrenceKeys));
 }
 
 
 @override
-int get hashCode => Object.hashAll([runtimeType,workDuration,breakDuration,longBreakDuration,sessionsUntilLongBreak,remainingTime,completedSessions,status,phase,preset,autoStartBreaks,autoStartFocus,notificationsEnabled,soundEnabled,const DeepCollectionEquality().hash(_brainDump),const DeepCollectionEquality().hash(_reminders),const DeepCollectionEquality().hash(_topPriorities),currentTimeBoxTitle,currentTimeBoxTimeRange,const DeepCollectionEquality().hash(_timeBoxes),activeTimeBoxId]);
+int get hashCode => Object.hashAll([runtimeType,workDuration,breakDuration,longBreakDuration,sessionsUntilLongBreak,remainingTime,completedSessions,status,phase,preset,autoStartBreaks,autoStartFocus,notificationsEnabled,soundEnabled,const DeepCollectionEquality().hash(_brainDump),const DeepCollectionEquality().hash(_reminders),const DeepCollectionEquality().hash(_topPriorities),currentTimeBoxTitle,currentTimeBoxTimeRange,const DeepCollectionEquality().hash(_timeBoxes),activeTimeBoxId,const DeepCollectionEquality().hash(_cancelledRecurrenceKeys)]);
 
 @override
 String toString() {
-  return 'Pomodoro(workDuration: $workDuration, breakDuration: $breakDuration, longBreakDuration: $longBreakDuration, sessionsUntilLongBreak: $sessionsUntilLongBreak, remainingTime: $remainingTime, completedSessions: $completedSessions, status: $status, phase: $phase, preset: $preset, autoStartBreaks: $autoStartBreaks, autoStartFocus: $autoStartFocus, notificationsEnabled: $notificationsEnabled, soundEnabled: $soundEnabled, brainDump: $brainDump, reminders: $reminders, topPriorities: $topPriorities, currentTimeBoxTitle: $currentTimeBoxTitle, currentTimeBoxTimeRange: $currentTimeBoxTimeRange, timeBoxes: $timeBoxes, activeTimeBoxId: $activeTimeBoxId)';
+  return 'Pomodoro(workDuration: $workDuration, breakDuration: $breakDuration, longBreakDuration: $longBreakDuration, sessionsUntilLongBreak: $sessionsUntilLongBreak, remainingTime: $remainingTime, completedSessions: $completedSessions, status: $status, phase: $phase, preset: $preset, autoStartBreaks: $autoStartBreaks, autoStartFocus: $autoStartFocus, notificationsEnabled: $notificationsEnabled, soundEnabled: $soundEnabled, brainDump: $brainDump, reminders: $reminders, topPriorities: $topPriorities, currentTimeBoxTitle: $currentTimeBoxTitle, currentTimeBoxTimeRange: $currentTimeBoxTimeRange, timeBoxes: $timeBoxes, activeTimeBoxId: $activeTimeBoxId, cancelledRecurrenceKeys: $cancelledRecurrenceKeys)';
 }
 
 
@@ -868,7 +879,7 @@ abstract mixin class _$PomodoroCopyWith<$Res> implements $PomodoroCopyWith<$Res>
   factory _$PomodoroCopyWith(_Pomodoro value, $Res Function(_Pomodoro) _then) = __$PomodoroCopyWithImpl;
 @override @useResult
 $Res call({
- int workDuration, int breakDuration, int longBreakDuration, int sessionsUntilLongBreak, int remainingTime, int completedSessions, PomodoroStatus status, PomodoroPhase phase, PomodoroPreset preset, bool autoStartBreaks, bool autoStartFocus, bool notificationsEnabled, bool soundEnabled, List<String> brainDump, List<String> reminders, List<String> topPriorities, String currentTimeBoxTitle, String currentTimeBoxTimeRange, List<TimeBox> timeBoxes, String activeTimeBoxId
+ int workDuration, int breakDuration, int longBreakDuration, int sessionsUntilLongBreak, int remainingTime, int completedSessions, PomodoroStatus status, PomodoroPhase phase, PomodoroPreset preset, bool autoStartBreaks, bool autoStartFocus, bool notificationsEnabled, bool soundEnabled, List<String> brainDump, List<String> reminders, List<String> topPriorities, String currentTimeBoxTitle, String currentTimeBoxTimeRange, List<TimeBox> timeBoxes, String activeTimeBoxId, List<String> cancelledRecurrenceKeys
 });
 
 
@@ -885,7 +896,7 @@ class __$PomodoroCopyWithImpl<$Res>
 
 /// Create a copy of Pomodoro
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? workDuration = null,Object? breakDuration = null,Object? longBreakDuration = null,Object? sessionsUntilLongBreak = null,Object? remainingTime = null,Object? completedSessions = null,Object? status = null,Object? phase = null,Object? preset = null,Object? autoStartBreaks = null,Object? autoStartFocus = null,Object? notificationsEnabled = null,Object? soundEnabled = null,Object? brainDump = null,Object? reminders = null,Object? topPriorities = null,Object? currentTimeBoxTitle = null,Object? currentTimeBoxTimeRange = null,Object? timeBoxes = null,Object? activeTimeBoxId = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? workDuration = null,Object? breakDuration = null,Object? longBreakDuration = null,Object? sessionsUntilLongBreak = null,Object? remainingTime = null,Object? completedSessions = null,Object? status = null,Object? phase = null,Object? preset = null,Object? autoStartBreaks = null,Object? autoStartFocus = null,Object? notificationsEnabled = null,Object? soundEnabled = null,Object? brainDump = null,Object? reminders = null,Object? topPriorities = null,Object? currentTimeBoxTitle = null,Object? currentTimeBoxTimeRange = null,Object? timeBoxes = null,Object? activeTimeBoxId = null,Object? cancelledRecurrenceKeys = null,}) {
   return _then(_Pomodoro(
 workDuration: null == workDuration ? _self.workDuration : workDuration // ignore: cast_nullable_to_non_nullable
 as int,breakDuration: null == breakDuration ? _self.breakDuration : breakDuration // ignore: cast_nullable_to_non_nullable
@@ -907,7 +918,8 @@ as List<String>,currentTimeBoxTitle: null == currentTimeBoxTitle ? _self.current
 as String,currentTimeBoxTimeRange: null == currentTimeBoxTimeRange ? _self.currentTimeBoxTimeRange : currentTimeBoxTimeRange // ignore: cast_nullable_to_non_nullable
 as String,timeBoxes: null == timeBoxes ? _self._timeBoxes : timeBoxes // ignore: cast_nullable_to_non_nullable
 as List<TimeBox>,activeTimeBoxId: null == activeTimeBoxId ? _self.activeTimeBoxId : activeTimeBoxId // ignore: cast_nullable_to_non_nullable
-as String,
+as String,cancelledRecurrenceKeys: null == cancelledRecurrenceKeys ? _self._cancelledRecurrenceKeys : cancelledRecurrenceKeys // ignore: cast_nullable_to_non_nullable
+as List<String>,
   ));
 }
 
