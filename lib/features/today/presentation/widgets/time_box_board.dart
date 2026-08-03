@@ -869,7 +869,11 @@ class _DraggableTimeBoxCard extends StatelessWidget {
                 ),
               ),
             ),
-            childWhenDragging: Opacity(opacity: 0.22, child: child),
+            // 원래 위치는 잔상으로만 남기고 hit test에서는 제외한다. 높이가 큰
+            // 카드 안에서 한 슬롯만 움직여도 아래 DragTarget이 drop을 받아야 한다.
+            childWhenDragging: IgnorePointer(
+              child: Opacity(opacity: 0.22, child: child),
+            ),
             onDragStarted: onDragStarted,
             onDragUpdate: onDragUpdate,
             onDragEnd: (_) => onDragEnd(),
