@@ -627,11 +627,11 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get notificationFocusCompleteBody =>
-      'Tómate una pausa antes del siguiente bloque.';
+      'El temporizador del siguiente bloque programado está comenzando.';
 
   @override
   String get notificationBreakCompleteBody =>
-      'Tu siguiente bloque de concentración está listo.';
+      'El temporizador del siguiente bloque programado está comenzando.';
 
   @override
   String get accountTitle => 'Cuenta';

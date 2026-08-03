@@ -18,7 +18,9 @@ abstract class NativeTimerCopy with _$NativeTimerCopy {
     @Default('%@ remaining') String remainingTimeFormat,
     @Default('Focus complete') String focusCompleteTitle,
     @Default('Break complete') String breakCompleteTitle,
-    @Default('Step away before the next block.') String focusCompleteBody,
-    @Default('Your next focus block is ready.') String breakCompleteBody,
+    @Default('The next scheduled timer is starting.')
+    String focusCompleteBody,
+    @Default('The next scheduled timer is starting.')
+    String breakCompleteBody,
   }) = _NativeTimerCopy;
 }

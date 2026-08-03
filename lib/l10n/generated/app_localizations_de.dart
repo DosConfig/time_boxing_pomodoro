@@ -626,11 +626,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get notificationFocusCompleteBody =>
-      'Mach vor dem nächsten Block eine kurze Pause.';
+      'Der Timer für den nächsten Termin startet.';
 
   @override
   String get notificationBreakCompleteBody =>
-      'Dein nächster Fokusblock ist bereit.';
+      'Der Timer für den nächsten Termin startet.';
 
   @override
   String get accountTitle => 'Konto';

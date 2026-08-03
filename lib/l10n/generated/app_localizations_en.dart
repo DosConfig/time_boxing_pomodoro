@@ -621,10 +621,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notificationFocusCompleteBody =>
-      'Step away before the next block.';
+      'The next scheduled timer is starting.';
 
   @override
-  String get notificationBreakCompleteBody => 'Your next focus block is ready.';
+  String get notificationBreakCompleteBody =>
+      'The next scheduled timer is starting.';
 
   @override
   String get accountTitle => 'Account';

@@ -1239,13 +1239,13 @@ abstract class AppLocalizations {
   /// No description provided for @notificationFocusCompleteBody.
   ///
   /// In en, this message translates to:
-  /// **'Step away before the next block.'**
+  /// **'The next scheduled timer is starting.'**
   String get notificationFocusCompleteBody;
 
   /// No description provided for @notificationBreakCompleteBody.
   ///
   /// In en, this message translates to:
-  /// **'Your next focus block is ready.'**
+  /// **'The next scheduled timer is starting.'**
   String get notificationBreakCompleteBody;
 
   /// No description provided for @accountTitle.

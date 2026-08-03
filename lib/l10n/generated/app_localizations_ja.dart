@@ -602,10 +602,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get notificationBreakCompleteTitle => '休憩完了';
 
   @override
-  String get notificationFocusCompleteBody => '次のブロックの前に少し休みましょう。';
+  String get notificationFocusCompleteBody => '次のスケジュールのタイマーが始まります。';
 
   @override
-  String get notificationBreakCompleteBody => '次の集中ブロックの準備ができました。';
+  String get notificationBreakCompleteBody => '次のスケジュールのタイマーが始まります。';
 
   @override
   String get accountTitle => 'アカウント';
