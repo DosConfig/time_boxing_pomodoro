@@ -1500,54 +1500,13 @@ class PomodoroController extends _$PomodoroController
     return loadPlanForDateUseCase(dateKey, Pomodoro.initial());
   }
 
-  /// 최근 날짜부터 역순으로 조회해 중복되지 않는 타임박스를 최대 [limit]개
-  /// 반환한다. 오늘 일정은 제외하고 제목+시간대가 같은 카드는 한 번만 보인다.
-  Future<List<TimeBox>> loadRecentTimeBoxes({
-    int limit = 20,
-    int days = 30,
-  }) async {
-    if (limit <= 0 || days <= 0) {
-      return const [];
-    }
-
-    final summaries = await repository.loadDailyPlanHistory(days: days);
-    final todayKey = _dateKey(DateTime.now());
-    final dateKeys =
-        summaries
-            .map((summary) => summary.dateKey)
-            .where((dateKey) => dateKey.compareTo(todayKey) < 0)
-            .toSet()
-            .toList()
-          ..sort((a, b) => b.compareTo(a));
-    final recent = <TimeBox>[];
-    final seen = <String>{};
-
-    for (final dateKey in dateKeys) {
-      final plan = await repository.loadPlanForDate(
-        dateKey,
-        Pomodoro.initial(),
-      );
-      if (plan == null) {
-        continue;
-      }
-      final boxes = [...plan.timeBoxes]
-        ..sort((a, b) {
-          final startA = a.startMinutes ?? -1;
-          final startB = b.startMinutes ?? -1;
-          return startB.compareTo(startA);
-        });
-      for (final box in boxes) {
-        final fingerprint = '${box.timeRange}.${box.title.trim()}';
-        if (!seen.add(fingerprint)) {
-          continue;
-        }
-        recent.add(box);
-        if (recent.length >= limit) {
-          return recent;
-        }
-      }
-    }
-    return recent;
+  /// 타임박스 가져오기에서 사용하는 직전 달력 일자의 플랜.
+  ///
+  /// 최근 기록을 여러 날 합치지 않는다. 어제 플랜이 없으면 null을 반환해
+  /// 오래된 일정이 오늘의 후보로 잘못 노출되지 않도록 한다.
+  Future<Pomodoro?> loadPreviousDayPlanSnapshot() {
+    final previousDay = DateTime.now().subtract(const Duration(days: 1));
+    return loadPlanForDateUseCase(_dateKey(previousDay), Pomodoro.initial());
   }
 
   /// 선택형 가져오기: 텍스트 항목들을 카테고리 규칙에 맞게 병합한다.

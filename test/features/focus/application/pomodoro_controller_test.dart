@@ -87,28 +87,36 @@ void main() {
       );
     });
 
-    test('loads at most 20 distinct recent time boxes newest first', () async {
+    test('loads time boxes only from the previous calendar day', () async {
       final now = DateTime.now();
-      final plansByDate = <String, Pomodoro>{};
-      final history = <DailyPlanSummary>[];
-      for (var back = 1; back <= 25; back += 1) {
-        final dateKey = _dateKeyForTest(now.subtract(Duration(days: back)));
-        history.add(DailyPlanSummary(dateKey: dateKey, plannedBoxCount: 1));
-        plansByDate[dateKey] = Pomodoro.initial().copyWith(
-          timeBoxes: [
-            TimeBox(
-              id: 'box-$back',
-              title: 'Task $back',
-              timeRange: '09:00-09:30',
-              durationSeconds: 30 * 60,
-            ),
-          ],
-        );
-      }
+      final yesterdayKey = _dateKeyForTest(
+        now.subtract(const Duration(days: 1)),
+      );
+      final olderKey = _dateKeyForTest(now.subtract(const Duration(days: 2)));
       final repository = _MemoryPomodoroRepository(
         Pomodoro.initial(),
-        history: history,
-        plansByDate: plansByDate,
+        plansByDate: {
+          yesterdayKey: Pomodoro.initial().copyWith(
+            timeBoxes: const [
+              TimeBox(
+                id: 'yesterday',
+                title: 'Yesterday task',
+                timeRange: '09:00-09:30',
+                durationSeconds: 30 * 60,
+              ),
+            ],
+          ),
+          olderKey: Pomodoro.initial().copyWith(
+            timeBoxes: const [
+              TimeBox(
+                id: 'older',
+                title: 'Older task',
+                timeRange: '10:00-10:30',
+                durationSeconds: 30 * 60,
+              ),
+            ],
+          ),
+        },
       );
       final container = ProviderContainer(
         overrides: [pomodoroRepositoryProvider.overrideWithValue(repository)],
@@ -117,11 +125,10 @@ void main() {
       final controller = container.read(pomodoroControllerProvider.notifier);
       await _settleControllerRestore();
 
-      final recent = await controller.loadRecentTimeBoxes();
+      final previousDay = await controller.loadPreviousDayPlanSnapshot();
 
-      expect(recent, hasLength(20));
-      expect(recent.first.title, 'Task 1');
-      expect(recent.last.title, 'Task 20');
+      expect(previousDay?.timeBoxes, hasLength(1));
+      expect(previousDay?.timeBoxes.single.id, 'yesterday');
     });
 
     test('resizes both edges using the selected interval', () async {
@@ -1041,7 +1048,6 @@ class _MemoryPomodoroRepository implements PomodoroRepository {
   final Pomodoro Function(Pomodoro fallback, int restoreCallCount)? onRestore;
   final Completer<Pomodoro>? restoreCompleter;
   final TimerSnapshot nativeSnapshot;
-  final List<DailyPlanSummary> history;
   final Map<String, Pomodoro> plansByDate;
   int restoreCallCount = 0;
   int startTimerCalls = 0;
@@ -1053,7 +1059,6 @@ class _MemoryPomodoroRepository implements PomodoroRepository {
     this.onRestore,
     this.restoreCompleter,
     this.nativeSnapshot = const TimerSnapshot(status: 'idle'),
-    this.history = const [],
     this.plansByDate = const {},
   });
 
@@ -1090,7 +1095,7 @@ class _MemoryPomodoroRepository implements PomodoroRepository {
 
   @override
   Future<List<DailyPlanSummary>> loadDailyPlanHistory({int days = 7}) async {
-    return history;
+    return const [];
   }
 
   @override

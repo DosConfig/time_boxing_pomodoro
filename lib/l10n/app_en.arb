@@ -147,7 +147,7 @@
   "carryOverPreviousPriorities": "Bring in previous priorities",
   "carryOverPreviousBrainDump": "Bring in previous brain dump",
   "carryOverPreviousReminders": "Bring in previous reminders",
-  "carryOverPreviousSchedule": "Import recent time boxes",
+  "carryOverPreviousSchedule": "Import yesterday's time boxes",
   "importSelected": "Bring in selected",
   "nothingToImport": "Nothing new to bring in.",
   "noItemsForDay": "No records for this day.",

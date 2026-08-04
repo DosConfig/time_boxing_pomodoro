@@ -480,7 +480,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get carryOverPreviousReminders => '이전 기억할 것 가져오기';
 
   @override
-  String get carryOverPreviousSchedule => '최근 타임박스 불러오기';
+  String get carryOverPreviousSchedule => '어제 타임박스 불러오기';
 
   @override
   String get importSelected => '선택 항목 가져오기';

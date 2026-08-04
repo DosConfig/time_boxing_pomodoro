@@ -496,7 +496,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get carryOverPreviousReminders => 'Vorige Merkpunkte übernehmen';
 
   @override
-  String get carryOverPreviousSchedule => 'Letzte Zeitblöcke übernehmen';
+  String get carryOverPreviousSchedule => 'Zeitblöcke von gestern übernehmen';
 
   @override
   String get importSelected => 'Auswahl übernehmen';

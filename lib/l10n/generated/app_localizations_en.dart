@@ -492,7 +492,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get carryOverPreviousReminders => 'Bring in previous reminders';
 
   @override
-  String get carryOverPreviousSchedule => 'Import recent time boxes';
+  String get carryOverPreviousSchedule => 'Import yesterday\'s time boxes';
 
   @override
   String get importSelected => 'Bring in selected';

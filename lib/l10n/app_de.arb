@@ -147,7 +147,7 @@
   "carryOverPreviousPriorities": "Vorige Prioritäten übernehmen",
   "carryOverPreviousBrainDump": "Vorigen Brain Dump übernehmen",
   "carryOverPreviousReminders": "Vorige Merkpunkte übernehmen",
-  "carryOverPreviousSchedule": "Letzte Zeitblöcke übernehmen",
+  "carryOverPreviousSchedule": "Zeitblöcke von gestern übernehmen",
   "importSelected": "Auswahl übernehmen",
   "nothingToImport": "Nichts Neues zu übernehmen.",
   "noItemsForDay": "Keine Einträge für diesen Tag.",

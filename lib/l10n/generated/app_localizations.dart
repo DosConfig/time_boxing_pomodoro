@@ -993,7 +993,7 @@ abstract class AppLocalizations {
   /// No description provided for @carryOverPreviousSchedule.
   ///
   /// In en, this message translates to:
-  /// **'Import recent time boxes'**
+  /// **'Import yesterday\'s time boxes'**
   String get carryOverPreviousSchedule;
 
   /// No description provided for @importSelected.
