@@ -497,8 +497,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get carryOverPreviousReminders => 'Traer recordatorios anteriores';
 
   @override
-  String get carryOverPreviousSchedule =>
-      'Importar bloques de tiempo recientes';
+  String get carryOverPreviousSchedule => 'Importar bloques de tiempo de ayer';
 
   @override
   String get importSelected => 'Traer seleccionados';

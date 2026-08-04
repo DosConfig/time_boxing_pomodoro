@@ -11,6 +11,9 @@ import '../../../focus/presentation/time_box_title_display.dart';
 /// 선택형 가져오기가 다루는 섹션.
 enum CarryOverSection { topPriority, brainDump, reminder, timeBox }
 
+// 데이터 조회 중 반복 탭까지 포함해 한 번에 하나의 가져오기 흐름만 허용한다.
+bool _carryOverPickerOpening = false;
+
 /// 이전 일자 플랜의 카드를 보여주고 골라서 가져오는 공용 시트.
 ///
 /// 모든 섹션의 "이전 것 가져오기" 버튼이 이 시트를 연다. 이전 플랜이
@@ -21,58 +24,65 @@ Future<void> showCarryOverPickerSheet(
   required PomodoroController notifier,
   required CarryOverSection section,
 }) async {
-  final l10n = context.l10n;
-  final previous = section == CarryOverSection.timeBox
-      ? null
-      : await notifier.loadPreviousPlanSnapshot();
-  final recentTimeBoxes = section == CarryOverSection.timeBox
-      ? await notifier.loadRecentTimeBoxes(limit: 20)
-      : const <TimeBox>[];
-  if (!context.mounted) {
+  if (_carryOverPickerOpening) {
     return;
   }
+  _carryOverPickerOpening = true;
 
-  final entries = _entriesForSection(
-    previous,
-    section,
-    recentTimeBoxes: recentTimeBoxes,
-  );
-  if (entries.isEmpty) {
-    showAppSnack(context, l10n.noPreviousDailyItems);
-    return;
+  try {
+    final l10n = context.l10n;
+    final previous = section == CarryOverSection.timeBox
+        ? await notifier.loadPreviousDayPlanSnapshot()
+        : await notifier.loadPreviousPlanSnapshot();
+    if (!context.mounted) {
+      return;
+    }
+
+    final entries = _entriesForSection(previous, section);
+    if (entries.isEmpty) {
+      showAppSnack(context, l10n.noPreviousDailyItems);
+      return;
+    }
+
+    final title = switch (section) {
+      CarryOverSection.topPriority => l10n.carryOverPreviousPriorities,
+      CarryOverSection.brainDump => l10n.carryOverPreviousBrainDump,
+      CarryOverSection.reminder => l10n.carryOverPreviousReminders,
+      CarryOverSection.timeBox => l10n.carryOverPreviousSchedule,
+    };
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(context).height * 0.82,
+      ),
+      clipBehavior: Clip.antiAlias,
+      backgroundColor: const Color(0xFF101010),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (sheetContext) {
+        return _CarryOverPickerSheet(
+          title: title,
+          entries: entries,
+          initiallySelected: section != CarryOverSection.timeBox,
+          onImport: (selected) {
+            final imported = _importSelection(notifier, section, selected);
+            Navigator.of(sheetContext).pop();
+            if (!imported) {
+              showAppSnack(context, l10n.nothingToImport);
+            } else {
+              HapticFeedback.lightImpact();
+            }
+          },
+        );
+      },
+    );
+  } finally {
+    _carryOverPickerOpening = false;
   }
-
-  final title = switch (section) {
-    CarryOverSection.topPriority => l10n.carryOverPreviousPriorities,
-    CarryOverSection.brainDump => l10n.carryOverPreviousBrainDump,
-    CarryOverSection.reminder => l10n.carryOverPreviousReminders,
-    CarryOverSection.timeBox => l10n.carryOverPreviousSchedule,
-  };
-
-  await showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: const Color(0xFF101010),
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-    ),
-    builder: (sheetContext) {
-      return _CarryOverPickerSheet(
-        title: title,
-        entries: entries,
-        initiallySelected: section != CarryOverSection.timeBox,
-        onImport: (selected) {
-          final imported = _importSelection(notifier, section, selected);
-          Navigator.of(sheetContext).pop();
-          if (!imported) {
-            showAppSnack(context, l10n.nothingToImport);
-          } else {
-            HapticFeedback.lightImpact();
-          }
-        },
-      );
-    },
-  );
 }
 
 class _CarryOverEntry {
@@ -91,35 +101,37 @@ class _CarryOverEntry {
 
 List<_CarryOverEntry> _entriesForSection(
   Pomodoro? previous,
-  CarryOverSection section, {
-  List<TimeBox> recentTimeBoxes = const [],
-}) {
-  if (previous == null && section != CarryOverSection.timeBox) {
+  CarryOverSection section,
+) {
+  if (previous == null) {
     return const [];
   }
 
   switch (section) {
     case CarryOverSection.topPriority:
-      return previous!.topPriorities
+      return previous.topPriorities
           .map((item) => item.trim())
           .where((item) => item.isNotEmpty)
           .take(3)
           .map((item) => _CarryOverEntry(label: item, textValue: item))
           .toList();
     case CarryOverSection.brainDump:
-      return previous!.brainDump
+      return previous.brainDump
           .map((item) => item.trim())
           .where((item) => item.isNotEmpty)
           .map((item) => _CarryOverEntry(label: item, textValue: item))
           .toList();
     case CarryOverSection.reminder:
-      return previous!.reminders
+      return previous.reminders
           .map((item) => item.trim())
           .where((item) => item.isNotEmpty)
           .map((item) => _CarryOverEntry(label: item, textValue: item))
           .toList();
     case CarryOverSection.timeBox:
-      return recentTimeBoxes
+      final boxes = [
+        ...previous.timeBoxes,
+      ]..sort((a, b) => (a.startMinutes ?? -1).compareTo(b.startMinutes ?? -1));
+      return boxes
           .map(
             (box) => _CarryOverEntry(
               label: displayTimeBoxTitle(box),
@@ -194,6 +206,7 @@ class _CarryOverPickerSheetState extends State<_CarryOverPickerSheet> {
     final selectedCount = _checked.where((checked) => checked).length;
 
     return SafeArea(
+      key: const ValueKey('carryOverPickerSheet'),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
         child: Column(
