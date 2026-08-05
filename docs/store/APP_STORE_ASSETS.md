@@ -1,6 +1,6 @@
 # App Store Connect 입력 자산 (v1.0)
 
-> 상태 반영: iOS 첫 심사 버전 `1.0.0+13`.
+> 상태 반영: iOS 첫 심사 버전 `1.0.0+14`.
 > Google/Apple 로그인 + Firebase + Live Activity + Crashlytics/Analytics 포함.
 > 캘린더 기능과 캘린더 권한은 첫 심사 범위에서 제외.
 
@@ -79,7 +79,7 @@ Live Activity is the core feature. To verify: sign in with Apple or Google, add 
 
 Timebox Mark 개인정보 처리방침
 
-시행일: 2026년 7월
+시행일: 2026년 8월 5일
 
 Timebox Mark는 개인 개발자가 만든 타임박싱 앱입니다. 앱은 다음 원칙을 따릅니다.
 

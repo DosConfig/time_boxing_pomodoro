@@ -129,7 +129,7 @@ abstract class AppLocalizations {
   /// No description provided for @introBrandBody.
   ///
   /// In en, this message translates to:
-  /// **'Turn brain dumps into priorities, flexible time blocks, Focus, alerts, and calendar-ready plans.'**
+  /// **'Turn brain dumps into priorities, flexible time blocks, focused sessions, and timely alerts.'**
   String get introBrandBody;
 
   /// No description provided for @introBrainDumpTitle.

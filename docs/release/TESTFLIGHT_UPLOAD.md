@@ -1,7 +1,7 @@
 # TestFlight Upload Runbook
 
 Status: `1.0.0+12` was uploaded successfully through Codemagic on August 5,
-2026. The App Store review candidate is `1.0.0+13`, which removes Calendar from
+2026. The App Store review candidate is `1.0.0+14`, which removes Calendar from
 the submitted iOS scope and still needs a signed TestFlight upload.
 
 ## Required From The Apple Account Owner
@@ -109,7 +109,7 @@ Use the `ios-testflight` workflow after configuring:
 The workflow uploads to TestFlight only. It does not submit the app for App
 Store review.
 
-## Current Local Status — 1.0.0+13
+## Current Local Status — 1.0.0+14
 
 - `flutter build ios --release --no-codesign` succeeds.
 - `flutter analyze` and all Flutter tests pass.
@@ -126,5 +126,5 @@ Store review.
 - Shorebird release packaging is configured in the Codemagic TestFlight
   workflow. Use patches only for Dart-only fixes within the reviewed feature
   scope.
-- The next release action is to push and tag `v1.0.0+13`, run the
+- The next release action is to push and tag `v1.0.0+14`, run the
   `ios-testflight` workflow, and wait for App Store Connect processing.

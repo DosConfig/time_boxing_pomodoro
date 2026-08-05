@@ -18,7 +18,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get introBrandTitle => '一日をタイムボックス化';
 
   @override
-  String get introBrandBody => 'ブレインダンプを優先事項、柔軟な時間ブロック、Focus、通知、カレンダー計画に変えます。';
+  String get introBrandBody => 'ブレインダンプを優先事項、柔軟な時間ブロック、集中セッション、通知に変えます。';
 
   @override
   String get introBrainDumpTitle => '頭の中を空に';
