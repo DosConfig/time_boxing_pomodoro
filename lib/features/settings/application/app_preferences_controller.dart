@@ -38,6 +38,12 @@ class AppPreferencesController extends _$AppPreferencesController {
   Future<void> _load() async {
     final preferences = await SharedPreferences.getInstance();
     final initial = AppPreferences.initial();
+    // Slot breaks were removed from the product. Clear the legacy preference
+    // so users who enabled it in an earlier beta cannot keep the old behavior.
+    await preferences.remove(_slotBreakEnabledKey);
+    if (!ref.mounted) {
+      return;
+    }
     state = AppPreferences(
       isLoaded: true,
       introCompleted: preferences.getBool(_introCompletedKey) ?? false,
@@ -50,18 +56,11 @@ class AppPreferencesController extends _$AppPreferencesController {
       timeSlotInterval: TimeSlotInterval.fromMinutes(
         preferences.getInt(_timeSlotIntervalKey),
       ),
-      slotBreakEnabled:
-          preferences.getBool(_slotBreakEnabledKey) ?? initial.slotBreakEnabled,
+      slotBreakEnabled: false,
       localeCode: _normalizedLocaleCode(
         preferences.getString(_localeCodeKey) ?? initial.localeCode,
       ),
     );
-  }
-
-  Future<void> setSlotBreakEnabled(bool enabled) async {
-    state = state.copyWith(slotBreakEnabled: enabled);
-    final preferences = await SharedPreferences.getInstance();
-    await preferences.setBool(_slotBreakEnabledKey, enabled);
   }
 
   Future<void> setLocaleCode(String localeCode) async {
