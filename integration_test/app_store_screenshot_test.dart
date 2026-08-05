@@ -73,12 +73,8 @@ void main() {
     await tester.pumpAndSettle(const Duration(seconds: 2));
     await binding.takeScreenshot('03-focus');
 
-    await tester.tap(find.byIcon(Icons.calendar_month_outlined));
-    await tester.pumpAndSettle(const Duration(seconds: 2));
-    await binding.takeScreenshot('04-calendar');
-
     await tester.tap(find.byIcon(Icons.tune_rounded));
     await tester.pumpAndSettle(const Duration(seconds: 2));
-    await binding.takeScreenshot('05-settings');
+    await binding.takeScreenshot('04-settings');
   });
 }

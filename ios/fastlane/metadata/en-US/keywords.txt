@@ -1,1 +1,1 @@
-timebox,pomodoro,focus,planner,calendar,productivity,timer
+timebox,pomodoro,focus,planner,productivity,timer,deep work

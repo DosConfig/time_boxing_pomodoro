@@ -1,6 +1,6 @@
 Timebox Mark helps you plan today with less effort.
 
-Capture what is on your mind, choose the top priorities, place work into 30-minute time boxes, and run the current block from Focus. Local alerts and Live Activity keep the active block visible, while calendar export lets you send selected blocks to your calendar when you choose.
+Capture what is on your mind, choose the top priorities, place work into 30-minute time boxes, and run the current block from Focus. Local alerts and Live Activity keep the active block visible while your signed-in daily plan stays available across app launches.
 
 Key features:
 - Brain dump capture
@@ -9,8 +9,6 @@ Key features:
 - Focus timer synced to the current block
 - Local completion alerts
 - iOS Live Activity support
-- Apple Calendar export
-- Google Calendar export
 - Firebase account sync
 
 Timebox Mark is designed for simple daily planning, not heavy project management.

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:time_boxing_pomodoro/l10n/l10n.dart';
 
-import '../../calendar/presentation/calendar_sync_screen.dart';
 import '../../focus/application/pomodoro_controller.dart';
 import '../../focus/domain/entities/pomodoro.dart';
 import '../../focus/presentation/native_timer_copy_l10n.dart';
@@ -41,7 +40,6 @@ class AppShell extends ConsumerWidget {
         children: [
           TodayScreen(onOpenFocus: () => _setIndex(ref, 1)),
           TimerScreen(onOpenToday: () => _setIndex(ref, 0)),
-          const CalendarSyncScreen(),
           const SettingsScreen(),
         ],
       ),
@@ -59,11 +57,6 @@ class AppShell extends ConsumerWidget {
             icon: const Icon(Icons.timer_outlined),
             selectedIcon: const Icon(Icons.timer_rounded),
             label: l10n.navFocus,
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.calendar_month_outlined),
-            selectedIcon: const Icon(Icons.calendar_month_rounded),
-            label: l10n.navCalendar,
           ),
           NavigationDestination(
             icon: const Icon(Icons.tune_rounded),
