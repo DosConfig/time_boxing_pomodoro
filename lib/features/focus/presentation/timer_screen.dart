@@ -21,7 +21,6 @@ class TimerScreen extends ConsumerWidget {
     final pomodoro = ref.watch(pomodoroControllerProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF080808),
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {

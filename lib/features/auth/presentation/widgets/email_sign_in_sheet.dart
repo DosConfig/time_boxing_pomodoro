@@ -55,7 +55,7 @@ class _EmailSignInSheetState extends ConsumerState<EmailSignInSheet> {
     final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
 
     return Material(
-      color: const Color(0xFF111111),
+      color: Theme.of(context).colorScheme.surface,
       child: SafeArea(
         top: false,
         child: SingleChildScrollView(
@@ -126,8 +126,8 @@ class _EmailSignInSheetState extends ConsumerState<EmailSignInSheet> {
                   Text(
                     context.l10n.emailSignInFailed,
                     key: const ValueKey('emailSignInError'),
-                    style: const TextStyle(
-                      color: Color(0xFFFFB4AB),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
                     ),
@@ -137,14 +137,6 @@ class _EmailSignInSheetState extends ConsumerState<EmailSignInSheet> {
                 FilledButton(
                   key: const ValueKey('emailSignInSubmitButton'),
                   onPressed: loading ? null : _submit,
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(48),
-                    backgroundColor: const Color(0xFFF6F3EC),
-                    foregroundColor: const Color(0xFF080808),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
                   child: loading
                       ? const SizedBox.square(
                           dimension: 18,

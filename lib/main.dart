@@ -12,6 +12,7 @@ import 'package:time_boxing_pomodoro/features/shell/presentation/app_shell.dart'
 import 'package:time_boxing_pomodoro/l10n/generated/app_localizations.dart';
 import 'package:time_boxing_pomodoro/l10n/l10n.dart';
 import 'package:time_boxing_pomodoro/shared/diagnostics/app_diagnostics.dart';
+import 'package:time_boxing_pomodoro/shared/theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -91,14 +92,7 @@ class MyApp extends ConsumerWidget {
       locale: preferences.localeCode.isEmpty
           ? null
           : Locale(preferences.localeCode),
-      theme: ThemeData(
-        useMaterial3: true,
-        brightness: Brightness.dark,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFFF6F3EC),
-          brightness: Brightness.dark,
-        ),
-      ),
+      theme: AppTheme.dark(),
       home: home,
     );
   }
@@ -110,15 +104,11 @@ class _LaunchLoadingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
-      backgroundColor: Color(0xFF080808),
       body: Center(
         child: SizedBox(
           width: 22,
           height: 22,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: Color(0xFFF6F3EC),
-          ),
+          child: CircularProgressIndicator(strokeWidth: 2),
         ),
       ),
     );

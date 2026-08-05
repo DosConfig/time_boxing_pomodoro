@@ -11,78 +11,55 @@ import '../../../focus/presentation/time_box_title_display.dart';
 /// 선택형 가져오기가 다루는 섹션.
 enum CarryOverSection { topPriority, brainDump, reminder, timeBox }
 
-// 데이터 조회 중 반복 탭까지 포함해 한 번에 하나의 가져오기 흐름만 허용한다.
-bool _carryOverPickerOpening = false;
-
 /// 이전 일자 플랜의 카드를 보여주고 골라서 가져오는 공용 시트.
 ///
-/// 모든 섹션의 "이전 것 가져오기" 버튼이 이 시트를 연다. 이전 플랜이
-/// 없거나 해당 섹션이 비어 있으면 스낵바만 띄운다.
+/// 데이터 조회는 호출 화면이 담당한다. 이 함수는 전달받은 플랜을 표시하고
+/// 선택 결과를 현재 플랜에 반영하는 presentation 책임만 가진다.
 /// doc: docs/architecture/DATA_LIFECYCLE.md
 Future<void> showCarryOverPickerSheet(
   BuildContext context, {
   required PomodoroController notifier,
   required CarryOverSection section,
+  required Pomodoro? sourcePlan,
 }) async {
-  if (_carryOverPickerOpening) {
+  final l10n = context.l10n;
+  final entries = _entriesForSection(sourcePlan, section);
+  if (entries.isEmpty) {
+    showAppSnack(context, l10n.noPreviousDailyItems);
     return;
   }
-  _carryOverPickerOpening = true;
 
-  try {
-    final l10n = context.l10n;
-    final previous = section == CarryOverSection.timeBox
-        ? await notifier.loadPreviousDayPlanSnapshot()
-        : await notifier.loadPreviousPlanSnapshot();
-    if (!context.mounted) {
-      return;
-    }
+  final title = switch (section) {
+    CarryOverSection.topPriority => l10n.carryOverPreviousPriorities,
+    CarryOverSection.brainDump => l10n.carryOverPreviousBrainDump,
+    CarryOverSection.reminder => l10n.carryOverPreviousReminders,
+    CarryOverSection.timeBox => l10n.carryOverPreviousSchedule,
+  };
 
-    final entries = _entriesForSection(previous, section);
-    if (entries.isEmpty) {
-      showAppSnack(context, l10n.noPreviousDailyItems);
-      return;
-    }
-
-    final title = switch (section) {
-      CarryOverSection.topPriority => l10n.carryOverPreviousPriorities,
-      CarryOverSection.brainDump => l10n.carryOverPreviousBrainDump,
-      CarryOverSection.reminder => l10n.carryOverPreviousReminders,
-      CarryOverSection.timeBox => l10n.carryOverPreviousSchedule,
-    };
-
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.sizeOf(context).height * 0.82,
-      ),
-      clipBehavior: Clip.antiAlias,
-      backgroundColor: const Color(0xFF101010),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-      ),
-      builder: (sheetContext) {
-        return _CarryOverPickerSheet(
-          title: title,
-          entries: entries,
-          initiallySelected: section != CarryOverSection.timeBox,
-          onImport: (selected) {
-            final imported = _importSelection(notifier, section, selected);
-            Navigator.of(sheetContext).pop();
-            if (!imported) {
-              showAppSnack(context, l10n.nothingToImport);
-            } else {
-              HapticFeedback.lightImpact();
-            }
-          },
-        );
-      },
-    );
-  } finally {
-    _carryOverPickerOpening = false;
-  }
+  await showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    useSafeArea: true,
+    constraints: BoxConstraints(
+      maxHeight: MediaQuery.sizeOf(context).height * 0.82,
+    ),
+    builder: (sheetContext) {
+      return _CarryOverPickerSheet(
+        title: title,
+        entries: entries,
+        initiallySelected: section != CarryOverSection.timeBox,
+        onImport: (selected) {
+          final imported = _importSelection(notifier, section, selected);
+          Navigator.of(sheetContext).pop();
+          if (!imported) {
+            showAppSnack(context, l10n.nothingToImport);
+          } else {
+            HapticFeedback.lightImpact();
+          }
+        },
+      );
+    },
+  );
 }
 
 class _CarryOverEntry {
@@ -203,6 +180,7 @@ class _CarryOverPickerSheetState extends State<_CarryOverPickerSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     final selectedCount = _checked.where((checked) => checked).length;
 
     return SafeArea(
@@ -218,8 +196,8 @@ class _CarryOverPickerSheetState extends State<_CarryOverPickerSheet> {
                 Expanded(
                   child: Text(
                     widget.title,
-                    style: const TextStyle(
-                      color: Color(0xFFF6F3EC),
+                    style: TextStyle(
+                      color: colors.onSurface,
                       fontSize: 18,
                       fontWeight: FontWeight.w900,
                     ),
@@ -228,7 +206,7 @@ class _CarryOverPickerSheetState extends State<_CarryOverPickerSheet> {
                 IconButton(
                   onPressed: () => Navigator.of(context).pop(),
                   icon: const Icon(Icons.close_rounded),
-                  color: const Color(0xFFF6F3EC),
+                  color: colors.onSurface,
                 ),
               ],
             ),
@@ -242,14 +220,14 @@ class _CarryOverPickerSheetState extends State<_CarryOverPickerSheet> {
                   final entry = widget.entries[index];
                   final checked = _checked[index];
                   return Material(
-                    color: Colors.white.withValues(
+                    color: colors.onSurface.withValues(
                       alpha: checked ? 0.07 : 0.035,
                     ),
                     shape: RoundedRectangleBorder(
                       side: BorderSide(
                         color: checked
-                            ? const Color(0xFFF6F3EC).withValues(alpha: 0.5)
-                            : Colors.white.withValues(alpha: 0.1),
+                            ? colors.onSurface.withValues(alpha: 0.5)
+                            : colors.onSurface.withValues(alpha: 0.1),
                       ),
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -268,8 +246,8 @@ class _CarryOverPickerSheetState extends State<_CarryOverPickerSheet> {
                                   : Icons.check_box_outline_blank_rounded,
                               size: 20,
                               color: checked
-                                  ? const Color(0xFFF6F3EC)
-                                  : Colors.white.withValues(alpha: 0.4),
+                                  ? colors.onSurface
+                                  : colors.onSurface.withValues(alpha: 0.4),
                             ),
                             const SizedBox(width: 10),
                             Expanded(
@@ -277,8 +255,8 @@ class _CarryOverPickerSheetState extends State<_CarryOverPickerSheet> {
                                 entry.label,
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  color: Color(0xFFF6F3EC),
+                                style: TextStyle(
+                                  color: colors.onSurface,
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700,
                                   height: 1.18,
@@ -291,7 +269,9 @@ class _CarryOverPickerSheetState extends State<_CarryOverPickerSheet> {
                                 entry.trailing!,
                                 maxLines: 1,
                                 style: TextStyle(
-                                  color: Colors.white.withValues(alpha: 0.5),
+                                  color: colors.onSurface.withValues(
+                                    alpha: 0.5,
+                                  ),
                                   fontSize: 11,
                                   fontWeight: FontWeight.w800,
                                 ),
@@ -324,15 +304,10 @@ class _CarryOverPickerSheetState extends State<_CarryOverPickerSheet> {
                 overflow: TextOverflow.ellipsis,
               ),
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFFF6F3EC),
-                foregroundColor: const Color(0xFF080808),
                 minimumSize: const Size.fromHeight(50),
                 textStyle: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w800,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
                 ),
               ),
             ),

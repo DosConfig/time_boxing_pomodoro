@@ -35,6 +35,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
   Timer? _dragAutoScrollTimer;
   double _dragAutoScrollDelta = 0;
   final _scrollController = ScrollController();
+  CarryOverSection? _loadingCarryOverSection;
 
   @override
   void dispose() {
@@ -79,6 +80,8 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                         _TopPrioritiesPanel(
                           priorities: priorities,
                           notifier: notifier,
+                          loadingCarryOverSection: _loadingCarryOverSection,
+                          onCarryOverPressed: _openCarryOverPicker,
                           onDragStarted: _beginDraftScheduleDrag,
                           onDragUpdate: _handleTimeBoxDragUpdate,
                           onDragEnd: _endDraftScheduleDrag,
@@ -87,6 +90,8 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                         _BrainDumpPanel(
                           pomodoro: pomodoro,
                           notifier: notifier,
+                          loadingCarryOverSection: _loadingCarryOverSection,
+                          onCarryOverPressed: _openCarryOverPicker,
                           onDragStarted: _beginDraftScheduleDrag,
                           onDragUpdate: _handleTimeBoxDragUpdate,
                           onDragEnd: _endDraftScheduleDrag,
@@ -95,6 +100,8 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                         _ReminderPanel(
                           pomodoro: pomodoro,
                           notifier: notifier,
+                          loadingCarryOverSection: _loadingCarryOverSection,
+                          onCarryOverPressed: _openCarryOverPicker,
                           onDragStarted: _beginDraftScheduleDrag,
                           onDragUpdate: _handleTimeBoxDragUpdate,
                           onDragEnd: _endDraftScheduleDrag,
@@ -103,6 +110,8 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                         TimeBoxBoard(
                           pomodoro: pomodoro,
                           notifier: notifier,
+                          loadingCarryOverSection: _loadingCarryOverSection,
+                          onCarryOverPressed: _openCarryOverPicker,
                           now: now,
                           awakeStartMinutes: preferences.awakeStartMinutes,
                           awakeEndMinutes: preferences.awakeEndMinutes,
@@ -143,8 +152,6 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                             overflow: TextOverflow.ellipsis,
                           ),
                           style: FilledButton.styleFrom(
-                            backgroundColor: const Color(0xFFF6F3EC),
-                            foregroundColor: const Color(0xFF080808),
                             minimumSize: const Size.fromHeight(54),
                             textStyle: const TextStyle(
                               fontSize: 16,
@@ -181,6 +188,35 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> _openCarryOverPicker(CarryOverSection section) async {
+    if (_loadingCarryOverSection != null) {
+      return;
+    }
+
+    setState(() => _loadingCarryOverSection = section);
+    final notifier = ref.read(pomodoroControllerProvider.notifier);
+    Pomodoro? sourcePlan;
+    try {
+      sourcePlan = section == CarryOverSection.timeBox
+          ? await notifier.loadPreviousDayPlanSnapshot()
+          : await notifier.loadPreviousPlanSnapshot();
+    } finally {
+      if (mounted) {
+        setState(() => _loadingCarryOverSection = null);
+      }
+    }
+
+    if (!mounted) {
+      return;
+    }
+    await showCarryOverPickerSheet(
+      context,
+      notifier: notifier,
+      section: section,
+      sourcePlan: sourcePlan,
     );
   }
 
@@ -266,6 +302,7 @@ class _TodayHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
+    final colors = Theme.of(context).colorScheme;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -273,7 +310,7 @@ class _TodayHeader extends StatelessWidget {
         Text(
           '${now.month.toString().padLeft(2, '0')}.${now.day.toString().padLeft(2, '0')}',
           style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.48),
+            color: colors.onSurface.withValues(alpha: 0.48),
             fontSize: 13,
             fontWeight: FontWeight.w700,
           ),
@@ -282,7 +319,7 @@ class _TodayHeader extends StatelessWidget {
         Text(
           context.l10n.todayTitle,
           style: TextStyle(
-            color: Color(0xFFF6F3EC),
+            color: colors.onSurface,
             fontSize: 38,
             fontWeight: FontWeight.w800,
             height: 1,
@@ -395,6 +432,8 @@ class _TimeBoxTrashTarget extends StatelessWidget {
 class _BrainDumpPanel extends StatelessWidget {
   final Pomodoro pomodoro;
   final PomodoroController notifier;
+  final CarryOverSection? loadingCarryOverSection;
+  final ValueChanged<CarryOverSection> onCarryOverPressed;
   final VoidCallback onDragStarted;
   final ValueChanged<DragUpdateDetails> onDragUpdate;
   final VoidCallback onDragEnd;
@@ -402,6 +441,8 @@ class _BrainDumpPanel extends StatelessWidget {
   const _BrainDumpPanel({
     required this.pomodoro,
     required this.notifier,
+    required this.loadingCarryOverSection,
+    required this.onCarryOverPressed,
     required this.onDragStarted,
     required this.onDragUpdate,
     required this.onDragEnd,
@@ -409,6 +450,7 @@ class _BrainDumpPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return _DailyPlanDropTarget(
       category: DailyPlanItemCategory.brainDump,
       notifier: notifier,
@@ -422,7 +464,7 @@ class _BrainDumpPanel extends StatelessWidget {
                   child: Text(
                     context.l10n.brainDumpTitle,
                     style: TextStyle(
-                      color: Color(0xFFF6F3EC),
+                      color: colors.onSurface,
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
                     ),
@@ -434,7 +476,7 @@ class _BrainDumpPanel extends StatelessWidget {
                     onPressed: () => _openAddSheet(context),
                     icon: const Icon(Icons.add_rounded),
                     style: IconButton.styleFrom(
-                      foregroundColor: const Color(0xFFF6F3EC),
+                      foregroundColor: colors.onSurface,
                       visualDensity: VisualDensity.compact,
                     ),
                   ),
@@ -479,12 +521,15 @@ class _BrainDumpPanel extends StatelessWidget {
               }),
             ] else ...[
               const SizedBox(height: 8),
-              DailyCarryOverButton(
-                label: context.l10n.carryOverPreviousBrainDump,
-                onPressed: () => showCarryOverPickerSheet(
-                  context,
-                  notifier: notifier,
-                  section: CarryOverSection.brainDump,
+              Align(
+                alignment: Alignment.centerLeft,
+                child: DailyCarryOverButton(
+                  label: context.l10n.carryOverPreviousBrainDump,
+                  isLoading:
+                      loadingCarryOverSection == CarryOverSection.brainDump,
+                  onPressed: loadingCarryOverSection == null
+                      ? () => onCarryOverPressed(CarryOverSection.brainDump)
+                      : null,
                 ),
               ),
             ],
@@ -510,6 +555,8 @@ class _BrainDumpPanel extends StatelessWidget {
 class _ReminderPanel extends StatelessWidget {
   final Pomodoro pomodoro;
   final PomodoroController notifier;
+  final CarryOverSection? loadingCarryOverSection;
+  final ValueChanged<CarryOverSection> onCarryOverPressed;
   final VoidCallback onDragStarted;
   final ValueChanged<DragUpdateDetails> onDragUpdate;
   final VoidCallback onDragEnd;
@@ -517,6 +564,8 @@ class _ReminderPanel extends StatelessWidget {
   const _ReminderPanel({
     required this.pomodoro,
     required this.notifier,
+    required this.loadingCarryOverSection,
+    required this.onCarryOverPressed,
     required this.onDragStarted,
     required this.onDragUpdate,
     required this.onDragEnd,
@@ -524,6 +573,7 @@ class _ReminderPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return _DailyPlanDropTarget(
       category: DailyPlanItemCategory.reminder,
       notifier: notifier,
@@ -537,7 +587,7 @@ class _ReminderPanel extends StatelessWidget {
                   child: Text(
                     context.l10n.keepInMindTitle,
                     style: TextStyle(
-                      color: Color(0xFFF6F3EC),
+                      color: colors.onSurface,
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
                     ),
@@ -549,7 +599,7 @@ class _ReminderPanel extends StatelessWidget {
                     onPressed: () => _openAddSheet(context),
                     icon: const Icon(Icons.add_rounded),
                     style: IconButton.styleFrom(
-                      foregroundColor: const Color(0xFFF6F3EC),
+                      foregroundColor: colors.onSurface,
                       visualDensity: VisualDensity.compact,
                     ),
                   ),
@@ -594,12 +644,15 @@ class _ReminderPanel extends StatelessWidget {
               }),
             ] else ...[
               const SizedBox(height: 8),
-              DailyCarryOverButton(
-                label: context.l10n.carryOverPreviousReminders,
-                onPressed: () => showCarryOverPickerSheet(
-                  context,
-                  notifier: notifier,
-                  section: CarryOverSection.reminder,
+              Align(
+                alignment: Alignment.centerLeft,
+                child: DailyCarryOverButton(
+                  label: context.l10n.carryOverPreviousReminders,
+                  isLoading:
+                      loadingCarryOverSection == CarryOverSection.reminder,
+                  onPressed: loadingCarryOverSection == null
+                      ? () => onCarryOverPressed(CarryOverSection.reminder)
+                      : null,
                 ),
               ),
             ],
@@ -1206,10 +1259,6 @@ void _showTodayReviewSheet(
   showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    backgroundColor: const Color(0xFF101010),
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-    ),
     builder: (context) {
       return _TodayReviewSheet(
         pomodoro: pomodoro,
@@ -1300,8 +1349,6 @@ class _TodayReviewSheet extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFFF6F3EC),
-                    foregroundColor: const Color(0xFF080808),
                     minimumSize: const Size.fromHeight(50),
                     textStyle: const TextStyle(
                       fontSize: 15,
@@ -1663,6 +1710,8 @@ class _TodayReviewNowBadge extends StatelessWidget {
 class _TopPrioritiesPanel extends StatelessWidget {
   final List<String> priorities;
   final PomodoroController notifier;
+  final CarryOverSection? loadingCarryOverSection;
+  final ValueChanged<CarryOverSection> onCarryOverPressed;
   final VoidCallback onDragStarted;
   final ValueChanged<DragUpdateDetails> onDragUpdate;
   final VoidCallback onDragEnd;
@@ -1670,6 +1719,8 @@ class _TopPrioritiesPanel extends StatelessWidget {
   const _TopPrioritiesPanel({
     required this.priorities,
     required this.notifier,
+    required this.loadingCarryOverSection,
+    required this.onCarryOverPressed,
     required this.onDragStarted,
     required this.onDragUpdate,
     required this.onDragEnd,
@@ -1677,6 +1728,7 @@ class _TopPrioritiesPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     final filledPriorities = <({int index, String value})>[
       for (var index = 0; index < priorities.length && index < 3; index += 1)
         if (priorities[index].trim().isNotEmpty)
@@ -1696,7 +1748,7 @@ class _TopPrioritiesPanel extends StatelessWidget {
                   child: Text(
                     context.l10n.topPrioritiesTitle,
                     style: TextStyle(
-                      color: Color(0xFFF6F3EC),
+                      color: colors.onSurface,
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
                     ),
@@ -1708,7 +1760,7 @@ class _TopPrioritiesPanel extends StatelessWidget {
                     onPressed: () => _openAddPriority(context),
                     icon: const Icon(Icons.add_rounded),
                     style: IconButton.styleFrom(
-                      foregroundColor: const Color(0xFFF6F3EC),
+                      foregroundColor: colors.onSurface,
                       visualDensity: VisualDensity.compact,
                     ),
                   ),
@@ -1720,18 +1772,21 @@ class _TopPrioritiesPanel extends StatelessWidget {
               Text(
                 context.l10n.noPrioritiesYet,
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.42),
+                  color: colors.onSurface.withValues(alpha: 0.42),
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                 ),
               ),
               const SizedBox(height: 4),
-              DailyCarryOverButton(
-                label: context.l10n.carryOverPreviousPriorities,
-                onPressed: () => showCarryOverPickerSheet(
-                  context,
-                  notifier: notifier,
-                  section: CarryOverSection.topPriority,
+              Align(
+                alignment: Alignment.centerLeft,
+                child: DailyCarryOverButton(
+                  label: context.l10n.carryOverPreviousPriorities,
+                  isLoading:
+                      loadingCarryOverSection == CarryOverSection.topPriority,
+                  onPressed: loadingCarryOverSection == null
+                      ? () => onCarryOverPressed(CarryOverSection.topPriority)
+                      : null,
                 ),
               ),
             ] else ...[

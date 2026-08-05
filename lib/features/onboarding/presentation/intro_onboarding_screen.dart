@@ -71,7 +71,6 @@ class _IntroOnboardingScreenState extends ConsumerState<IntroOnboardingScreen> {
     final lastIndex = slides.length - 1;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF080808),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
@@ -1056,18 +1055,17 @@ class _IntroPrimaryAction extends StatelessWidget {
   final String label;
   final Future<void> Function() onPressed;
 
-  const _IntroPrimaryAction({super.key, required this.label, required this.onPressed});
+  const _IntroPrimaryAction({
+    super.key,
+    required this.label,
+    required this.onPressed,
+  });
 
   @override
   Widget build(BuildContext context) {
     return FilledButton(
       onPressed: onPressed,
-      style: FilledButton.styleFrom(
-        backgroundColor: const Color(0xFFF6F3EC),
-        foregroundColor: const Color(0xFF080808),
-        minimumSize: const Size.fromHeight(54),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      ),
+      style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(54)),
       child: Text(
         label,
         maxLines: 1,

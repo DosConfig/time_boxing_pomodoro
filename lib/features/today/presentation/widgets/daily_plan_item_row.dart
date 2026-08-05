@@ -23,10 +23,11 @@ class DailyPlanItemRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Material(
-      color: Colors.white.withValues(alpha: 0.045),
+      color: colors.onSurface.withValues(alpha: 0.045),
       shape: RoundedRectangleBorder(
-        side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+        side: BorderSide(color: colors.onSurface.withValues(alpha: 0.1)),
         borderRadius: BorderRadius.circular(8),
       ),
       child: InkWell(
@@ -40,7 +41,7 @@ class DailyPlanItemRow extends StatelessWidget {
                 Text(
                   '${leadingIndex! + 1}',
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.46),
+                    color: colors.onSurface.withValues(alpha: 0.46),
                     fontSize: 13,
                     fontWeight: FontWeight.w900,
                   ),
@@ -52,8 +53,8 @@ class DailyPlanItemRow extends StatelessWidget {
                   text,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Color(0xFFF6F3EC),
+                  style: TextStyle(
+                    color: colors.onSurface,
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                     height: 1.18,
@@ -89,6 +90,7 @@ class DailyPlanReorderTarget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return DragTarget<TimeBoxBoardDragPayload>(
       onWillAcceptWithDetails: (details) {
         final payload = details.data;
@@ -118,9 +120,7 @@ class DailyPlanReorderTarget extends StatelessWidget {
               height: 2,
               margin: EdgeInsets.only(bottom: targeted ? 4 : 0),
               decoration: BoxDecoration(
-                color: targeted
-                    ? const Color(0xFFF6F3EC)
-                    : Colors.transparent,
+                color: targeted ? colors.onSurface : Colors.transparent,
                 borderRadius: BorderRadius.circular(1),
               ),
             ),
