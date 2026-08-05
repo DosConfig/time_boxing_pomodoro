@@ -10,7 +10,4 @@ force(true)
 skip_screenshots(false)
 skip_metadata(false)
 run_precheck_before_submit(true)
-
-privacy_url("https://timebox-mark-prod.web.app/privacy/")
-support_url("https://timebox-mark-prod.web.app/support/")
-marketing_url("https://timebox-mark-prod.web.app/")
+precheck_include_in_app_purchases(false)
