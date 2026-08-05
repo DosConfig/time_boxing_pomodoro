@@ -1,6 +1,6 @@
 # App Store Connect 입력 자산 (v1.0)
 
-> 상태 반영: iOS 첫 심사 버전 `1.0.0+13`.
+> 상태 반영: iOS 첫 심사 버전 `1.0.0+14`.
 > Google/Apple 로그인 + Firebase + Live Activity + Crashlytics/Analytics 포함.
 > 캘린더 기능과 캘린더 권한은 첫 심사 범위에서 제외.
 

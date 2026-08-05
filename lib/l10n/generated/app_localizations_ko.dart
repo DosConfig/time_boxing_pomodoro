@@ -18,8 +18,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get introBrandTitle => '하루를 타임박스로';
 
   @override
-  String get introBrandBody =>
-      '브레인 덤프를 우선순위, 유연한 타임박스, 집중, 알림, 캘린더 계획으로 빠르게 바꿉니다.';
+  String get introBrandBody => '브레인 덤프를 우선순위, 유연한 타임박스, 집중 세션과 알림으로 빠르게 바꿉니다.';
 
   @override
   String get introBrainDumpTitle => '머릿속을 비우기';

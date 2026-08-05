@@ -19,7 +19,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get introBrandBody =>
-      'Convierte ideas sueltas en prioridades, bloques flexibles, Focus, avisos y planes listos para calendario.';
+      'Convierte ideas sueltas en prioridades, bloques flexibles, sesiones de enfoque y avisos oportunos.';
 
   @override
   String get introBrainDumpTitle => 'Vacía la mente';

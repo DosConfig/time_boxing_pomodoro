@@ -19,7 +19,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get introBrandBody =>
-      'Mache aus Notizen Prioritäten, flexible Zeitblöcke, Fokus, Alarme und kalenderfertige Pläne.';
+      'Mache aus Notizen Prioritäten, flexible Zeitblöcke, Fokussitzungen und rechtzeitige Hinweise.';
 
   @override
   String get introBrainDumpTitle => 'Kopf leeren';

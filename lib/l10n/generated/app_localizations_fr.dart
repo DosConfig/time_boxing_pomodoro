@@ -19,7 +19,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get introBrandBody =>
-      'Transformez les notes en priorités, blocs flexibles, Focus, alertes et plans prêts pour le calendrier.';
+      'Transformez les notes en priorités, blocs flexibles, sessions de concentration et alertes utiles.';
 
   @override
   String get introBrainDumpTitle => 'Vider l\'esprit';

@@ -19,7 +19,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get introBrandBody =>
-      'Turn brain dumps into priorities, flexible time blocks, Focus, alerts, and calendar-ready plans.';
+      'Turn brain dumps into priorities, flexible time blocks, focused sessions, and timely alerts.';
 
   @override
   String get introBrainDumpTitle => 'Empty your head';

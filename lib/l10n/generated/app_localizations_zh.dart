@@ -18,7 +18,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get introBrandTitle => '把一天装进时间块';
 
   @override
-  String get introBrandBody => '把脑中事项变成重点、灵活时间块、Focus、提醒和可同步的日历计划。';
+  String get introBrandBody => '把脑中事项变成重点、灵活时间块、专注时段和及时提醒。';
 
   @override
   String get introBrainDumpTitle => '清空脑中事项';
