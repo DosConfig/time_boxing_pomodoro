@@ -32,7 +32,7 @@ void main() {
     );
   });
 
-  test('loads and persists the slot break preference', () async {
+  test('clears the removed slot break preference', () async {
     SharedPreferences.setMockInitialValues({'app.slotBreakEnabled': true});
     final container = ProviderContainer();
     addTearDown(container.dispose);
@@ -42,15 +42,11 @@ void main() {
 
     expect(
       container.read(appPreferencesControllerProvider).slotBreakEnabled,
-      isTrue,
+      isFalse,
     );
 
-    await container
-        .read(appPreferencesControllerProvider.notifier)
-        .setSlotBreakEnabled(false);
-
     final stored = await SharedPreferences.getInstance();
-    expect(stored.getBool('app.slotBreakEnabled'), isFalse);
+    expect(stored.getBool('app.slotBreakEnabled'), isNull);
     expect(
       container.read(appPreferencesControllerProvider).slotBreakEnabled,
       isFalse,

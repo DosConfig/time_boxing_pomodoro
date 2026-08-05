@@ -405,9 +405,7 @@ class _TimeBoxTrashTarget extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          targeted
-                              ? context.l10n.deleteAction
-                              : '${context.l10n.dragTimeBoxTooltip} · ${context.l10n.deleteAction}',
+                          context.l10n.deleteAction,
                           style: TextStyle(
                             color: targeted
                                 ? const Color(0xFF080808)

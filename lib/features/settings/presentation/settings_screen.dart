@@ -128,23 +128,6 @@ class SettingsScreen extends ConsumerWidget {
                             value: pomodoro.autoStartFocus,
                             onChanged: notifier.setAutoStartFocus,
                           ),
-                          _SettingsSwitch(
-                            label: l10n.slotBreakTitle,
-                            description: l10n.slotBreakDescription(
-                              preferences.timeSlotInterval.minutes,
-                              slotBreakMinutesForInterval(
-                                preferences.timeSlotInterval.minutes,
-                              ),
-                            ),
-                            value: preferences.slotBreakEnabled,
-                            onChanged: (enabled) {
-                              ref
-                                  .read(
-                                    appPreferencesControllerProvider.notifier,
-                                  )
-                                  .setSlotBreakEnabled(enabled);
-                            },
-                          ),
                         ],
                       ),
                     ),

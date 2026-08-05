@@ -763,7 +763,7 @@ void main() {
       );
     });
 
-    test('slot breaks clip the focus segment to the break start', () async {
+    test('legacy slot break preference no longer clips focus', () async {
       SharedPreferences.setMockInitialValues({
         'app.slotBreakEnabled': true,
         'app.timeSlotIntervalMinutes': 30,
@@ -790,7 +790,7 @@ void main() {
       );
       addTearDown(container.dispose);
 
-      // 설정 로드가 끝난 뒤 추적 자동 시작이 세그먼트를 계산하도록 한다.
+      // 제거된 beta 설정은 로드 과정에서 무시되고 삭제된다.
       container.read(appPreferencesControllerProvider);
       await _settleControllerRestore();
       container.read(pomodoroControllerProvider);
@@ -799,11 +799,10 @@ void main() {
       final state = container.read(pomodoroControllerProvider);
       expect(state.status, PomodoroStatus.running);
       expect(state.phase, PomodoroPhase.focus);
-      // 09:00 시작, 간격 30분·휴식 3분 → 집중 세그먼트는 09:27까지 27분.
-      expect(state.remainingTime, 27 * 60);
+      expect(state.remainingTime, 60 * 60);
     });
 
-    test('starting inside a slot break window runs the break first', () async {
+    test('legacy slot break window no longer starts a break', () async {
       SharedPreferences.setMockInitialValues({
         'app.slotBreakEnabled': true,
         'app.timeSlotIntervalMinutes': 30,
@@ -836,10 +835,9 @@ void main() {
       await _settleControllerRestore();
 
       final state = container.read(pomodoroControllerProvider);
-      // 09:28은 27~30분 휴식 창 안 → 남은 휴식 2분을 먼저 소화.
       expect(state.status, PomodoroStatus.running);
-      expect(state.phase, PomodoroPhase.shortBreak);
-      expect(state.remainingTime, 2 * 60);
+      expect(state.phase, PomodoroPhase.focus);
+      expect(state.remainingTime, 32 * 60);
     });
 
     test('auto-starts the current scheduled box when enabled', () async {

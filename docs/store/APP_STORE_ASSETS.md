@@ -1,6 +1,6 @@
 # App Store Connect 입력 자산 (v1.0)
 
-> 상태 반영: iOS 첫 심사 버전 `1.0.0+14`.
+> 상태 반영: iOS 첫 심사 버전 `1.0.0+15`.
 > Google/Apple 로그인 + Firebase + Live Activity + Crashlytics/Analytics 포함.
 > 캘린더 기능과 캘린더 권한은 첫 심사 범위에서 제외.
 
@@ -22,7 +22,7 @@ Timebox Mark는 오늘의 계획을 실행 가능한 타이머로 바꾸는 타�
 - 잠금화면 Live Activity와 Dynamic Island로 진행 중인 타임박스 상시 표시
 - 벽시계 기준 동기화로 앱을 껐다 켜도 어긋나지 않는 타이머
 - Firebase 기반 오늘 계획 동기화로 로그인 후 계획과 진행 상태 복원
-- 집중 및 휴식 구간이 끝났을 때 알려주는 로컬 알림
+- 현재 타임박스가 끝났을 때 알려주는 로컬 알림
 
 광고 추적 없이 기능과 안정성에 필요한 데이터만 사용하는 앱입니다.
 
@@ -104,10 +104,11 @@ Privacy Policy (English summary)
 
 Timebox Mark stores timer and planning data on your device and may sync daily plans through Firebase after sign-in. Sign in with Apple or Google is used for authentication and plan sync. Firebase Crashlytics and Analytics collect crash, device/app version, installation/session, and limited interaction data for stability; account IDs and user-entered plan text are excluded from diagnostics. We do not collect location, contacts, photos, calendar events, or advertising identifiers, and we do not track you. Contact: seongwoo@10xkeleton.com
 
-## 스크린샷 플랜 (6.7인치 필수, 6.5인치 겸용)
+## 스크린샷 세트 (6.9인치, 1320×2868)
 
-1. 타임박스 보드(오늘 계획) 화면
-2. 실행 중 타이머 화면
-3. 잠금화면 Live Activity (실기기 캡처 권장)
-4. Dynamic Island 확장 상태
-5. 설정 및 계정 삭제 화면
+1. Today 계획 화면
+2. 타임박스 보드 화면
+3. Focus 타이머 화면
+4. 설정 화면
+
+파일 위치: `ios/fastlane/screenshots/en-US/`

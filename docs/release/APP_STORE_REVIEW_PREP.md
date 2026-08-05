@@ -1,4 +1,4 @@
-# App Store Review Preparation — iOS 1.0.0+14
+# App Store Review Preparation — iOS 1.0.0+15
 
 Status: code and metadata preparation for the first iOS App Store review.
 Calendar export is deliberately excluded from this version.
@@ -10,7 +10,7 @@ This document is a release checklist, not legal advice.
 - Today: brain dump, top priorities, and the daily timebox board
 - Focus: current timebox timer, pause/resume/stop, and completion state
 - iOS Live Activity: Lock Screen and Dynamic Island timer presentation
-- Local notifications: focus and break completion alerts
+- Local notifications: current-timebox completion alerts
 - Firebase Auth: Sign in with Apple and Google sign-in
 - Firestore: signed-in daily-plan synchronization
 - Settings: notification controls, legal links, sign out, and account deletion
@@ -38,11 +38,11 @@ Release automation:
 - App Store Connect app ID: `6792788166`
 - Bundle ID: `com.seongwoo.focusmark`
 - Widget extension: `com.seongwoo.focusmark.PomodoroWidgetExtension`
-- TestFlight build target: `1.0.0+14`
+- TestFlight build target: `1.0.0+15`
 
 ## Required Before Submission
 
-- [ ] Build `1.0.0+14` appears as processed in App Store Connect
+- [ ] Build `1.0.0+15` appears as processed in App Store Connect
 - [ ] Apple and Google sign-in both work in the submitted build
 - [ ] Firestore plan creation and restoration work on a physical device
 - [ ] Live Activity appears on a supported physical iPhone
@@ -68,7 +68,7 @@ deletes the Firebase Auth user and synced plan data under `users/{uid}`.
 ### Notifications and Live Activity
 
 Notification permission is requested when the user starts a timer, not on first
-launch. Notifications report focus or break completion. ActivityKit presents
+launch. Notifications report the current timebox completion. ActivityKit presents
 the active timer on the Lock Screen and Dynamic Island. A Live Activity update
 token may be stored only to update or end the current activity; it is not used
 for marketing.
@@ -92,7 +92,7 @@ Declare according to the actual App Store Connect form:
 - Identifiers > Device ID: Firebase installation/session identifier for
   stability measurement; not used for advertising or tracking
 
-Do not declare Calendar Events for `1.0.0+14`. The app also does not collect
+Do not declare Calendar Events for `1.0.0+15`. The app also does not collect
 location, contacts, photos, browsing history, or advertising identifiers.
 
 Diagnostic context must not include email, Firebase UID, user-entered plan
@@ -124,15 +124,13 @@ updating or ending the active Live Activity and is not used for marketing.
 1. Today — priorities and current plan
 2. Today — timebox board
 3. Focus — running timer
-4. Lock Screen — Live Activity
-5. Dynamic Island — expanded state
-6. Settings — notification controls and account deletion
+4. Settings — notification controls
 
 Do not include a Calendar screenshot or calendar-related caption.
 
 ## App Store Connect Manual Tasks
 
-- Select the processed `1.0.0+14` build
+- Select the processed `1.0.0+15` build
 - Enter category: Productivity; optional secondary category: Lifestyle
 - Complete the 4+ age-rating questionnaire based on actual content
 - Enter Privacy Policy: https://timebox-mark-prod.web.app/privacy/
