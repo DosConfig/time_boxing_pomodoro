@@ -1,8 +1,8 @@
 # TestFlight Upload Runbook
 
-Status: not uploaded yet. This repo is prepared for a signed archive, but
-TestFlight upload requires Apple Developer signing credentials and App Store
-Connect access.
+Status: `1.0.0+12` was uploaded successfully through Codemagic on August 5,
+2026. The App Store review candidate is `1.0.0+13`, which removes Calendar from
+the submitted iOS scope and still needs a signed TestFlight upload.
 
 ## Required From The Apple Account Owner
 
@@ -109,16 +109,22 @@ Use the `ios-testflight` workflow after configuring:
 The workflow uploads to TestFlight only. It does not submit the app for App
 Store review.
 
-## Current Local Status
+## Current Local Status — 1.0.0+13
 
 - `flutter build ios --release --no-codesign` succeeds.
+- `flutter analyze` and all Flutter tests pass.
+- The submitted iOS surface has Today, Focus, and Settings tabs; Calendar is
+  not visible or reachable.
+- The iOS binary does not contain the EventKit link, Calendar MethodChannel,
+  Calendar permission strings, or Calendar privacy declaration.
 - Firebase Hosting legal/support pages are deployed.
 - Firestore rules are deployed.
 - Firestore code writes `users/{uid}` and `users/{uid}/days/{yyyy-MM-dd}` after
   a signed-in user edits the plan; production document creation must still be
   confirmed with a real-device smoke test.
 - Fastlane and Codemagic release automation files are prepared.
-- Shorebird is documented and guarded, but not initialized in the submitted
-  binary.
-- TestFlight upload is blocked only by Apple signing/App Store Connect
-  credentials, Codemagic signing setup, and the app record setup.
+- Shorebird release packaging is configured in the Codemagic TestFlight
+  workflow. Use patches only for Dart-only fixes within the reviewed feature
+  scope.
+- The next release action is to push and tag `v1.0.0+13`, run the
+  `ios-testflight` workflow, and wait for App Store Connect processing.

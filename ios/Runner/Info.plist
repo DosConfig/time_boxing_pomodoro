@@ -49,10 +49,6 @@
 	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
-	<key>LSApplicationQueriesSchemes</key>
-	<array>
-		<string>comgooglecalendar</string>
-	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
@@ -99,9 +95,5 @@
 	<true/>
 	<key>NSSupportsLiveActivitiesFrequentUpdates</key>
 	<true/>
-	<key>NSCalendarsWriteOnlyAccessUsageDescription</key>
-	<string>Timebox Mark adds only the time boxes you export as events in your calendar.</string>
-	<key>NSCalendarsUsageDescription</key>
-	<string>Timebox Mark adds only the time boxes you export as events in your calendar.</string>
 </dict>
 </plist>
