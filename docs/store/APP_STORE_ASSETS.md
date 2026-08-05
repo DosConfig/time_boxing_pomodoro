@@ -79,7 +79,7 @@ Live Activity is the core feature. To verify: sign in with Apple or Google, add 
 
 Timebox Mark 개인정보 처리방침
 
-시행일: 2026년 7월
+시행일: 2026년 8월 5일
 
 Timebox Mark는 개인 개발자가 만든 타임박싱 앱입니다. 앱은 다음 원칙을 따릅니다.
 
