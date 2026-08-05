@@ -36,7 +36,6 @@ class AppShell extends ConsumerWidget {
     });
 
     return Scaffold(
-      backgroundColor: const Color(0xFF080808),
       body: IndexedStack(
         index: index,
         children: [
@@ -46,56 +45,32 @@ class AppShell extends ConsumerWidget {
           const SettingsScreen(),
         ],
       ),
-      bottomNavigationBar: NavigationBarTheme(
-        data: NavigationBarThemeData(
-          backgroundColor: const Color(0xFF101010),
-          indicatorColor: const Color(0xFFF6F3EC),
-          labelTextStyle: WidgetStateProperty.resolveWith((states) {
-            final selected = states.contains(WidgetState.selected);
-            return TextStyle(
-              color: selected
-                  ? const Color(0xFFF6F3EC)
-                  : Colors.white.withValues(alpha: 0.48),
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-            );
-          }),
-          iconTheme: WidgetStateProperty.resolveWith((states) {
-            final selected = states.contains(WidgetState.selected);
-            return IconThemeData(
-              color: selected
-                  ? const Color(0xFF080808)
-                  : Colors.white.withValues(alpha: 0.58),
-            );
-          }),
-        ),
-        child: NavigationBar(
-          selectedIndex: index,
-          height: 72,
-          onDestinationSelected: (nextIndex) => _setIndex(ref, nextIndex),
-          destinations: [
-            NavigationDestination(
-              icon: const Icon(Icons.view_day_outlined),
-              selectedIcon: const Icon(Icons.view_day_rounded),
-              label: l10n.navToday,
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.timer_outlined),
-              selectedIcon: const Icon(Icons.timer_rounded),
-              label: l10n.navFocus,
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.calendar_month_outlined),
-              selectedIcon: const Icon(Icons.calendar_month_rounded),
-              label: l10n.navCalendar,
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.tune_rounded),
-              selectedIcon: const Icon(Icons.tune_rounded),
-              label: l10n.navSettings,
-            ),
-          ],
-        ),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: index,
+        height: 72,
+        onDestinationSelected: (nextIndex) => _setIndex(ref, nextIndex),
+        destinations: [
+          NavigationDestination(
+            icon: const Icon(Icons.view_day_outlined),
+            selectedIcon: const Icon(Icons.view_day_rounded),
+            label: l10n.navToday,
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.timer_outlined),
+            selectedIcon: const Icon(Icons.timer_rounded),
+            label: l10n.navFocus,
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.calendar_month_outlined),
+            selectedIcon: const Icon(Icons.calendar_month_rounded),
+            label: l10n.navCalendar,
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.tune_rounded),
+            selectedIcon: const Icon(Icons.tune_rounded),
+            label: l10n.navSettings,
+          ),
+        ],
       ),
     );
   }
@@ -114,17 +89,17 @@ class AppShell extends ConsumerWidget {
     messenger.showMaterialBanner(
       MaterialBanner(
         elevation: 0,
-        backgroundColor: const Color(0xFFF6F3EC),
+        backgroundColor: Theme.of(context).colorScheme.primary,
         leading: Icon(
           isBreak ? Icons.self_improvement_rounded : Icons.timer_rounded,
-          color: const Color(0xFF080808),
+          color: Theme.of(context).colorScheme.onPrimary,
         ),
         content: Text(
           isBreak
               ? context.l10n.breakCompleteMessage
               : context.l10n.focusCompleteMessage,
-          style: const TextStyle(
-            color: Color(0xFF080808),
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onPrimary,
             fontSize: 14,
             fontWeight: FontWeight.w800,
           ),
@@ -132,6 +107,9 @@ class AppShell extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: messenger.hideCurrentMaterialBanner,
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.onPrimary,
+            ),
             child: Text(context.l10n.ok),
           ),
         ],

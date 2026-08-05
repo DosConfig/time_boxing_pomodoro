@@ -25,7 +25,6 @@ class OnboardingScreen extends ConsumerWidget {
           );
 
     return Scaffold(
-      backgroundColor: const Color(0xFF080808),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(24, 28, 24, 28),
@@ -121,12 +120,7 @@ class OnboardingScreen extends ConsumerWidget {
                       );
                 },
                 style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFFF6F3EC),
-                  foregroundColor: const Color(0xFF080808),
                   minimumSize: const Size.fromHeight(54),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
                   textStyle: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w900,

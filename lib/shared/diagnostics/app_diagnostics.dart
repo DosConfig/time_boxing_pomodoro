@@ -261,6 +261,10 @@ void installGlobalErrorHandlers(AppDiagnostics diagnostics) {
   };
 }
 
+/// 앱의 lifecycle 변경을 진단 시스템에 기록하는 경계 위젯.
+///
+/// 화면 상태를 직접 그리기 위해서가 아니라 [WidgetsBindingObserver]의 등록과
+/// 해제 시점을 위젯의 수명에 맞추기 위해 StatefulWidget을 사용한다.
 class AppLifecycleDiagnostics extends StatefulWidget {
   const AppLifecycleDiagnostics({
     required this.diagnostics,

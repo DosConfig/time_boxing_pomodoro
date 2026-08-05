@@ -280,10 +280,6 @@ class SettingsScreen extends ConsumerWidget {
 
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: const Color(0xFF101010),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-      ),
       builder: (context) {
         return Consumer(
           builder: (context, ref, _) {
@@ -357,12 +353,7 @@ class SettingsScreen extends ConsumerWidget {
                         }
                       },
                       style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFFF6F3EC),
-                        foregroundColor: const Color(0xFF080808),
                         minimumSize: const Size.fromHeight(50),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
                         textStyle: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w900,
@@ -763,7 +754,6 @@ class _DeleteAccountDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      backgroundColor: const Color(0xFF101010),
       title: Text(context.l10n.deleteAccountTitle),
       content: Text(context.l10n.deleteAccountBody),
       actions: [
@@ -773,10 +763,6 @@ class _DeleteAccountDialog extends StatelessWidget {
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(true),
-          style: FilledButton.styleFrom(
-            backgroundColor: const Color(0xFFF6F3EC),
-            foregroundColor: const Color(0xFF080808),
-          ),
           child: Text(context.l10n.deleteAction),
         ),
       ],

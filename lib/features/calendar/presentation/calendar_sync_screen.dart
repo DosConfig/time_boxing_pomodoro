@@ -72,11 +72,7 @@ class _CalendarProviderExportScreen extends ConsumerWidget {
     final exportState = ref.watch(calendarExportControllerProvider(provider));
 
     return Scaffold(
-      backgroundColor: const Color(0xFF080808),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF080808),
-        foregroundColor: const Color(0xFFF6F3EC),
-        elevation: 0,
         title: Text(
           _CalendarProviderCopy.title(context, provider),
           maxLines: 1,
@@ -189,7 +185,7 @@ class _CalendarSnackBar {
           ? null
           : SnackBarAction(
               label: context.l10n.openCalendarAction,
-              textColor: const Color(0xFF080808),
+              textColor: Theme.of(context).colorScheme.onPrimary,
               onPressed: onOpenCalendar,
             ),
     );
@@ -205,12 +201,12 @@ class _CalendarSnackBar {
     messenger.showSnackBar(
       SnackBar(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: const Color(0xFFF6F3EC),
+        backgroundColor: Theme.of(context).colorScheme.primary,
         action: action,
         content: Text(
           message,
-          style: const TextStyle(
-            color: Color(0xFF080808),
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onPrimary,
             fontWeight: FontWeight.w800,
           ),
         ),
@@ -674,14 +670,6 @@ class _ExportButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return FilledButton.icon(
       onPressed: exporting ? null : onPressed,
-      style: FilledButton.styleFrom(
-        backgroundColor: const Color(0xFFF6F3EC),
-        foregroundColor: const Color(0xFF080808),
-        disabledBackgroundColor: Colors.white.withValues(alpha: 0.18),
-        disabledForegroundColor: Colors.white.withValues(alpha: 0.42),
-        minimumSize: const Size.fromHeight(48),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      ),
       icon: exporting
           ? const SizedBox(
               width: 18,

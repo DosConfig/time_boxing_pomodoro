@@ -132,10 +132,6 @@ Future<void> showDailyPlanTextSheet(
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    backgroundColor: const Color(0xFF101010),
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-    ),
     builder: (context) {
       return _DailyPlanTextSheet(
         title: title,
@@ -184,6 +180,7 @@ class _DailyPlanTextSheetState extends State<_DailyPlanTextSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
 
     return SafeArea(
@@ -198,8 +195,8 @@ class _DailyPlanTextSheetState extends State<_DailyPlanTextSheet> {
                 Expanded(
                   child: Text(
                     widget.title,
-                    style: const TextStyle(
-                      color: Color(0xFFF6F3EC),
+                    style: TextStyle(
+                      color: colors.onSurface,
                       fontSize: 18,
                       fontWeight: FontWeight.w900,
                     ),
@@ -208,7 +205,7 @@ class _DailyPlanTextSheetState extends State<_DailyPlanTextSheet> {
                 IconButton(
                   onPressed: () => Navigator.of(context).pop(),
                   icon: const Icon(Icons.close_rounded),
-                  color: const Color(0xFFF6F3EC),
+                  color: colors.onSurface,
                 ),
               ],
             ),
@@ -217,13 +214,13 @@ class _DailyPlanTextSheetState extends State<_DailyPlanTextSheet> {
               key: const ValueKey('dailyPlanSheetField'),
               controller: _controller,
               autofocus: true,
-              cursorColor: const Color(0xFFF6F3EC),
+              cursorColor: colors.onSurface,
               textInputAction: TextInputAction.done,
               onSubmitted: (_) => _save(),
               minLines: 1,
               maxLines: 3,
-              style: const TextStyle(
-                color: Color(0xFFF6F3EC),
+              style: TextStyle(
+                color: colors.onSurface,
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
               ),
@@ -231,7 +228,7 @@ class _DailyPlanTextSheetState extends State<_DailyPlanTextSheet> {
                 isDense: true,
                 labelText: widget.fieldLabel,
                 labelStyle: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.46),
+                  color: colors.onSurface.withValues(alpha: 0.46),
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                 ),
@@ -242,12 +239,12 @@ class _DailyPlanTextSheetState extends State<_DailyPlanTextSheet> {
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide: BorderSide(
-                    color: Colors.white.withValues(alpha: 0.14),
+                    color: colors.onSurface.withValues(alpha: 0.14),
                   ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Color(0xFFF6F3EC)),
+                  borderSide: BorderSide(color: colors.onSurface),
                 ),
               ),
             ),
@@ -262,15 +259,10 @@ class _DailyPlanTextSheetState extends State<_DailyPlanTextSheet> {
                 overflow: TextOverflow.ellipsis,
               ),
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFFF6F3EC),
-                foregroundColor: const Color(0xFF080808),
                 minimumSize: const Size.fromHeight(50),
                 textStyle: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w800,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
                 ),
               ),
             ),
@@ -303,12 +295,11 @@ class _SheetActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final foreground = action.destructive
-        ? const Color(0xFFFF8D8D)
-        : const Color(0xFFF6F3EC);
+    final colors = Theme.of(context).colorScheme;
+    final foreground = action.destructive ? colors.error : colors.onSurface;
 
     return Material(
-      color: Colors.white.withValues(alpha: 0.055),
+      color: colors.onSurface.withValues(alpha: 0.055),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       child: InkWell(
         onTap: () => action.onTap(context),
@@ -338,4 +329,3 @@ class _SheetActionButton extends StatelessWidget {
     );
   }
 }
-

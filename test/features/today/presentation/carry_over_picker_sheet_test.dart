@@ -93,22 +93,62 @@ Widget _testApp(_CarryOverTestController controller) {
     locale: const Locale('ko'),
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
-    home: Scaffold(
-      body: Builder(
-        builder: (context) {
-          return DailyCarryOverButton(
-            key: const ValueKey('openCarryOver'),
-            label: 'Open',
-            onPressed: () => showCarryOverPickerSheet(
-              context,
-              notifier: controller,
-              section: CarryOverSection.timeBox,
-            ),
-          );
-        },
-      ),
-    ),
+    home: _CarryOverTestScreen(controller: controller),
   );
+}
+
+class _CarryOverTestScreen extends StatefulWidget {
+  const _CarryOverTestScreen({required this.controller});
+
+  final _CarryOverTestController controller;
+
+  @override
+  State<_CarryOverTestScreen> createState() => _CarryOverTestScreenState();
+}
+
+class _CarryOverTestScreenState extends State<_CarryOverTestScreen> {
+  CarryOverSection? _loadingSection;
+
+  Future<void> _openPicker() async {
+    if (_loadingSection != null) {
+      return;
+    }
+    setState(() => _loadingSection = CarryOverSection.timeBox);
+
+    Pomodoro? sourcePlan;
+    try {
+      sourcePlan = await widget.controller.loadPreviousDayPlanSnapshot();
+    } finally {
+      if (mounted) {
+        setState(() => _loadingSection = null);
+      }
+    }
+
+    if (!mounted) {
+      return;
+    }
+    await showCarryOverPickerSheet(
+      context,
+      notifier: widget.controller,
+      section: CarryOverSection.timeBox,
+      sourcePlan: sourcePlan,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Align(
+        alignment: Alignment.centerLeft,
+        child: DailyCarryOverButton(
+          key: const ValueKey('openCarryOver'),
+          label: 'Open',
+          isLoading: _loadingSection == CarryOverSection.timeBox,
+          onPressed: _loadingSection == null ? _openPicker : null,
+        ),
+      ),
+    );
+  }
 }
 
 Pomodoro _planWithTimeBoxes(int count) {
@@ -118,8 +158,7 @@ Pomodoro _planWithTimeBoxes(int count) {
       return TimeBox(
         id: 'box-$index',
         title: 'Task $index',
-        timeRange:
-            '${_clock(startMinutes)}-${_clock(startMinutes + 30)}',
+        timeRange: '${_clock(startMinutes)}-${_clock(startMinutes + 30)}',
         durationSeconds: 30 * 60,
       );
     }),

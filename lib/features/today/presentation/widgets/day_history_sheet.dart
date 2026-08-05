@@ -15,10 +15,6 @@ void showDayHistorySheet(BuildContext context, {required String dateKey}) {
   showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    backgroundColor: const Color(0xFF101010),
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-    ),
     builder: (context) {
       return _DayHistorySheet(dateKey: dateKey);
     },
@@ -101,7 +97,8 @@ class _DayHistoryBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dayPlan = plan;
-    final priorities = dayPlan?.topPriorities
+    final priorities =
+        dayPlan?.topPriorities
             .map((item) => item.trim())
             .where((item) => item.isNotEmpty)
             .toList() ??

@@ -17,7 +17,6 @@ class AuthGateScreen extends ConsumerWidget {
     final authActionLoading = ref.watch(authActionControllerProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF080808),
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -66,7 +65,6 @@ class AuthGateScreen extends ConsumerWidget {
                             context: context,
                             isScrollControlled: true,
                             useSafeArea: true,
-                            backgroundColor: const Color(0xFF111111),
                             shape: const RoundedRectangleBorder(
                               borderRadius: BorderRadius.vertical(
                                 top: Radius.circular(8),
@@ -131,6 +129,7 @@ class _AuthBrandCopy extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -139,7 +138,7 @@ class _AuthBrandCopy extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.52),
+            color: colors.onSurface.withValues(alpha: 0.52),
             fontSize: 13,
             fontWeight: FontWeight.w900,
           ),
@@ -149,8 +148,8 @@ class _AuthBrandCopy extends StatelessWidget {
           appName,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            color: Color(0xFFF6F3EC),
+          style: TextStyle(
+            color: colors.onSurface,
             fontSize: 42,
             fontWeight: FontWeight.w900,
             height: 1,
@@ -162,7 +161,7 @@ class _AuthBrandCopy extends StatelessWidget {
           maxLines: 3,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.56),
+            color: colors.onSurface.withValues(alpha: 0.56),
             fontSize: 15,
             fontWeight: FontWeight.w700,
             height: 1.34,

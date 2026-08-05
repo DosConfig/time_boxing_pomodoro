@@ -77,6 +77,8 @@ class TimeBoxBoard extends ConsumerWidget {
   final int awakeStartMinutes;
   final int awakeEndMinutes;
   final int slotMinutes;
+  final CarryOverSection? loadingCarryOverSection;
+  final ValueChanged<CarryOverSection> onCarryOverPressed;
   final VoidCallback onDragStarted;
   final ValueChanged<DragUpdateDetails> onDragUpdate;
   final VoidCallback onDragEnd;
@@ -89,6 +91,8 @@ class TimeBoxBoard extends ConsumerWidget {
     required this.awakeStartMinutes,
     required this.awakeEndMinutes,
     required this.slotMinutes,
+    required this.loadingCarryOverSection,
+    required this.onCarryOverPressed,
     required this.onDragStarted,
     required this.onDragUpdate,
     required this.onDragEnd,
@@ -117,6 +121,7 @@ class TimeBoxBoard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = Theme.of(context).colorScheme;
     final dayStart = _dayStartMinutes();
     final dayEnd = _dayEndMinutes(dayStart);
     final slotCount = ((dayEnd - dayStart) / slotMinutes).ceil();
@@ -135,7 +140,7 @@ class TimeBoxBoard extends ConsumerWidget {
             key: const ValueKey('timebox_board_title'),
             context.l10n.timeBoxesTitle,
             style: TextStyle(
-              color: Color(0xFFF6F3EC),
+              color: colors.onSurface,
               fontSize: 15,
               fontWeight: FontWeight.w800,
             ),
@@ -144,18 +149,20 @@ class TimeBoxBoard extends ConsumerWidget {
           Text(
             context.l10n.timeBoxesHint,
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.42),
+              color: colors.onSurface.withValues(alpha: 0.42),
               fontSize: 12,
               fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 4),
-          DailyCarryOverButton(
-            label: context.l10n.carryOverPreviousSchedule,
-            onPressed: () => showCarryOverPickerSheet(
-              context,
-              notifier: notifier,
-              section: CarryOverSection.timeBox,
+          Align(
+            alignment: Alignment.centerLeft,
+            child: DailyCarryOverButton(
+              label: context.l10n.carryOverPreviousSchedule,
+              isLoading: loadingCarryOverSection == CarryOverSection.timeBox,
+              onPressed: loadingCarryOverSection == null
+                  ? () => onCarryOverPressed(CarryOverSection.timeBox)
+                  : null,
             ),
           ),
           const SizedBox(height: 14),
@@ -320,10 +327,6 @@ class TimeBoxBoard extends ConsumerWidget {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF101010),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-      ),
       builder: (context) {
         return _TimeBoxEditorSheet(
           notifier: notifier,
@@ -341,10 +344,6 @@ class TimeBoxBoard extends ConsumerWidget {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF101010),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-      ),
       builder: (context) {
         return _TimeBoxEditorSheet(
           box: box,
@@ -1293,15 +1292,10 @@ class _TimeBoxEditorSheetState extends State<_TimeBoxEditorSheet> {
               icon: const Icon(Icons.check_rounded),
               label: Text(context.l10n.saveAction),
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFFF6F3EC),
-                foregroundColor: const Color(0xFF080808),
                 minimumSize: const Size.fromHeight(50),
                 textStyle: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w800,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
                 ),
               ),
             ),
