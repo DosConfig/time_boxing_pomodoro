@@ -1,6 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../domain/entities/calendar_sync_options.dart';
+import '../../domain/entities/calendar_sync_options.dart';
 
 part 'calendar_sync_options_controller.g.dart';
 

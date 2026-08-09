@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../di/auth_providers.dart';
-import '../domain/entities/auth_session.dart';
+import '../../domain/entities/auth_session.dart';
+import '../../di/auth_providers.dart';
 
-export '../di/auth_providers.dart';
+export '../../di/auth_providers.dart';
 
 part 'auth_controller.g.dart';
 

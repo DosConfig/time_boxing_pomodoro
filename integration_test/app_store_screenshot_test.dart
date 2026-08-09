@@ -6,8 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:time_boxing_pomodoro/features/auth/application/auth_controller.dart';
-import 'package:time_boxing_pomodoro/features/focus/application/pomodoro_controller.dart';
+import 'package:time_boxing_pomodoro/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:time_boxing_pomodoro/features/focus/presentation/controllers/pomodoro_controller.dart';
 import 'package:time_boxing_pomodoro/features/focus/domain/entities/native_timer_copy.dart';
 import 'package:time_boxing_pomodoro/features/shell/presentation/app_shell.dart';
 import 'package:time_boxing_pomodoro/main.dart';
@@ -146,7 +146,8 @@ Future<void> _captureFlutterSurface(
 ) async {
   final boundary =
       boundaryKey.currentContext!.findRenderObject()! as RenderRepaintBoundary;
-  final image = await boundary.toImage(pixelRatio: 3);
+  final pixelRatio = View.of(boundaryKey.currentContext!).devicePixelRatio;
+  final image = await boundary.toImage(pixelRatio: pixelRatio);
   final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
   image.dispose();
   final bytes = byteData!.buffer.asUint8List();

@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:time_boxing_pomodoro/l10n/l10n.dart';
 
-import '../../settings/application/app_preferences_controller.dart';
+import 'package:time_boxing_pomodoro/features/settings/presentation/controllers/app_preferences_controller.dart';
 
 class IntroOnboardingScreen extends ConsumerStatefulWidget {
   const IntroOnboardingScreen({super.key});

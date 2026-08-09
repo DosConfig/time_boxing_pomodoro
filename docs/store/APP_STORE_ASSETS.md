@@ -1,6 +1,6 @@
 # App Store Connect 입력 자산 (v1.0)
 
-> 상태 반영: iOS 첫 심사 버전 `1.0.0+15`.
+> 상태 반영: iOS 첫 심사 버전 `1.0.0+16`.
 > Google/Apple 로그인 + Firebase + Live Activity + Crashlytics/Analytics 포함.
 > 캘린더 기능과 캘린더 권한은 첫 심사 범위에서 제외.
 
@@ -104,7 +104,10 @@ Privacy Policy (English summary)
 
 Timebox Mark stores timer and planning data on your device and may sync daily plans through Firebase after sign-in. Sign in with Apple or Google is used for authentication and plan sync. Firebase Crashlytics and Analytics collect crash, device/app version, installation/session, and limited interaction data for stability; account IDs and user-entered plan text are excluded from diagnostics. We do not collect location, contacts, photos, calendar events, or advertising identifiers, and we do not track you. Contact: seongwoo@10xkeleton.com
 
-## 스크린샷 세트 (6.9인치, 1320×2868)
+## 스크린샷 세트
+
+- iPhone 6.5인치: 1242×2688
+- iPad Pro 12.9인치: 2048×2732
 
 1. Today 계획 화면
 2. 타임박스 보드 화면

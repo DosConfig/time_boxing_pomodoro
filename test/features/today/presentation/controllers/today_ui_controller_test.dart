@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:time_boxing_pomodoro/features/today/application/today_ui_controller.dart';
+import 'package:time_boxing_pomodoro/features/today/presentation/controllers/today_ui_controller.dart';
 
 void main() {
   test('resize drag consumes movement in exact slot-height steps', () {

@@ -5,11 +5,11 @@ import 'package:patrol/patrol.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:time_boxing_pomodoro/features/auth/presentation/auth_gate_screen.dart';
 import 'package:time_boxing_pomodoro/features/auth/presentation/widgets/auth_provider_buttons.dart';
-import 'package:time_boxing_pomodoro/features/focus/application/pomodoro_controller.dart';
+import 'package:time_boxing_pomodoro/features/focus/presentation/controllers/pomodoro_controller.dart';
 import 'package:time_boxing_pomodoro/features/focus/domain/entities/pomodoro.dart';
 import 'package:time_boxing_pomodoro/features/onboarding/presentation/intro_onboarding_screen.dart';
 import 'package:time_boxing_pomodoro/features/onboarding/presentation/onboarding_screen.dart';
-import 'package:time_boxing_pomodoro/features/settings/application/app_preferences_controller.dart';
+import 'package:time_boxing_pomodoro/features/settings/presentation/controllers/app_preferences_controller.dart';
 import 'package:time_boxing_pomodoro/features/shell/presentation/app_shell.dart';
 import 'package:time_boxing_pomodoro/main.dart';
 

@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:time_boxing_pomodoro/l10n/l10n.dart';
 import 'package:time_boxing_pomodoro/shared/presentation/widgets/focus_mark_motion.dart';
 
-import '../application/auth_controller.dart';
+import 'package:time_boxing_pomodoro/features/auth/presentation/controllers/auth_controller.dart';
 import '../domain/entities/auth_session.dart';
 import 'widgets/auth_provider_buttons.dart';
 import 'widgets/email_sign_in_sheet.dart';

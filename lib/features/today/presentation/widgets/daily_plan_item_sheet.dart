@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:time_boxing_pomodoro/l10n/l10n.dart';
 
 import '../../../../shared/presentation/app_snack.dart';
-import '../../../focus/application/pomodoro_controller.dart';
+import 'package:time_boxing_pomodoro/features/focus/presentation/controllers/pomodoro_controller.dart';
 import '../../../focus/domain/entities/daily_plan_item_category.dart';
 
 /// 데일리 플랜 카드(최우선/브레인덤프/기억할 것) 공용 시트.

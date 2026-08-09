@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:time_boxing_pomodoro/features/focus/application/pomodoro_controller.dart';
+import 'package:time_boxing_pomodoro/features/focus/presentation/controllers/pomodoro_controller.dart';
 import 'package:time_boxing_pomodoro/features/focus/domain/entities/pomodoro.dart';
 import 'package:time_boxing_pomodoro/features/today/presentation/widgets/time_box_board.dart';
 import 'package:time_boxing_pomodoro/l10n/generated/app_localizations.dart';

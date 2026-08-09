@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:time_boxing_pomodoro/features/auth/application/auth_controller.dart';
+import 'package:time_boxing_pomodoro/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:time_boxing_pomodoro/features/auth/domain/entities/auth_session.dart';
 import 'package:time_boxing_pomodoro/features/auth/domain/repositories/auth_repository.dart';
 
