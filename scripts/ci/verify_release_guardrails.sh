@@ -52,3 +52,19 @@ python3 -m json.tool firestore.indexes.json >/dev/null
 has_regex_in_paths 'https://timebox-mark-prod\.web\.app/privacy/' lib docs public
 has_regex_in_paths 'https://timebox-mark-prod\.web\.app/support/' lib docs public
 has_regex_in_paths 'https://timebox-mark-prod\.web\.app/terms/' lib docs public
+
+# 4) 첫 iOS 심사 범위에는 캘린더가 없다. 예전 스토어 문구나 이미지가
+#    다시 제출 자산에 섞이면 실제 바이너리와 불일치하므로 배포를 막는다.
+if has_regex_in_paths '(calendar|Calendar|CALENDAR|캘린더)' ios/fastlane/metadata; then
+  echo "Release guard failed: calendar claim remains in App Store metadata." >&2
+  exit 1
+fi
+
+calendar_screenshot_paths="$(
+  find ios/fastlane/screenshots -type f 2>/dev/null | filter_regex '(calendar|Calendar|CALENDAR|캘린더)' || true
+)"
+if [[ -n "$calendar_screenshot_paths" ]]; then
+  echo "Release guard failed: calendar screenshot remains in App Store assets:" >&2
+  echo "$calendar_screenshot_paths" >&2
+  exit 1
+fi

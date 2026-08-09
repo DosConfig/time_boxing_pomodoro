@@ -146,7 +146,8 @@ Future<void> _captureFlutterSurface(
 ) async {
   final boundary =
       boundaryKey.currentContext!.findRenderObject()! as RenderRepaintBoundary;
-  final image = await boundary.toImage(pixelRatio: 3);
+  final pixelRatio = View.of(boundaryKey.currentContext!).devicePixelRatio;
+  final image = await boundary.toImage(pixelRatio: pixelRatio);
   final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
   image.dispose();
   final bytes = byteData!.buffer.asUint8List();

@@ -1,4 +1,4 @@
-# App Store Review Preparation — iOS 1.0.0+15
+# App Store Review Preparation — iOS 1.0.0+16
 
 Status: code and metadata preparation for the first iOS App Store review.
 Calendar export is deliberately excluded from this version.
@@ -38,11 +38,11 @@ Release automation:
 - App Store Connect app ID: `6792788166`
 - Bundle ID: `com.seongwoo.focusmark`
 - Widget extension: `com.seongwoo.focusmark.PomodoroWidgetExtension`
-- TestFlight build target: `1.0.0+15`
+- TestFlight build target: `1.0.0+16`
 
 ## Required Before Submission
 
-- [ ] Build `1.0.0+15` appears as processed in App Store Connect
+- [ ] Build `1.0.0+16` appears as processed in App Store Connect
 - [ ] Apple and Google sign-in both work in the submitted build
 - [ ] Firestore plan creation and restoration work on a physical device
 - [ ] Live Activity appears on a supported physical iPhone
@@ -92,7 +92,7 @@ Declare according to the actual App Store Connect form:
 - Identifiers > Device ID: Firebase installation/session identifier for
   stability measurement; not used for advertising or tracking
 
-Do not declare Calendar Events for `1.0.0+15`. The app also does not collect
+Do not declare Calendar Events for `1.0.0+16`. The app also does not collect
 location, contacts, photos, browsing history, or advertising identifiers.
 
 Diagnostic context must not include email, Firebase UID, user-entered plan
