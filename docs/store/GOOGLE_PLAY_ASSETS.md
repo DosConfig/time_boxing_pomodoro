@@ -6,16 +6,16 @@
 
 - Developer account: `Seongwoo Do` (`seongwoo@10xkeleton.com`)
 - Developer account ID: `4737209074398192496`
-- Identity document: uploaded; Google verification is in progress
+- Identity document: approved; no identity-verification issue remains in the console
 - Physical Android device verification: pending; the account owner must complete it in the Play Console mobile app
-- Contact phone verification: locked until identity verification is approved
+- Contact phone verification: locked until physical-device verification is complete
 - App creation and release upload: locked until the account checks above are complete
 
 ### Prepared release
 
 - Bundle: `build/app/outputs/bundle/release/app-release.aab`
 - Package: `com.seongwoo.focusmark`
-- Version: `1.0.0` (`versionCode 2`)
+- Version: `1.0.0` (`versionCode 16`)
 - Minimum SDK: 24
 - Target SDK: 36
 - Upload certificate SHA-1: `A2:76:49:7F:D4:CE:25:57:05:86:10:32:83:1D:93:5E:78:B9:1B:F2`

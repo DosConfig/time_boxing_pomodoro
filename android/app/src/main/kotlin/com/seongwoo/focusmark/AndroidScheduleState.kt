@@ -31,6 +31,9 @@ data class AndroidScheduleState(
     fun nextEntry(nowMs: Long): AndroidScheduleEntry? =
         entries.firstOrNull { it.startTimeMs > nowMs }
 
+    fun hasCurrentOrFutureEntry(nowMs: Long): Boolean =
+        currentEntry(nowMs) != null || nextEntry(nowMs) != null
+
     companion object {
         private const val PREFS = "pomodoro.android.schedule"
         private const val PAYLOAD = "payload"
