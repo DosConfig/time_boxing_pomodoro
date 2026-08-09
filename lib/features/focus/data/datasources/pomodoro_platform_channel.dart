@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import '../../domain/entities/live_activity_push_registration.dart';
+import '../../domain/entities/pomodoro.dart';
 
 class PomodoroPlatformChannel {
   static const _channel = MethodChannel('com.pomodoro/timer');
@@ -11,6 +13,7 @@ class PomodoroPlatformChannel {
       StreamController<LiveActivityPushRegistration>.broadcast();
   static final _liveActivityEndedController =
       StreamController<String>.broadcast();
+  static String? _lastAndroidScheduleSignature;
 
   static Stream<LiveActivityPushRegistration> get liveActivityRegistrations =>
       _liveActivityRegistrationController.stream;
@@ -89,6 +92,82 @@ class PomodoroPlatformChannel {
     } catch (e) {
       debugPrint('Error starting timer: $e');
       return false;
+    }
+  }
+
+  /// Android Foreground Service에 오늘의 전체 타임박스를 전달한다.
+  ///
+  /// Dart isolate가 멈춘 뒤에도 Android가 절대 시각을 기준으로 현재 카드와
+  /// 다음 카드를 전환할 수 있도록, 화면 상태가 아닌 최소 일정 데이터만 보낸다.
+  static Future<void> syncAndroidSchedule(Pomodoro pomodoro) async {
+    if (defaultTargetPlatform != TargetPlatform.android) {
+      return;
+    }
+
+    final now = DateTime.now();
+    final dayStart = DateTime(now.year, now.month, now.day);
+    final entries =
+        pomodoro.timeBoxes
+            .map((box) {
+              final startMinutes = box.startMinutes;
+              final endMinutes = box.endMinutes;
+              if (startMinutes == null || endMinutes == null) {
+                return null;
+              }
+              final start = dayStart.add(Duration(minutes: startMinutes));
+              final end = dayStart.add(Duration(minutes: endMinutes));
+              var title = box.title;
+              if (box.id == 'box-0900' && pomodoro.topPriorities.isNotEmpty) {
+                title = pomodoro.topPriorities.first.trim().isEmpty
+                    ? title
+                    : pomodoro.topPriorities.first.trim();
+              } else if (box.id == 'box-1330' &&
+                  pomodoro.topPriorities.length > 1) {
+                title = pomodoro.topPriorities[1].trim().isEmpty
+                    ? title
+                    : pomodoro.topPriorities[1].trim();
+              }
+              return <String, Object>{
+                'id': box.id,
+                'title': title,
+                'timeRange': box.timeRange,
+                'startTimeMs': start.millisecondsSinceEpoch,
+                'endTimeMs': end.millisecondsSinceEpoch,
+              };
+            })
+            .whereType<Map<String, Object>>()
+            .toList()
+          ..sort(
+            (left, right) => (left['startTimeMs']! as int).compareTo(
+              right['startTimeMs']! as int,
+            ),
+          );
+
+    final payload = <String, Object>{
+      'enabled': pomodoro.autoStartFocus && entries.isNotEmpty,
+      'dateKey':
+          '${now.year.toString().padLeft(4, '0')}-'
+          '${now.month.toString().padLeft(2, '0')}-'
+          '${now.day.toString().padLeft(2, '0')}',
+      'notificationsEnabled': pomodoro.notificationsEnabled,
+      'soundEnabled': pomodoro.soundEnabled,
+      'topPriorities': pomodoro.topPriorities,
+      'localizedCopy': const <String, String>{
+        'focusCompleteTitle': 'Timebox complete',
+        'focusCompleteBody': 'The next scheduled timer is starting.',
+      },
+      'entries': entries,
+    };
+    final signature = jsonEncode(payload);
+    if (_lastAndroidScheduleSignature == signature) {
+      return;
+    }
+
+    try {
+      await _channel.invokeMethod('syncAndroidSchedule', payload);
+      _lastAndroidScheduleSignature = signature;
+    } catch (error) {
+      debugPrint('Error syncing Android schedule: $error');
     }
   }
 

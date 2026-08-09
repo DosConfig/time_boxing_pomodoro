@@ -36,6 +36,7 @@ void main() {
     expect(restored.reminders, savedPlan.reminders);
     expect(restored.topPriorities, savedPlan.topPriorities);
     expect(restored.timeBoxes, savedPlan.timeBoxes);
+    expect(restored.autoStartFocus, isTrue);
     expect(otherUserPlan.brainDump, isEmpty);
     expect(otherUserPlan.reminders, isEmpty);
     expect(otherUserPlan.topPriorities, ['', '', '']);
@@ -128,6 +129,7 @@ Pomodoro _savedPlan() {
       ),
     ],
     activeTimeBoxId: 'saved-box',
+    autoStartFocus: true,
   );
 }
 

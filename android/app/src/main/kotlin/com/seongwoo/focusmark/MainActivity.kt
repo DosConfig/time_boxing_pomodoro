@@ -53,7 +53,11 @@ class MainActivity : FlutterActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (PomodoroTimerState.read(this).isRunning) startTicker()
+        if (PomodoroTimerState.read(this).isRunning) {
+            startTicker()
+        } else if (AndroidScheduleState.read(this).enabled) {
+            sendTimerAction(PomodoroTimerService.ACTION_SYNC_SCHEDULE)
+        }
     }
 
     override fun onDestroy() {
@@ -102,6 +106,17 @@ class MainActivity : FlutterActivity() {
                 PomodoroTimerState.updateNotificationSettings(this, call)
                 sendTimerAction(PomodoroTimerService.ACTION_UPDATE)
                 result.success(true)
+            }
+            "syncAndroidSchedule" -> {
+                val schedule = AndroidScheduleState.write(this, call)
+                if (schedule.enabled) requestNotificationPermissionIfNeeded()
+                sendTimerAction(PomodoroTimerService.ACTION_SYNC_SCHEDULE)
+                result.success(
+                    mapOf(
+                        "enabled" to schedule.enabled,
+                        "entryCount" to schedule.entries.size,
+                    ),
+                )
             }
             "getActivityStatus" -> {
                 val state = PomodoroTimerState.read(this)

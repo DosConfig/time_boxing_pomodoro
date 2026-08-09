@@ -49,7 +49,12 @@ Swift PomodoroTimerManager
 
 The native timer owns the authoritative `endTime`. Flutter receives tick updates for the in-app display, while Live Activity renders from the same absolute timestamp. When the app process is killed and reopened, Flutter asks native code to restore the active session instead of resetting to `25:00`.
 
-Android now follows the same architecture: one absolute `endTime` is the source of truth, while a Kotlin foreground service delegates the visible countdown to notification Chronometer fields. The app does not repost a notification every second just to move the timer. Android 16 progress-centric Live Updates remain a separate enhancement.
+Android follows the same absolute-time architecture. Flutter synchronizes the
+Today schedule to native storage, and a Kotlin foreground service selects the
+current/next card from persisted start and end timestamps. Active countdowns
+use notification Chronometer fields, so the app does not repost a notification
+every second. Android 16 progress-centric Live Updates remain a separate
+presentation enhancement.
 
 ## Product Decisions
 
@@ -210,7 +215,7 @@ segments.
 
 ## Android Timer Notes
 
-Android has a parallel constraint: notification updates can be rate-limited or delayed by the system, and OEM battery management can affect persistent notification freshness. The implemented Kotlin foreground service passes the end time into an ongoing notification and lets Android render time through `setWhen`, `setUsesChronometer`, and `setChronometerCountDown`. Android 16 Live Updates can later add `Notification.ProgressStyle` for supported progress-centric surfaces.
+Android has a parallel constraint: notification updates can be rate-limited or delayed by the system, and OEM battery management can affect persistent notification freshness. The implemented Kotlin foreground service passes the end time into an ongoing notification and lets Android render time through `setWhen`, `setUsesChronometer`, and `setChronometerCountDown`. It also persists the daily card schedule and advances contiguous cards without depending on a running Dart isolate. See [Android timer notification strategy](docs/product/ANDROID_TIMER_NOTIFICATION_STRATEGY.md) for the verified flow and current limitations. Android 16 Live Updates can later add `Notification.ProgressStyle` for supported progress-centric surfaces.
 
 ## Local Setup
 
