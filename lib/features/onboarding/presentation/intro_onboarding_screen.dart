@@ -286,18 +286,37 @@ class _PreviewScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(15, 18, 15, 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const _PreviewStatusBar(),
-          const SizedBox(height: 14),
-          Expanded(child: child),
-          const SizedBox(height: 10),
-          const _PreviewNavBar(),
-        ],
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // The phone mock-up can become shorter than its contents on compact
+        // Android displays. Lay it out at a stable design height and scale the
+        // whole mock-up down, instead of letting an inner Column overflow.
+        final designHeight = math.max(312.0, constraints.maxHeight);
+        final scale = constraints.maxHeight / designHeight;
+        final designWidth = constraints.maxWidth / scale;
+
+        return FittedBox(
+          fit: BoxFit.contain,
+          alignment: Alignment.topCenter,
+          child: SizedBox(
+            width: designWidth,
+            height: designHeight,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(15, 18, 15, 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const _PreviewStatusBar(),
+                  const SizedBox(height: 14),
+                  Expanded(child: child),
+                  const SizedBox(height: 10),
+                  const _PreviewNavBar(),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

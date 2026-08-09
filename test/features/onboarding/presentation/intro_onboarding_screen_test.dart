@@ -6,8 +6,11 @@ import 'package:time_boxing_pomodoro/l10n/generated/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  Future<void> pumpIntro(WidgetTester tester) async {
-    await tester.binding.setSurfaceSize(const Size(390, 844));
+  Future<void> pumpIntro(
+    WidgetTester tester, {
+    Size surfaceSize = const Size(390, 844),
+  }) async {
+    await tester.binding.setSurfaceSize(surfaceSize);
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     await tester.pumpWidget(
@@ -45,5 +48,19 @@ void main() {
 
     final preferences = await SharedPreferences.getInstance();
     expect(preferences.getBool('app.introCompleted'), isTrue);
+  });
+
+  testWidgets('all pages fit on a compact Android display', (tester) async {
+    await pumpIntro(tester, surfaceSize: const Size(360, 640));
+
+    for (var page = 0; page < 4; page += 1) {
+      expect(tester.takeException(), isNull);
+      if (page < 3) {
+        await tester.tap(find.text('Next'));
+        await tester.pumpAndSettle();
+      }
+    }
+
+    expect(tester.takeException(), isNull);
   });
 }

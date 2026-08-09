@@ -1,7 +1,9 @@
 package com.seongwoo.focusmark
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class AndroidScheduleStateTest {
@@ -31,6 +33,13 @@ class AndroidScheduleStateTest {
         assertEquals("first", schedule.nextEntry(0L)?.id)
         assertEquals("second", schedule.nextEntry(2_500L)?.id)
         assertNull(schedule.nextEntry(4_000L))
+    }
+
+    @Test
+    fun currentOrFutureEntryBecomesFalseAfterTheFinalBoundary() {
+        assertTrue(schedule.hasCurrentOrFutureEntry(0L))
+        assertTrue(schedule.hasCurrentOrFutureEntry(2_500L))
+        assertFalse(schedule.hasCurrentOrFutureEntry(4_000L))
     }
 
     private fun entry(id: String, start: Long, end: Long) = AndroidScheduleEntry(

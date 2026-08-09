@@ -56,7 +56,7 @@ class MainActivity : FlutterActivity() {
         if (PomodoroTimerState.read(this).isRunning) {
             startTicker()
         } else if (AndroidScheduleState.read(this).enabled) {
-            sendTimerAction(PomodoroTimerService.ACTION_SYNC_SCHEDULE)
+            reconcileTimerService()
         }
     }
 
@@ -104,13 +104,13 @@ class MainActivity : FlutterActivity() {
             "restoreState" -> result.success(restoreState())
             "updateNotificationSettings" -> {
                 PomodoroTimerState.updateNotificationSettings(this, call)
-                sendTimerAction(PomodoroTimerService.ACTION_UPDATE)
+                reconcileTimerService()
                 result.success(true)
             }
             "syncAndroidSchedule" -> {
                 val schedule = AndroidScheduleState.write(this, call)
                 if (schedule.enabled) requestNotificationPermissionIfNeeded()
-                sendTimerAction(PomodoroTimerService.ACTION_SYNC_SCHEDULE)
+                reconcileTimerService(schedule)
                 result.success(
                     mapOf(
                         "enabled" to schedule.enabled,
@@ -202,15 +202,35 @@ class MainActivity : FlutterActivity() {
         handler.post(ticker)
     }
 
+    private fun reconcileTimerService(
+        schedule: AndroidScheduleState = AndroidScheduleState.read(this),
+    ) {
+        val timer = PomodoroTimerState.read(this)
+        when {
+            timer.isRunning || (timer.active && timer.paused) -> {
+                sendTimerAction(PomodoroTimerService.ACTION_UPDATE)
+            }
+            schedule.enabled && schedule.hasCurrentOrFutureEntry(System.currentTimeMillis()) -> {
+                sendTimerAction(PomodoroTimerService.ACTION_SYNC_SCHEDULE)
+            }
+            else -> stopService(Intent(this, PomodoroTimerService::class.java))
+        }
+    }
+
     private fun sendTimerAction(action: String) {
         val intent = Intent(this, PomodoroTimerService::class.java).setAction(action)
+        val mustEnterForeground =
+            action == PomodoroTimerService.ACTION_START ||
+                action == PomodoroTimerService.ACTION_RESUME
         if (
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
-            action != PomodoroTimerService.ACTION_STOP &&
-            action != PomodoroTimerService.ACTION_COMPLETE
+            mustEnterForeground
         ) {
             startForegroundService(intent)
         } else {
+            // Sync/update can legitimately decide that no timer remains. Starting
+            // those actions as foreground services would make Android require a
+            // notification even when the correct outcome is to stop immediately.
             startService(intent)
         }
     }
