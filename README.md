@@ -109,14 +109,16 @@ References used while shaping the product:
 
 ## Architecture
 
-The codebase now follows a feature-first structure with Clean Architecture boundaries inside each feature. Domain entities are immutable Freezed models, platform payloads are isolated as DTOs, and Riverpod 3 code generation owns dependency injection and app state controllers.
+The codebase follows a feature-first structure. Each feature uses the
+`data`, `domain`, and `presentation` layers it needs. Riverpod controllers live
+under `presentation/controllers`. The optional `di` directory is not an
+additional application layer; it is the composition point that connects data
+implementations, domain use cases, and presentation controllers.
 
 ```text
 lib/
   features/
     focus/
-      application/
-        pomodoro_controller.dart
       data/
         datasources/
         dtos/
@@ -126,24 +128,33 @@ lib/
         repositories/
         usecases/
       presentation/
+        controllers/
+          pomodoro_controller.dart
+        widgets/
+      di/
+        focus_providers.dart
     today/
-      application/
-        today_ui_controller.dart
       presentation/
+        controllers/
+          today_ui_controller.dart
+        widgets/
     calendar/
-      application/
+      data/
       domain/
       presentation/
+        controllers/
+      di/
+        calendar_providers.dart
     settings/
-      application/
       domain/
       presentation/
+        controllers/
     onboarding/
-      application/
       presentation/
+        controllers/
     shell/
-      application/
       presentation/
+        controllers/
 
 ios/
   Runner/

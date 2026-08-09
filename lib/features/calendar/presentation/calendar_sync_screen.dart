@@ -4,10 +4,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:time_boxing_pomodoro/l10n/l10n.dart';
 
-import '../../focus/application/pomodoro_controller.dart';
+import 'package:time_boxing_pomodoro/features/focus/presentation/controllers/pomodoro_controller.dart';
 import '../../focus/domain/entities/pomodoro.dart';
 import '../../focus/presentation/time_box_title_display.dart';
-import '../application/calendar_export_controller.dart';
+import 'package:time_boxing_pomodoro/features/calendar/presentation/controllers/calendar_export_controller.dart';
 import '../domain/entities/calendar_export.dart';
 
 class CalendarSyncScreen extends ConsumerWidget {

@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:time_boxing_pomodoro/features/settings/application/app_preferences_controller.dart';
-import 'package:time_boxing_pomodoro/features/focus/application/pomodoro_controller.dart';
+import 'package:time_boxing_pomodoro/features/settings/presentation/controllers/app_preferences_controller.dart';
+import 'package:time_boxing_pomodoro/features/focus/presentation/controllers/pomodoro_controller.dart';
 import 'package:time_boxing_pomodoro/features/focus/domain/entities/daily_plan_summary.dart';
 import 'package:time_boxing_pomodoro/features/focus/domain/entities/daily_plan_item_category.dart';
 import 'package:time_boxing_pomodoro/features/focus/domain/entities/native_timer_copy.dart';
@@ -605,6 +605,58 @@ void main() {
       expect(newDay.brainDump, isEmpty);
       expect(newDay.topPriorities, ['', '', '']);
       expect(repository.restoreCallCount, 2);
+    });
+
+    test('retries the day rollover when the first restore fails', () async {
+      var now = DateTime(2026, 7, 20, 23, 59);
+      final previousDay = Pomodoro.initial().copyWith(
+        brainDump: const ['Yesterday'],
+        timeBoxes: const [
+          TimeBox(
+            id: 'yesterday-box',
+            title: 'Yesterday box',
+            timeRange: '09:00-09:30',
+            durationSeconds: 30 * 60,
+          ),
+        ],
+      );
+      final repository = _MemoryPomodoroRepository(
+        previousDay,
+        onRestore: (fallback, restoreCallCount) {
+          if (restoreCallCount == 1) {
+            return previousDay;
+          }
+          if (restoreCallCount == 2) {
+            throw StateError('temporary restore failure');
+          }
+          return fallback;
+        },
+      );
+      final container = ProviderContainer(
+        overrides: [
+          pomodoroRepositoryProvider.overrideWithValue(repository),
+          pomodoroClockProvider.overrideWithValue(() => now),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final controller = container.read(pomodoroControllerProvider.notifier);
+      await _settleControllerRestore();
+
+      now = DateTime(2026, 7, 21);
+      controller.syncDayBoundaryAndFocus();
+      await _settleControllerRestore();
+
+      expect(container.read(pomodoroControllerProvider).timeBoxes, isNotEmpty);
+      expect(repository.restoreCallCount, 2);
+
+      controller.syncDayBoundaryAndFocus();
+      await _settleControllerRestore();
+
+      final restoredDay = container.read(pomodoroControllerProvider);
+      expect(restoredDay.brainDump, isEmpty);
+      expect(restoredDay.timeBoxes, isEmpty);
+      expect(repository.restoreCallCount, 3);
     });
 
     test('computes slot break windows from the wall clock', () {

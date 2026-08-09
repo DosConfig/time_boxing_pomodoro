@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:time_boxing_pomodoro/features/auth/application/auth_controller.dart';
+import 'package:time_boxing_pomodoro/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:time_boxing_pomodoro/features/auth/domain/entities/auth_session.dart';
-import 'package:time_boxing_pomodoro/features/focus/application/pomodoro_controller.dart';
+import 'package:time_boxing_pomodoro/features/focus/presentation/controllers/pomodoro_controller.dart';
 import 'package:time_boxing_pomodoro/features/focus/domain/entities/pomodoro.dart';
-import 'package:time_boxing_pomodoro/features/settings/application/app_preferences_controller.dart';
+import 'package:time_boxing_pomodoro/features/settings/presentation/controllers/app_preferences_controller.dart';
 import 'package:time_boxing_pomodoro/features/settings/domain/entities/app_preferences.dart';
 import 'package:time_boxing_pomodoro/features/settings/presentation/settings_screen.dart';
 import 'package:time_boxing_pomodoro/l10n/generated/app_localizations.dart';

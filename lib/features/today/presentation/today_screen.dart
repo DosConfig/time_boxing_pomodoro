@@ -6,14 +6,14 @@ import 'package:flutter/services.dart';
 import 'package:time_boxing_pomodoro/l10n/l10n.dart';
 
 import '../../../shared/presentation/app_snack.dart';
-import '../../focus/application/pomodoro_controller.dart';
+import 'package:time_boxing_pomodoro/features/focus/presentation/controllers/pomodoro_controller.dart';
 import '../../focus/domain/entities/daily_plan_summary.dart';
 import '../../focus/domain/entities/daily_plan_item_category.dart';
 import '../../focus/domain/entities/pomodoro.dart';
 import '../../focus/presentation/native_timer_copy_l10n.dart';
 import '../../focus/presentation/time_box_title_display.dart';
-import '../../settings/application/app_preferences_controller.dart';
-import '../application/today_ui_controller.dart';
+import 'package:time_boxing_pomodoro/features/settings/presentation/controllers/app_preferences_controller.dart';
+import 'package:time_boxing_pomodoro/features/today/presentation/controllers/today_ui_controller.dart';
 import 'widgets/carry_over_picker_sheet.dart';
 import 'widgets/daily_carry_over_button.dart';
 import 'widgets/daily_plan_item_row.dart';

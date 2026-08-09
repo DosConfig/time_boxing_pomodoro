@@ -2,24 +2,24 @@ import 'dart:async';
 
 import 'package:flutter/widgets.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:time_boxing_pomodoro/features/settings/presentation/controllers/app_preferences_controller.dart';
 
-import '../../../shared/diagnostics/app_diagnostics.dart';
-import '../../settings/application/app_preferences_controller.dart';
-import '../di/focus_providers.dart';
-import '../domain/entities/native_timer_copy.dart';
-import '../domain/entities/daily_plan_item_category.dart';
-import '../domain/entities/pomodoro.dart';
-import '../domain/entities/daily_plan_summary.dart';
-import '../domain/repositories/pomodoro_repository.dart';
-import '../domain/usecases/pause_pomodoro.dart';
-import '../domain/usecases/reset_pomodoro.dart';
-import '../domain/usecases/restore_pomodoro_state.dart';
-import '../domain/usecases/restore_today_plan.dart';
-import '../domain/usecases/load_plan_for_date.dart';
-import '../domain/usecases/load_previous_plan.dart';
-import '../domain/usecases/start_pomodoro.dart';
+import '../../../../shared/diagnostics/app_diagnostics.dart';
+import '../../domain/entities/daily_plan_item_category.dart';
+import '../../domain/entities/daily_plan_summary.dart';
+import '../../domain/entities/native_timer_copy.dart';
+import '../../domain/entities/pomodoro.dart';
+import '../../domain/repositories/pomodoro_repository.dart';
+import '../../domain/usecases/load_plan_for_date.dart';
+import '../../domain/usecases/load_previous_plan.dart';
+import '../../domain/usecases/pause_pomodoro.dart';
+import '../../domain/usecases/reset_pomodoro.dart';
+import '../../domain/usecases/restore_pomodoro_state.dart';
+import '../../domain/usecases/restore_today_plan.dart';
+import '../../domain/usecases/start_pomodoro.dart';
+import '../../di/focus_providers.dart';
 
-export '../di/focus_providers.dart';
+export '../../di/focus_providers.dart';
 
 part 'pomodoro_controller.g.dart';
 
@@ -382,11 +382,29 @@ class PomodoroController extends _$PomodoroController
     }
     final nextDateKey = _dateKey(_now());
     if (nextDateKey != _activeDateKey) {
-      _activeDateKey = nextDateKey;
-      unawaited(_rolloverToNewDay());
+      unawaited(_attemptDayRollover(nextDateKey));
       return;
     }
     syncFocusWithClock();
+  }
+
+  Future<void> _attemptDayRollover(String requestedDateKey) async {
+    try {
+      await _rolloverToNewDay();
+      // 복원이 성공한 뒤에만 날짜 전환을 확정한다. 실패하면 기존 날짜 키를
+      // 유지하므로 다음 clock tick 또는 onResume에서 다시 시도한다.
+      _activeDateKey = _dateKey(_now());
+    } catch (error, stackTrace) {
+      await diagnostics.recordNonFatal(
+        error,
+        stackTrace,
+        reason: 'day_rollover_failed',
+        attributes: {
+          'from_date': _activeDateKey,
+          'requested_date': requestedDateKey,
+        },
+      );
+    }
   }
 
   Future<void> _rolloverToNewDay() => _dayRollover.run(_doRolloverToNewDay);

@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:time_boxing_pomodoro/features/settings/application/app_preferences_controller.dart';
+import 'package:time_boxing_pomodoro/features/settings/presentation/controllers/app_preferences_controller.dart';
 import 'package:time_boxing_pomodoro/features/settings/domain/entities/app_preferences.dart';
 
 void main() {

@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:time_boxing_pomodoro/l10n/l10n.dart';
 
-import '../../focus/application/pomodoro_controller.dart';
+import 'package:time_boxing_pomodoro/features/focus/presentation/controllers/pomodoro_controller.dart';
 import '../../focus/domain/entities/pomodoro.dart';
 import '../../focus/presentation/native_timer_copy_l10n.dart';
 import '../../focus/presentation/timer_screen.dart';
 import '../../settings/presentation/settings_screen.dart';
-import '../application/app_shell_controller.dart';
+import 'package:time_boxing_pomodoro/features/shell/presentation/controllers/app_shell_controller.dart';
 import '../../today/presentation/today_screen.dart';
 
 class AppShell extends ConsumerWidget {

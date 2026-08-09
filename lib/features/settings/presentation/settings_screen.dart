@@ -4,14 +4,14 @@ import 'package:time_boxing_pomodoro/l10n/l10n.dart';
 import 'package:time_boxing_pomodoro/shared/legal/legal_links.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../auth/application/auth_controller.dart';
+import 'package:time_boxing_pomodoro/features/auth/presentation/controllers/auth_controller.dart';
 import '../../auth/domain/entities/auth_session.dart';
 import '../../auth/presentation/widgets/auth_provider_buttons.dart';
-import '../../focus/application/pomodoro_controller.dart';
+import 'package:time_boxing_pomodoro/features/focus/presentation/controllers/pomodoro_controller.dart';
 import '../../onboarding/presentation/onboarding_screen.dart'
     show formatClock, normalizeAwakeRange;
-import '../application/awake_window_draft_controller.dart';
-import '../application/app_preferences_controller.dart';
+import 'package:time_boxing_pomodoro/features/settings/presentation/controllers/awake_window_draft_controller.dart';
+import 'package:time_boxing_pomodoro/features/settings/presentation/controllers/app_preferences_controller.dart';
 import '../domain/entities/app_preferences.dart';
 
 class SettingsScreen extends ConsumerWidget {

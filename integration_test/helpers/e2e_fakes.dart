@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:time_boxing_pomodoro/features/auth/application/auth_controller.dart';
+import 'package:time_boxing_pomodoro/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:time_boxing_pomodoro/features/auth/domain/entities/auth_session.dart';
 import 'package:time_boxing_pomodoro/features/auth/domain/repositories/auth_repository.dart';
-import 'package:time_boxing_pomodoro/features/focus/application/pomodoro_controller.dart';
+import 'package:time_boxing_pomodoro/features/focus/presentation/controllers/pomodoro_controller.dart';
 import 'package:time_boxing_pomodoro/features/focus/data/datasources/pomodoro_cloud_datasource.dart';
 import 'package:time_boxing_pomodoro/features/focus/data/datasources/pomodoro_local_datasource.dart';
 import 'package:time_boxing_pomodoro/features/focus/domain/entities/daily_plan_summary.dart';

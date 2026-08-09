@@ -1,9 +1,9 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../di/calendar_providers.dart';
-import '../domain/entities/calendar_export.dart';
+import '../../domain/entities/calendar_export.dart';
+import '../../di/calendar_providers.dart';
 
-export '../di/calendar_providers.dart';
+export '../../di/calendar_providers.dart';
 
 part 'calendar_export_controller.g.dart';
 

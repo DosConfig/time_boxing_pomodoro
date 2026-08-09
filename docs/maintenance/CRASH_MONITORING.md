@@ -146,7 +146,7 @@ flutter run --dart-define=ENABLE_DIAGNOSTICS=true
 - 초기화와 전역 오류 handler: `lib/shared/diagnostics/app_diagnostics.dart`
 - 앱 lifecycle/auth breadcrumb: `lib/main.dart`
 - 타이머/Live Activity non-fatal과 상태 breadcrumb:
-  `lib/features/focus/application/pomodoro_controller.dart`
+  `lib/features/focus/presentation/controllers/pomodoro_controller.dart`
 - Android plugin: `android/settings.gradle.kts`,
   `android/app/build.gradle.kts`
 - iOS dSYM upload phase: `ios/Runner.xcodeproj/project.pbxproj`

@@ -1,7 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../domain/entities/app_preferences.dart';
+import '../../domain/entities/app_preferences.dart';
 
 part 'app_preferences_controller.g.dart';
 

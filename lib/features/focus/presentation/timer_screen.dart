@@ -5,9 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:time_boxing_pomodoro/l10n/generated/app_localizations.dart';
 import 'package:time_boxing_pomodoro/l10n/l10n.dart';
 
-import '../application/pomodoro_controller.dart';
+import 'package:time_boxing_pomodoro/features/focus/presentation/controllers/pomodoro_controller.dart';
 import '../domain/entities/pomodoro.dart';
-import 'native_timer_copy_l10n.dart';
 import 'time_box_title_display.dart';
 import 'widgets/focus_timer_dial.dart';
 
@@ -85,7 +84,7 @@ class TimerScreen extends ConsumerWidget {
   }
 }
 
-class _FocusContent extends ConsumerWidget {
+class _FocusContent extends StatelessWidget {
   final Pomodoro pomodoro;
   final double dialSize;
   final bool isCompactHeight;
@@ -99,7 +98,7 @@ class _FocusContent extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final hasActiveFocus =
         pomodoro.canStartFocus ||
         pomodoro.status == PomodoroStatus.running ||
@@ -113,7 +112,6 @@ class _FocusContent extends ConsumerWidget {
           ? _ActiveFocusContent(
               key: const ValueKey('active-focus'),
               pomodoro: pomodoro,
-              notifier: ref.read(pomodoroControllerProvider.notifier),
               dialSize: dialSize,
               isCompactHeight: isCompactHeight,
               onOpenToday: onOpenToday,
@@ -121,7 +119,6 @@ class _FocusContent extends ConsumerWidget {
           : _EmptyFocusContent(
               key: const ValueKey('empty-focus'),
               pomodoro: pomodoro,
-              notifier: ref.read(pomodoroControllerProvider.notifier),
               onOpenToday: onOpenToday,
               isCompactHeight: isCompactHeight,
             ),
@@ -131,7 +128,6 @@ class _FocusContent extends ConsumerWidget {
 
 class _ActiveFocusContent extends StatelessWidget {
   final Pomodoro pomodoro;
-  final PomodoroController notifier;
   final double dialSize;
   final bool isCompactHeight;
   final VoidCallback? onOpenToday;
@@ -139,7 +135,6 @@ class _ActiveFocusContent extends StatelessWidget {
   const _ActiveFocusContent({
     super.key,
     required this.pomodoro,
-    required this.notifier,
     required this.dialSize,
     required this.isCompactHeight,
     required this.onOpenToday,
@@ -167,8 +162,6 @@ class _ActiveFocusContent extends StatelessWidget {
         ),
         SizedBox(height: isCompactHeight ? 22 : 28),
         _SessionDots(pomodoro: pomodoro),
-        SizedBox(height: isCompactHeight ? 22 : 26),
-        _ScheduleTrackingControl(pomodoro: pomodoro, notifier: notifier),
       ],
     );
   }
@@ -176,14 +169,12 @@ class _ActiveFocusContent extends StatelessWidget {
 
 class _EmptyFocusContent extends StatelessWidget {
   final Pomodoro pomodoro;
-  final PomodoroController notifier;
   final VoidCallback? onOpenToday;
   final bool isCompactHeight;
 
   const _EmptyFocusContent({
     super.key,
     required this.pomodoro,
-    required this.notifier,
     required this.onOpenToday,
     required this.isCompactHeight,
   });
@@ -198,8 +189,6 @@ class _EmptyFocusContent extends StatelessWidget {
           SizedBox(height: isCompactHeight ? 18 : 24),
           _SessionDots(pomodoro: pomodoro),
         ],
-        SizedBox(height: isCompactHeight ? 18 : 24),
-        _ScheduleTrackingControl(pomodoro: pomodoro, notifier: notifier),
       ],
     );
   }
@@ -503,83 +492,6 @@ class _SessionDots extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _ScheduleTrackingControl extends StatelessWidget {
-  final Pomodoro pomodoro;
-  final PomodoroController notifier;
-
-  const _ScheduleTrackingControl({
-    required this.pomodoro,
-    required this.notifier,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final enabled = pomodoro.autoStartFocus;
-    return Material(
-      color: Colors.white.withValues(alpha: 0.045),
-      shape: RoundedRectangleBorder(
-        side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: InkWell(
-        onTap: () => notifier.setScheduleTrackingEnabled(
-          !enabled,
-          context.l10n.nativeTimerCopy,
-        ),
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 13, 8, 13),
-          child: Row(
-            children: [
-              Icon(
-                enabled ? Icons.sensors_rounded : Icons.sensors_off_rounded,
-                color: const Color(0xFFF6F3EC),
-                size: 22,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      context.l10n.liveTrackingTitle,
-                      style: const TextStyle(
-                        color: Color(0xFFF6F3EC),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      context.l10n.liveTrackingDescription,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.5),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        height: 1.2,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Switch(
-                value: enabled,
-                onChanged: (value) => notifier.setScheduleTrackingEnabled(
-                  value,
-                  context.l10n.nativeTimerCopy,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }
