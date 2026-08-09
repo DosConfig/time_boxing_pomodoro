@@ -218,6 +218,7 @@ class PomodoroLocalDataSource {
 
   void updatePomodoro(Pomodoro pomodoro, {int? updatedAtEpochMs}) {
     _currentPomodoro = pomodoro;
+    unawaited(PomodoroPlatformChannel.syncAndroidSchedule(pomodoro));
     final scope = _scopeKey;
     final todayKey = _dateKey(DateTime.now());
     final dto = TodayPlanDto.fromEntity(
@@ -242,6 +243,7 @@ class PomodoroLocalDataSource {
     await preferences.remove(_dateIndexKey(scope));
 
     _currentPomodoro = Pomodoro.initial();
+    unawaited(PomodoroPlatformChannel.syncAndroidSchedule(_currentPomodoro));
     _lastPersistedPlanJsonByScope.remove(scope);
     _lastRestoreFoundTodayPlan = false;
     _persistQueue = Future.value();

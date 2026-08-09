@@ -32,7 +32,7 @@ Map<String, dynamic> _$TimeBoxDtoToJson(_TimeBoxDto instance) =>
 _TodayPlanDto _$TodayPlanDtoFromJson(
   Map<String, dynamic> json,
 ) => _TodayPlanDto(
-  schemaVersion: (json['schemaVersion'] as num?)?.toInt() ?? 2,
+  schemaVersion: (json['schemaVersion'] as num?)?.toInt() ?? 3,
   dateKey: json['dateKey'] as String? ?? '',
   updatedAtEpochMs: (json['updatedAtEpochMs'] as num?)?.toInt() ?? 0,
   brainDump:
@@ -53,6 +53,7 @@ _TodayPlanDto _$TodayPlanDtoFromJson(
       const <TimeBoxDto>[],
   activeTimeBoxId: json['activeTimeBoxId'] as String? ?? '',
   completedSessions: (json['completedSessions'] as num?)?.toInt() ?? 0,
+  autoStartFocus: json['autoStartFocus'] as bool? ?? false,
   cancelledRecurrenceKeys:
       (json['cancelledRecurrenceKeys'] as List<dynamic>?)
           ?.map((e) => e as String)
@@ -71,5 +72,6 @@ Map<String, dynamic> _$TodayPlanDtoToJson(_TodayPlanDto instance) =>
       'timeBoxes': instance.timeBoxes,
       'activeTimeBoxId': instance.activeTimeBoxId,
       'completedSessions': instance.completedSessions,
+      'autoStartFocus': instance.autoStartFocus,
       'cancelledRecurrenceKeys': instance.cancelledRecurrenceKeys,
     };

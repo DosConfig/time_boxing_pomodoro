@@ -27,15 +27,39 @@ That means Android has the same design pressure as iOS Live Activity: use a stab
   `setChronometerCountDown`; it is not reposted every second.
 - The MethodChannel supports start, pause, resume, stop, restore, and settings
   updates from the shared Flutter domain layer.
+- Flutter also sends the complete Today schedule when its cards or tracking
+  setting changes. `AndroidScheduleState` persists that compact payload in
+  native `SharedPreferences`, using absolute start/end timestamps.
+- While schedule tracking is enabled, the foreground service selects the card
+  containing `now`. At a card boundary it completes the old timer, starts the
+  next contiguous card, and replaces the ongoing notification. During a gap it
+  keeps a low-cost "Next" notification and schedules only one Handler callback
+  for the next start time; it does not execute a one-second background loop.
+- `autoStartFocus` is stored in the daily-plan schema so the Flutter toggle and
+  native schedule cannot disagree after process recreation.
 - Android 13 notification permission and foreground-service manifest entries
   are configured.
-- Kotlin unit tests cover running, paused, and completed timer restoration.
+- Kotlin unit tests cover timer restoration and start-inclusive/end-exclusive
+  schedule boundary selection.
+
+Verified on a Pixel API 35 emulator:
+
+1. Flutter/Kotlin debug build installs and launches.
+2. The first native schedule entry creates the foreground notification.
+3. With Flutter no longer driving the transition, the service persists and
+   changes from the first entry to the second entry at the absolute boundary.
+4. After the final entry, the timer becomes inactive and the service stops.
 
 Still pending:
 
 - Android 16 `Notification.ProgressStyle` promoted Live Updates.
 - Release upload-key and Play App Signing setup.
 - Wear OS companion UI and Data Layer synchronization.
+- Reboot rescheduling. A persisted schedule is restored when the app process is
+  relaunched, but there is no `BOOT_COMPLETED` receiver in this version.
+- Slot-break segmentation while Dart is suspended. Native fallback tracks the
+  card's full wall-clock range; when Flutter is active, the existing controller
+  still owns the finer focus/break segment policy.
 
 ## Android 16 Live Updates
 
@@ -53,7 +77,7 @@ The fallback remains the foreground-service chronometer notification.
 ## Interview Answer
 
 ```text
-The timer is not coupled to per-second notification updates. On iOS, Live Activity receives an end time and the system renders Text(timerInterval:). On Android, the same model maps to a foreground-service notification using Chronometer, or Android 16 ProgressStyle where available. If the OS rate-limits notification updates, the timer is still correct because remaining time is derived from endTime minus now.
+The timer is not coupled to per-second notification updates. On iOS, Live Activity receives an end time and the system renders Text(timerInterval:). On Android, the same model maps to a foreground-service notification using Chronometer. I also persist today's card start and end timestamps natively, so a contiguous next card can start even if the Dart isolate is suspended. During a schedule gap the service waits for one boundary callback and shows the next card instead of running a one-second background loop. Android 16 ProgressStyle remains an optional presentation enhancement; timer correctness still comes from absolute timestamps.
 ```
 
 ## References

@@ -123,6 +123,31 @@ data class PomodoroTimerState(
                 .apply()
         }
 
+        fun startScheduled(
+            context: Context,
+            entry: AndroidScheduleEntry,
+            schedule: AndroidScheduleState,
+        ) {
+            val remainingSeconds = ceil(
+                (entry.endTimeMs - System.currentTimeMillis()).coerceAtLeast(0L) / 1_000.0,
+            ).toInt()
+            context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+                .putBoolean(ACTIVE, true)
+                .putBoolean(PAUSED, false)
+                .putLong(END_TIME, entry.endTimeMs)
+                .putInt(PAUSED_REMAINING, remainingSeconds)
+                .putInt(TARGET_DURATION, remainingSeconds)
+                .putString(PHASE, "focus")
+                .putBoolean(NOTIFICATIONS, schedule.notificationsEnabled)
+                .putBoolean(SOUND, schedule.soundEnabled)
+                .putString(TOP_PRIORITIES, schedule.topPriorities.joinToString(LIST_SEPARATOR))
+                .putString(TITLE, entry.title)
+                .putString(RANGE, entry.timeRange)
+                .putString(FOCUS_COMPLETE_TITLE, schedule.focusCompleteTitle)
+                .putString(FOCUS_COMPLETE_BODY, schedule.focusCompleteBody)
+                .apply()
+        }
+
         fun pause(context: Context) {
             val current = read(context)
             context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()

@@ -299,7 +299,7 @@ as String,
 /// @nodoc
 mixin _$TodayPlanDto {
 
- int get schemaVersion; String get dateKey; int get updatedAtEpochMs; List<String> get brainDump; List<String> get reminders; List<String> get topPriorities; List<TimeBoxDto> get timeBoxes; String get activeTimeBoxId; int get completedSessions; List<String> get cancelledRecurrenceKeys;
+ int get schemaVersion; String get dateKey; int get updatedAtEpochMs; List<String> get brainDump; List<String> get reminders; List<String> get topPriorities; List<TimeBoxDto> get timeBoxes; String get activeTimeBoxId; int get completedSessions; bool get autoStartFocus; List<String> get cancelledRecurrenceKeys;
 /// Create a copy of TodayPlanDto
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -312,16 +312,16 @@ $TodayPlanDtoCopyWith<TodayPlanDto> get copyWith => _$TodayPlanDtoCopyWithImpl<T
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is TodayPlanDto&&(identical(other.schemaVersion, schemaVersion) || other.schemaVersion == schemaVersion)&&(identical(other.dateKey, dateKey) || other.dateKey == dateKey)&&(identical(other.updatedAtEpochMs, updatedAtEpochMs) || other.updatedAtEpochMs == updatedAtEpochMs)&&const DeepCollectionEquality().equals(other.brainDump, brainDump)&&const DeepCollectionEquality().equals(other.reminders, reminders)&&const DeepCollectionEquality().equals(other.topPriorities, topPriorities)&&const DeepCollectionEquality().equals(other.timeBoxes, timeBoxes)&&(identical(other.activeTimeBoxId, activeTimeBoxId) || other.activeTimeBoxId == activeTimeBoxId)&&(identical(other.completedSessions, completedSessions) || other.completedSessions == completedSessions)&&const DeepCollectionEquality().equals(other.cancelledRecurrenceKeys, cancelledRecurrenceKeys));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TodayPlanDto&&(identical(other.schemaVersion, schemaVersion) || other.schemaVersion == schemaVersion)&&(identical(other.dateKey, dateKey) || other.dateKey == dateKey)&&(identical(other.updatedAtEpochMs, updatedAtEpochMs) || other.updatedAtEpochMs == updatedAtEpochMs)&&const DeepCollectionEquality().equals(other.brainDump, brainDump)&&const DeepCollectionEquality().equals(other.reminders, reminders)&&const DeepCollectionEquality().equals(other.topPriorities, topPriorities)&&const DeepCollectionEquality().equals(other.timeBoxes, timeBoxes)&&(identical(other.activeTimeBoxId, activeTimeBoxId) || other.activeTimeBoxId == activeTimeBoxId)&&(identical(other.completedSessions, completedSessions) || other.completedSessions == completedSessions)&&(identical(other.autoStartFocus, autoStartFocus) || other.autoStartFocus == autoStartFocus)&&const DeepCollectionEquality().equals(other.cancelledRecurrenceKeys, cancelledRecurrenceKeys));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,schemaVersion,dateKey,updatedAtEpochMs,const DeepCollectionEquality().hash(brainDump),const DeepCollectionEquality().hash(reminders),const DeepCollectionEquality().hash(topPriorities),const DeepCollectionEquality().hash(timeBoxes),activeTimeBoxId,completedSessions,const DeepCollectionEquality().hash(cancelledRecurrenceKeys));
+int get hashCode => Object.hash(runtimeType,schemaVersion,dateKey,updatedAtEpochMs,const DeepCollectionEquality().hash(brainDump),const DeepCollectionEquality().hash(reminders),const DeepCollectionEquality().hash(topPriorities),const DeepCollectionEquality().hash(timeBoxes),activeTimeBoxId,completedSessions,autoStartFocus,const DeepCollectionEquality().hash(cancelledRecurrenceKeys));
 
 @override
 String toString() {
-  return 'TodayPlanDto(schemaVersion: $schemaVersion, dateKey: $dateKey, updatedAtEpochMs: $updatedAtEpochMs, brainDump: $brainDump, reminders: $reminders, topPriorities: $topPriorities, timeBoxes: $timeBoxes, activeTimeBoxId: $activeTimeBoxId, completedSessions: $completedSessions, cancelledRecurrenceKeys: $cancelledRecurrenceKeys)';
+  return 'TodayPlanDto(schemaVersion: $schemaVersion, dateKey: $dateKey, updatedAtEpochMs: $updatedAtEpochMs, brainDump: $brainDump, reminders: $reminders, topPriorities: $topPriorities, timeBoxes: $timeBoxes, activeTimeBoxId: $activeTimeBoxId, completedSessions: $completedSessions, autoStartFocus: $autoStartFocus, cancelledRecurrenceKeys: $cancelledRecurrenceKeys)';
 }
 
 
@@ -332,7 +332,7 @@ abstract mixin class $TodayPlanDtoCopyWith<$Res>  {
   factory $TodayPlanDtoCopyWith(TodayPlanDto value, $Res Function(TodayPlanDto) _then) = _$TodayPlanDtoCopyWithImpl;
 @useResult
 $Res call({
- int schemaVersion, String dateKey, int updatedAtEpochMs, List<String> brainDump, List<String> reminders, List<String> topPriorities, List<TimeBoxDto> timeBoxes, String activeTimeBoxId, int completedSessions, List<String> cancelledRecurrenceKeys
+ int schemaVersion, String dateKey, int updatedAtEpochMs, List<String> brainDump, List<String> reminders, List<String> topPriorities, List<TimeBoxDto> timeBoxes, String activeTimeBoxId, int completedSessions, bool autoStartFocus, List<String> cancelledRecurrenceKeys
 });
 
 
@@ -349,7 +349,7 @@ class _$TodayPlanDtoCopyWithImpl<$Res>
 
 /// Create a copy of TodayPlanDto
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? schemaVersion = null,Object? dateKey = null,Object? updatedAtEpochMs = null,Object? brainDump = null,Object? reminders = null,Object? topPriorities = null,Object? timeBoxes = null,Object? activeTimeBoxId = null,Object? completedSessions = null,Object? cancelledRecurrenceKeys = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? schemaVersion = null,Object? dateKey = null,Object? updatedAtEpochMs = null,Object? brainDump = null,Object? reminders = null,Object? topPriorities = null,Object? timeBoxes = null,Object? activeTimeBoxId = null,Object? completedSessions = null,Object? autoStartFocus = null,Object? cancelledRecurrenceKeys = null,}) {
   return _then(_self.copyWith(
 schemaVersion: null == schemaVersion ? _self.schemaVersion : schemaVersion // ignore: cast_nullable_to_non_nullable
 as int,dateKey: null == dateKey ? _self.dateKey : dateKey // ignore: cast_nullable_to_non_nullable
@@ -360,7 +360,8 @@ as List<String>,topPriorities: null == topPriorities ? _self.topPriorities : top
 as List<String>,timeBoxes: null == timeBoxes ? _self.timeBoxes : timeBoxes // ignore: cast_nullable_to_non_nullable
 as List<TimeBoxDto>,activeTimeBoxId: null == activeTimeBoxId ? _self.activeTimeBoxId : activeTimeBoxId // ignore: cast_nullable_to_non_nullable
 as String,completedSessions: null == completedSessions ? _self.completedSessions : completedSessions // ignore: cast_nullable_to_non_nullable
-as int,cancelledRecurrenceKeys: null == cancelledRecurrenceKeys ? _self.cancelledRecurrenceKeys : cancelledRecurrenceKeys // ignore: cast_nullable_to_non_nullable
+as int,autoStartFocus: null == autoStartFocus ? _self.autoStartFocus : autoStartFocus // ignore: cast_nullable_to_non_nullable
+as bool,cancelledRecurrenceKeys: null == cancelledRecurrenceKeys ? _self.cancelledRecurrenceKeys : cancelledRecurrenceKeys // ignore: cast_nullable_to_non_nullable
 as List<String>,
   ));
 }
@@ -446,10 +447,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int schemaVersion,  String dateKey,  int updatedAtEpochMs,  List<String> brainDump,  List<String> reminders,  List<String> topPriorities,  List<TimeBoxDto> timeBoxes,  String activeTimeBoxId,  int completedSessions,  List<String> cancelledRecurrenceKeys)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int schemaVersion,  String dateKey,  int updatedAtEpochMs,  List<String> brainDump,  List<String> reminders,  List<String> topPriorities,  List<TimeBoxDto> timeBoxes,  String activeTimeBoxId,  int completedSessions,  bool autoStartFocus,  List<String> cancelledRecurrenceKeys)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _TodayPlanDto() when $default != null:
-return $default(_that.schemaVersion,_that.dateKey,_that.updatedAtEpochMs,_that.brainDump,_that.reminders,_that.topPriorities,_that.timeBoxes,_that.activeTimeBoxId,_that.completedSessions,_that.cancelledRecurrenceKeys);case _:
+return $default(_that.schemaVersion,_that.dateKey,_that.updatedAtEpochMs,_that.brainDump,_that.reminders,_that.topPriorities,_that.timeBoxes,_that.activeTimeBoxId,_that.completedSessions,_that.autoStartFocus,_that.cancelledRecurrenceKeys);case _:
   return orElse();
 
 }
@@ -467,10 +468,10 @@ return $default(_that.schemaVersion,_that.dateKey,_that.updatedAtEpochMs,_that.b
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int schemaVersion,  String dateKey,  int updatedAtEpochMs,  List<String> brainDump,  List<String> reminders,  List<String> topPriorities,  List<TimeBoxDto> timeBoxes,  String activeTimeBoxId,  int completedSessions,  List<String> cancelledRecurrenceKeys)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int schemaVersion,  String dateKey,  int updatedAtEpochMs,  List<String> brainDump,  List<String> reminders,  List<String> topPriorities,  List<TimeBoxDto> timeBoxes,  String activeTimeBoxId,  int completedSessions,  bool autoStartFocus,  List<String> cancelledRecurrenceKeys)  $default,) {final _that = this;
 switch (_that) {
 case _TodayPlanDto():
-return $default(_that.schemaVersion,_that.dateKey,_that.updatedAtEpochMs,_that.brainDump,_that.reminders,_that.topPriorities,_that.timeBoxes,_that.activeTimeBoxId,_that.completedSessions,_that.cancelledRecurrenceKeys);case _:
+return $default(_that.schemaVersion,_that.dateKey,_that.updatedAtEpochMs,_that.brainDump,_that.reminders,_that.topPriorities,_that.timeBoxes,_that.activeTimeBoxId,_that.completedSessions,_that.autoStartFocus,_that.cancelledRecurrenceKeys);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -487,10 +488,10 @@ return $default(_that.schemaVersion,_that.dateKey,_that.updatedAtEpochMs,_that.b
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int schemaVersion,  String dateKey,  int updatedAtEpochMs,  List<String> brainDump,  List<String> reminders,  List<String> topPriorities,  List<TimeBoxDto> timeBoxes,  String activeTimeBoxId,  int completedSessions,  List<String> cancelledRecurrenceKeys)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int schemaVersion,  String dateKey,  int updatedAtEpochMs,  List<String> brainDump,  List<String> reminders,  List<String> topPriorities,  List<TimeBoxDto> timeBoxes,  String activeTimeBoxId,  int completedSessions,  bool autoStartFocus,  List<String> cancelledRecurrenceKeys)?  $default,) {final _that = this;
 switch (_that) {
 case _TodayPlanDto() when $default != null:
-return $default(_that.schemaVersion,_that.dateKey,_that.updatedAtEpochMs,_that.brainDump,_that.reminders,_that.topPriorities,_that.timeBoxes,_that.activeTimeBoxId,_that.completedSessions,_that.cancelledRecurrenceKeys);case _:
+return $default(_that.schemaVersion,_that.dateKey,_that.updatedAtEpochMs,_that.brainDump,_that.reminders,_that.topPriorities,_that.timeBoxes,_that.activeTimeBoxId,_that.completedSessions,_that.autoStartFocus,_that.cancelledRecurrenceKeys);case _:
   return null;
 
 }
@@ -502,7 +503,7 @@ return $default(_that.schemaVersion,_that.dateKey,_that.updatedAtEpochMs,_that.b
 @JsonSerializable()
 
 class _TodayPlanDto extends TodayPlanDto {
-  const _TodayPlanDto({this.schemaVersion = 2, this.dateKey = '', this.updatedAtEpochMs = 0, final  List<String> brainDump = const <String>[], final  List<String> reminders = const <String>[], final  List<String> topPriorities = const <String>['', '', ''], final  List<TimeBoxDto> timeBoxes = const <TimeBoxDto>[], this.activeTimeBoxId = '', this.completedSessions = 0, final  List<String> cancelledRecurrenceKeys = const <String>[]}): _brainDump = brainDump,_reminders = reminders,_topPriorities = topPriorities,_timeBoxes = timeBoxes,_cancelledRecurrenceKeys = cancelledRecurrenceKeys,super._();
+  const _TodayPlanDto({this.schemaVersion = 3, this.dateKey = '', this.updatedAtEpochMs = 0, final  List<String> brainDump = const <String>[], final  List<String> reminders = const <String>[], final  List<String> topPriorities = const <String>['', '', ''], final  List<TimeBoxDto> timeBoxes = const <TimeBoxDto>[], this.activeTimeBoxId = '', this.completedSessions = 0, this.autoStartFocus = false, final  List<String> cancelledRecurrenceKeys = const <String>[]}): _brainDump = brainDump,_reminders = reminders,_topPriorities = topPriorities,_timeBoxes = timeBoxes,_cancelledRecurrenceKeys = cancelledRecurrenceKeys,super._();
   factory _TodayPlanDto.fromJson(Map<String, dynamic> json) => _$TodayPlanDtoFromJson(json);
 
 @override@JsonKey() final  int schemaVersion;
@@ -538,6 +539,7 @@ class _TodayPlanDto extends TodayPlanDto {
 
 @override@JsonKey() final  String activeTimeBoxId;
 @override@JsonKey() final  int completedSessions;
+@override@JsonKey() final  bool autoStartFocus;
  final  List<String> _cancelledRecurrenceKeys;
 @override@JsonKey() List<String> get cancelledRecurrenceKeys {
   if (_cancelledRecurrenceKeys is EqualUnmodifiableListView) return _cancelledRecurrenceKeys;
@@ -559,16 +561,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _TodayPlanDto&&(identical(other.schemaVersion, schemaVersion) || other.schemaVersion == schemaVersion)&&(identical(other.dateKey, dateKey) || other.dateKey == dateKey)&&(identical(other.updatedAtEpochMs, updatedAtEpochMs) || other.updatedAtEpochMs == updatedAtEpochMs)&&const DeepCollectionEquality().equals(other._brainDump, _brainDump)&&const DeepCollectionEquality().equals(other._reminders, _reminders)&&const DeepCollectionEquality().equals(other._topPriorities, _topPriorities)&&const DeepCollectionEquality().equals(other._timeBoxes, _timeBoxes)&&(identical(other.activeTimeBoxId, activeTimeBoxId) || other.activeTimeBoxId == activeTimeBoxId)&&(identical(other.completedSessions, completedSessions) || other.completedSessions == completedSessions)&&const DeepCollectionEquality().equals(other._cancelledRecurrenceKeys, _cancelledRecurrenceKeys));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _TodayPlanDto&&(identical(other.schemaVersion, schemaVersion) || other.schemaVersion == schemaVersion)&&(identical(other.dateKey, dateKey) || other.dateKey == dateKey)&&(identical(other.updatedAtEpochMs, updatedAtEpochMs) || other.updatedAtEpochMs == updatedAtEpochMs)&&const DeepCollectionEquality().equals(other._brainDump, _brainDump)&&const DeepCollectionEquality().equals(other._reminders, _reminders)&&const DeepCollectionEquality().equals(other._topPriorities, _topPriorities)&&const DeepCollectionEquality().equals(other._timeBoxes, _timeBoxes)&&(identical(other.activeTimeBoxId, activeTimeBoxId) || other.activeTimeBoxId == activeTimeBoxId)&&(identical(other.completedSessions, completedSessions) || other.completedSessions == completedSessions)&&(identical(other.autoStartFocus, autoStartFocus) || other.autoStartFocus == autoStartFocus)&&const DeepCollectionEquality().equals(other._cancelledRecurrenceKeys, _cancelledRecurrenceKeys));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,schemaVersion,dateKey,updatedAtEpochMs,const DeepCollectionEquality().hash(_brainDump),const DeepCollectionEquality().hash(_reminders),const DeepCollectionEquality().hash(_topPriorities),const DeepCollectionEquality().hash(_timeBoxes),activeTimeBoxId,completedSessions,const DeepCollectionEquality().hash(_cancelledRecurrenceKeys));
+int get hashCode => Object.hash(runtimeType,schemaVersion,dateKey,updatedAtEpochMs,const DeepCollectionEquality().hash(_brainDump),const DeepCollectionEquality().hash(_reminders),const DeepCollectionEquality().hash(_topPriorities),const DeepCollectionEquality().hash(_timeBoxes),activeTimeBoxId,completedSessions,autoStartFocus,const DeepCollectionEquality().hash(_cancelledRecurrenceKeys));
 
 @override
 String toString() {
-  return 'TodayPlanDto(schemaVersion: $schemaVersion, dateKey: $dateKey, updatedAtEpochMs: $updatedAtEpochMs, brainDump: $brainDump, reminders: $reminders, topPriorities: $topPriorities, timeBoxes: $timeBoxes, activeTimeBoxId: $activeTimeBoxId, completedSessions: $completedSessions, cancelledRecurrenceKeys: $cancelledRecurrenceKeys)';
+  return 'TodayPlanDto(schemaVersion: $schemaVersion, dateKey: $dateKey, updatedAtEpochMs: $updatedAtEpochMs, brainDump: $brainDump, reminders: $reminders, topPriorities: $topPriorities, timeBoxes: $timeBoxes, activeTimeBoxId: $activeTimeBoxId, completedSessions: $completedSessions, autoStartFocus: $autoStartFocus, cancelledRecurrenceKeys: $cancelledRecurrenceKeys)';
 }
 
 
@@ -579,7 +581,7 @@ abstract mixin class _$TodayPlanDtoCopyWith<$Res> implements $TodayPlanDtoCopyWi
   factory _$TodayPlanDtoCopyWith(_TodayPlanDto value, $Res Function(_TodayPlanDto) _then) = __$TodayPlanDtoCopyWithImpl;
 @override @useResult
 $Res call({
- int schemaVersion, String dateKey, int updatedAtEpochMs, List<String> brainDump, List<String> reminders, List<String> topPriorities, List<TimeBoxDto> timeBoxes, String activeTimeBoxId, int completedSessions, List<String> cancelledRecurrenceKeys
+ int schemaVersion, String dateKey, int updatedAtEpochMs, List<String> brainDump, List<String> reminders, List<String> topPriorities, List<TimeBoxDto> timeBoxes, String activeTimeBoxId, int completedSessions, bool autoStartFocus, List<String> cancelledRecurrenceKeys
 });
 
 
@@ -596,7 +598,7 @@ class __$TodayPlanDtoCopyWithImpl<$Res>
 
 /// Create a copy of TodayPlanDto
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? schemaVersion = null,Object? dateKey = null,Object? updatedAtEpochMs = null,Object? brainDump = null,Object? reminders = null,Object? topPriorities = null,Object? timeBoxes = null,Object? activeTimeBoxId = null,Object? completedSessions = null,Object? cancelledRecurrenceKeys = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? schemaVersion = null,Object? dateKey = null,Object? updatedAtEpochMs = null,Object? brainDump = null,Object? reminders = null,Object? topPriorities = null,Object? timeBoxes = null,Object? activeTimeBoxId = null,Object? completedSessions = null,Object? autoStartFocus = null,Object? cancelledRecurrenceKeys = null,}) {
   return _then(_TodayPlanDto(
 schemaVersion: null == schemaVersion ? _self.schemaVersion : schemaVersion // ignore: cast_nullable_to_non_nullable
 as int,dateKey: null == dateKey ? _self.dateKey : dateKey // ignore: cast_nullable_to_non_nullable
@@ -607,7 +609,8 @@ as List<String>,topPriorities: null == topPriorities ? _self._topPriorities : to
 as List<String>,timeBoxes: null == timeBoxes ? _self._timeBoxes : timeBoxes // ignore: cast_nullable_to_non_nullable
 as List<TimeBoxDto>,activeTimeBoxId: null == activeTimeBoxId ? _self.activeTimeBoxId : activeTimeBoxId // ignore: cast_nullable_to_non_nullable
 as String,completedSessions: null == completedSessions ? _self.completedSessions : completedSessions // ignore: cast_nullable_to_non_nullable
-as int,cancelledRecurrenceKeys: null == cancelledRecurrenceKeys ? _self._cancelledRecurrenceKeys : cancelledRecurrenceKeys // ignore: cast_nullable_to_non_nullable
+as int,autoStartFocus: null == autoStartFocus ? _self.autoStartFocus : autoStartFocus // ignore: cast_nullable_to_non_nullable
+as bool,cancelledRecurrenceKeys: null == cancelledRecurrenceKeys ? _self._cancelledRecurrenceKeys : cancelledRecurrenceKeys // ignore: cast_nullable_to_non_nullable
 as List<String>,
   ));
 }

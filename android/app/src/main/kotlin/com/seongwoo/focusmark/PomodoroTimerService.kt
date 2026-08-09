@@ -14,6 +14,7 @@ import android.os.Looper
 class PomodoroTimerService : Service() {
     private val handler = Handler(Looper.getMainLooper())
     private val completion = Runnable { completeTimer() }
+    private val scheduleBoundary = Runnable { reconcileSchedule() }
 
     override fun onCreate() {
         super.onCreate()
@@ -26,7 +27,9 @@ class PomodoroTimerService : Service() {
             ACTION_COMPLETE -> completeTimer()
             ACTION_PAUSE -> showPausedNotification()
             ACTION_UPDATE -> refreshNotification()
-            ACTION_START, ACTION_RESUME, null -> startRunningTimer()
+            ACTION_SYNC_SCHEDULE -> reconcileSchedule()
+            ACTION_START, ACTION_RESUME -> startRunningTimer()
+            null -> restoreServiceState()
         }
         return START_STICKY
     }
@@ -35,7 +38,17 @@ class PomodoroTimerService : Service() {
 
     override fun onDestroy() {
         handler.removeCallbacks(completion)
+        handler.removeCallbacks(scheduleBoundary)
         super.onDestroy()
+    }
+
+    private fun restoreServiceState() {
+        val timer = PomodoroTimerState.read(this)
+        when {
+            timer.isRunning -> startRunningTimer()
+            timer.active && timer.paused -> showPausedNotification()
+            else -> reconcileSchedule()
+        }
     }
 
     private fun startRunningTimer() {
@@ -80,18 +93,59 @@ class PomodoroTimerService : Service() {
         handler.removeCallbacks(completion)
         val state = PomodoroTimerState.read(this)
         PomodoroTimerState.complete(this)
-        stopForeground(STOP_FOREGROUND_REMOVE)
-        stopSelf()
-        if (!state.notificationsEnabled) return
+        if (state.notificationsEnabled) {
+            val manager = getSystemService(NotificationManager::class.java)
+            manager.notify(COMPLETION_NOTIFICATION_ID, completionNotification(state))
+        }
 
-        val manager = getSystemService(NotificationManager::class.java)
-        manager.notify(COMPLETION_NOTIFICATION_ID, completionNotification(state))
+        val schedule = AndroidScheduleState.read(this)
+        if (schedule.enabled) {
+            reconcileSchedule()
+        } else {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+            stopSelf()
+        }
     }
 
     private fun stopTimer() {
         handler.removeCallbacks(completion)
+        handler.removeCallbacks(scheduleBoundary)
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
+    }
+
+    private fun reconcileSchedule(nowMs: Long = System.currentTimeMillis()) {
+        handler.removeCallbacks(completion)
+        handler.removeCallbacks(scheduleBoundary)
+        val schedule = AndroidScheduleState.read(this)
+        if (!schedule.enabled || schedule.entries.isEmpty()) {
+            val timer = PomodoroTimerState.read(this)
+            if (timer.active) refreshNotification() else stopTimer()
+            return
+        }
+
+        val current = schedule.currentEntry(nowMs)
+        if (current != null) {
+            val timer = PomodoroTimerState.read(this)
+            val alreadyRunningCurrentEntry =
+                timer.isRunning && timer.currentTimeBoxTimeRange == current.timeRange
+            if (!alreadyRunningCurrentEntry) {
+                PomodoroTimerState.startScheduled(this, current, schedule)
+            }
+            startRunningTimer()
+            return
+        }
+
+        PomodoroTimerState.stop(this)
+        val next = schedule.nextEntry(nowMs)
+        if (next == null) {
+            stopTimer()
+            return
+        }
+
+        startForeground(ONGOING_NOTIFICATION_ID, upcomingNotification(next))
+        val delay = (next.startTimeMs - nowMs).coerceAtLeast(0L)
+        handler.postDelayed(scheduleBoundary, delay)
     }
 
     private fun runningNotification(state: PomodoroTimerState): Notification {
@@ -126,6 +180,20 @@ class PomodoroTimerService : Service() {
             .setCategory(Notification.CATEGORY_PROGRESS)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
+            .build()
+    }
+
+    private fun upcomingNotification(entry: AndroidScheduleEntry): Notification {
+        return notificationBuilder(ONGOING_CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+            .setContentTitle("Next · ${entry.title.ifBlank { "Focus" }}")
+            .setContentText(entry.timeRange)
+            .setContentIntent(appPendingIntent())
+            .setCategory(Notification.CATEGORY_PROGRESS)
+            .setOngoing(true)
+            .setOnlyAlertOnce(true)
+            .setShowWhen(true)
+            .setWhen(entry.startTimeMs)
             .build()
     }
 
@@ -225,6 +293,7 @@ class PomodoroTimerService : Service() {
         const val ACTION_STOP = "com.seongwoo.focusmark.timer.STOP"
         const val ACTION_COMPLETE = "com.seongwoo.focusmark.timer.COMPLETE"
         const val ACTION_UPDATE = "com.seongwoo.focusmark.timer.UPDATE"
+        const val ACTION_SYNC_SCHEDULE = "com.seongwoo.focusmark.timer.SYNC_SCHEDULE"
 
         private const val ONGOING_CHANNEL_ID = "pomodoro_running"
         private const val COMPLETION_CHANNEL_ID = "pomodoro_completion"

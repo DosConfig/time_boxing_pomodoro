@@ -60,7 +60,7 @@ abstract class TodayPlanDto with _$TodayPlanDto {
   const TodayPlanDto._();
 
   const factory TodayPlanDto({
-    @Default(2) int schemaVersion,
+    @Default(3) int schemaVersion,
     @Default('') String dateKey,
     @Default(0) int updatedAtEpochMs,
     @Default(<String>[]) List<String> brainDump,
@@ -69,6 +69,7 @@ abstract class TodayPlanDto with _$TodayPlanDto {
     @Default(<TimeBoxDto>[]) List<TimeBoxDto> timeBoxes,
     @Default('') String activeTimeBoxId,
     @Default(0) int completedSessions,
+    @Default(false) bool autoStartFocus,
     @Default(<String>[]) List<String> cancelledRecurrenceKeys,
   }) = _TodayPlanDto;
 
@@ -100,6 +101,7 @@ abstract class TodayPlanDto with _$TodayPlanDto {
       timeBoxes: pomodoro.timeBoxes.map(TimeBoxDto.fromEntity).toList(),
       activeTimeBoxId: pomodoro.activeTimeBoxId,
       completedSessions: pomodoro.completedSessions,
+      autoStartFocus: pomodoro.autoStartFocus,
       cancelledRecurrenceKeys: pomodoro.cancelledRecurrenceKeys,
     );
   }
@@ -122,6 +124,7 @@ abstract class TodayPlanDto with _$TodayPlanDto {
       timeBoxes: nextBoxes,
       activeTimeBoxId: nextActiveBoxId,
       completedSessions: completedSessions < 0 ? 0 : completedSessions,
+      autoStartFocus: autoStartFocus,
       cancelledRecurrenceKeys: cancelledRecurrenceKeys.toSet().toList(),
       currentTimeBoxTitle: activeBox?.title ?? '',
       currentTimeBoxTimeRange: activeBox?.timeRange ?? '',
